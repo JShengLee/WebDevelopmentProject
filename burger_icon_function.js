@@ -4,7 +4,7 @@ const menu = document.querySelector("#mainmenu");
 let isClosed = true;
 
 button.addEventListener("click", function(){
-    if (button.textContent === "☰"){
+    if (button.textContent.trim() === "☰"){
         if (isClosed){
             button.textContent = "X";
         }
