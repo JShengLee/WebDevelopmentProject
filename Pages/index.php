@@ -41,7 +41,7 @@
                             </p>
                         </div>
 
-                        <a href="appointments.php" class="primary-button">
+                        <a href="book-appointment.php" class="primary-button">
                             + Book Appointment
                         </a>
                     </section>
@@ -64,7 +64,7 @@
                             </p>
 
                             <h2>
-                                18 Sep
+                                16 Oct
                             </h2>
 
                             <p class="card-description">
@@ -165,7 +165,7 @@
 
                                 <div class="appointment-info">
                                     <strong>
-                                        18 September 2026
+                                        16 October 2026
                                     </strong>
 
                                     <span>
@@ -196,7 +196,7 @@
                             </div>
 
                             <div class="quick-actions">
-                                <a href="appointments.php" class="action-button">
+                                <a href="book-appointment.php" class="action-button">
                                     <span class="action-icon">
                                         +
                                     </span>

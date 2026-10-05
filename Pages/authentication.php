@@ -7,7 +7,7 @@
         <title>Login | BrightSmile Dental Clinic</title>
 
         <!-- Login Page CSS -->
-        <link rel="stylesheet" href="../Styling/login.css">
+        <link rel="stylesheet" href="../Styling/authentication.css">
     </head>
 
     <body>

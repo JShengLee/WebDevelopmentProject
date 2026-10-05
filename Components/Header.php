@@ -1,15 +1,18 @@
-<link rel="stylesheet" href="../Styling/Header.css">
+<link rel="stylesheet" href="../Styling/header.css">
 
+<div class="header-container">
 <!-- Top header -->
                 <header class="top-header">
                     <div class="mobile-logo">
                         <!-- Empty on desktop -->
                     </div>
 
-                    <button class="navbar-toggler burger-icon"
+                    <button 
+                            class="navbar-toggler burger-icon"
                             type="button" 
                             data-bs-toggle="collapse" 
-                            data-bs-target="#mainmenu"><i class="fa-solid fa-bars"></i></button>
+                            data-bs-target="#mainmenu"
+                            id="burger-icon"><i class="fa-solid fa-bars"></i></button>
 
                     <div class="middle-logo">
                         <div class="mobile-logo">
@@ -52,8 +55,22 @@
                         </div>
                     </div>
 
-                    <a href="login.php" class="logout-button">
+                    <a href="authentication.php" class="logout-button">
                         <span>↪</span>
                         <span>Log Out</span>
                     </a>
                 </div>
+</div>
+
+<script>
+    // Toggle the burger icon between bars and times
+    const button = document.getElementById("burger-icon");
+
+    button.addEventListener("click", function(){
+        const icon = button.querySelector("i");
+        if (icon) {
+            icon.classList.toggle("fa-bars");
+            icon.classList.toggle("fa-xmark");
+        }
+    });
+</script>
