@@ -1,0 +1,149 @@
+/* Sidebar */
+.sidebar {
+    position: sticky;
+    top: 0;
+    width: 245px;
+    height: 100dvh;
+    background-color: white;
+    border-right: 1px solid #e8eef1;
+    display: flex;
+    flex-direction: column;
+    padding: 28px 16px;
+}
+
+/* Sidebar logo */
+.sidebar-logo {
+    padding: 0 12px 30px;
+}
+
+.sidebar-logo img {
+    width: 145px;
+    height: auto;
+    display: block;
+}
+
+/* Navigation */
+.sidebar-nav {
+    flex: 1;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.nav-title {
+    padding: 0 12px;
+    margin-bottom: 10px;
+    color: #a0acb3;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+}
+
+.second-title {
+    margin-top: 30px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 12px;
+    margin-bottom: 4px;
+    border-radius: 9px;
+    color: #697881;
+    font-size: 14px;
+    font-weight: 500;
+    transition: 0.2s ease;
+}
+
+.nav-item:hover {
+    background-color: #f1fafc;
+    color: #42B1CC;
+}
+
+.nav-item.active {
+    background-color: #eaf8fb;
+    color: #42B1CC;
+    font-weight: 600;
+}
+
+.nav-icon {
+    width: 20px;
+    text-align: center;
+    font-size: 17px;
+}
+
+/* Sidebar bottom */
+.sidebar-bottom {
+    margin-top: auto;
+}
+
+.help-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px;
+    margin-bottom: 15px;
+    border-radius: 10px;
+    background-color: #f5fafb;
+}
+
+.help-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #dff3f7;
+    color: #42B1CC;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.help-box strong {
+    display: block;
+    color: #43515a;
+    font-size: 13px;
+}
+
+.help-box span {
+    display: block;
+    margin-top: 3px;
+    color: #97a2a8;
+    font-size: 11px;
+}
+
+.logout-button {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 12px;
+    color: #7d898f;
+    font-size: 14px;
+    border-radius: 9px;
+}
+
+.logout-button:hover {
+    background-color: #f7f8f9;
+    color: #e05c5c;
+}
+
+/* Tablet */
+@media (max-width: 1000px) {
+    .sidebar {
+        width: 220px;
+    }
+}
+
+/* Mobile */
+@media (max-width: 750px) {
+    /* Hide desktop sidebar*/
+    .sidebar {
+        display: none;
+    }
+
+    /*Remove sidebar spacing*/
+    .main-content {
+        margin-left: 0;
+    }
+}
