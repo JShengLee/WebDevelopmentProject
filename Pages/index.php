@@ -6,7 +6,7 @@
         <link rel="icon" type="image/x-icon" href="../Logo.png">
         <title>Patient Dashboard | BrightSmile Dental Clinic</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="../Styling/patient_homepage.css">
+        <link rel="stylesheet" href="../Styling/index.css">
     </head>
 
     <body>

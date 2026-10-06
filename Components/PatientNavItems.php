@@ -9,7 +9,7 @@
                         <span>Dashboard</span>
                     </a>
 
-                    <a href="appointments.php" class="nav-item<?php echo in_array($currentPage, ['appointments.php', 'book-appointment.php'], true) ? ' active' : ''; ?>">
+                    <a href="appointments.php" class="nav-item<?php echo $currentPage === 'appointments.php' ? ' active' : ''; ?>">
                         <span class="nav-icon"><i class="fas fa-calendar-alt"></i></span>
                         <span>Appointments</span>
                     </a>
@@ -28,11 +28,6 @@
                         <span class="nav-icon"><i class="fas fa-concierge-bell"></i></span>
                         <span>Services</span>
                     </a>
-
-                    <!--<a href="contact.php" class="nav-item">
-                        <span class="nav-icon"><i class="fas fa-envelope"></i></span>
-                        <span>Contact Us</span>
-                    </a>-->
 
                     <p class="nav-title second-title">
                         ACCOUNT

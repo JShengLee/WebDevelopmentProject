@@ -1,8 +1,9 @@
 <link rel="stylesheet" href="../Styling/header.css">
+<link rel="stylesheet" href="../global.css">
 
 <div class="header-container">
-<!-- Top header -->
-                <header class="top-header">
+    <!-- Top header -->
+    <header class="top-header">
                     <div class="mobile-logo">
                         <!-- Empty on desktop -->
                     </div>
@@ -42,7 +43,7 @@
                 </header>
 
                 <div class="burger-navbar collapse" id="mainmenu">
-                    <?php include 'SidebarNavItems.php'; ?>
+                    <?php include "PatientNavItems.php"; ?>
 
                     <div class="help-box">
                         <div class="help-icon">

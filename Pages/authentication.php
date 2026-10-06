@@ -8,6 +8,7 @@
 
         <!-- Login Page CSS -->
         <link rel="stylesheet" href="../Styling/authentication.css">
+        <link rel="stylesheet" href="../global.css">
     </head>
 
     <body>
@@ -58,7 +59,6 @@
                     </div>
                 </div>
             </section>
-
 
             <!-- RIGHT SIDE - LOGIN FORM -->
             <section class="login-section">

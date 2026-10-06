@@ -9,7 +9,7 @@
 
                 <!-- Navigation -->
                 <nav class="sidebar-nav">
-                    <?php include 'SidebarNavItems.php'; ?>
+                    <?php include 'PatientNavItems.php'; ?>
                 </nav>
 
                 <!-- Sidebar Bottom -->

@@ -9,10 +9,23 @@
     <link rel="stylesheet" href="../Styling/patient-pages.css">
 </head>
 <body>
+    <!-- Main application -->
     <div class="app-container">
-        <?php include '../Components/Sidebar.php'; ?>
+
+        <!-- Sidebar -->
+        <?php
+            include '../Components/Sidebar.php';
+        ?>
+
+        <!-- Main content -->
         <main class="main-content">
-            <?php include '../Components/Header.php'; ?>
+
+            <!-- Header -->
+            <?php
+                include '../Components/Header.php';
+            ?>
+
+            <!-- Page content -->
             <section class="page-content patient-page">
                 <div class="page-heading page-heading-row">
                     <div>
