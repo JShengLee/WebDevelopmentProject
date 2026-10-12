@@ -1,3 +1,6 @@
+<?php
+require_once __DIR__ . '/../includes/patient_bootstrap.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -31,10 +34,6 @@
 
                     <section class="page-header">
                         <div>
-                            <span class="page-label">
-                                CLINIC SERVICES
-                            </span>
-
                             <h1>
                                 Dental Services & Fees
                             </h1>

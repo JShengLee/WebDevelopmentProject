@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="../Styling/Sidebar.css">
+<link rel="stylesheet" href="../Styling/sidebar.css">
 
 <!-- Sidebar -->
             <aside class="sidebar">
@@ -25,8 +25,8 @@
                         </div>
                     </a>
 
-                    <a href="login.php" class="logout-button">
-                        <span>↪</span>
+                    <a href="logout.php" class="logout-button">
+                        <span><i class="fa-solid fa-arrow-right-from-bracket"></i></span>
                         <span>Log Out</span>
                     </a>
                 </div>

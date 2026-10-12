@@ -1,416 +1,160 @@
+<?php
+require_once __DIR__ . '/../includes/patient_bootstrap.php';
+$flash = take_flash();
+
+$upcomingStatement = $pdo->prepare(
+        "SELECT COUNT(*) FROM appointment
+         WHERE PatientID = :patient_id AND AppointmentStatus IN ('Pending', 'Confirmed')
+             AND TIMESTAMP(AppointmentDate, AppointmentTime) >= NOW()"
+);
+$upcomingStatement->execute(['patient_id' => $currentPatient['PatientID']]);
+$upcomingCount = (int) $upcomingStatement->fetchColumn();
+$completedStatement = $pdo->prepare("SELECT COUNT(*) FROM appointment WHERE PatientID = :patient_id AND AppointmentStatus = 'Completed'");
+$completedStatement->execute(['patient_id' => $currentPatient['PatientID']]);
+$completedCount = (int) $completedStatement->fetchColumn();
+$pendingStatement = $pdo->prepare("SELECT COUNT(*) FROM appointment WHERE PatientID = :patient_id AND AppointmentStatus = 'Pending'");
+$pendingStatement->execute(['patient_id' => $currentPatient['PatientID']]);
+$pendingCount = (int) $pendingStatement->fetchColumn();
+$appointmentStatement = $pdo->prepare(
+        'SELECT a.AppointmentID, a.AppointmentDate, a.AppointmentTime, a.AppointmentStatus,
+                        s.ServiceName, u.FullName AS DentistName
+         FROM appointment a
+         INNER JOIN service s ON s.ServiceID = a.ServiceID
+         INNER JOIN dentist d ON d.DentistID = a.DentistID
+         INNER JOIN user u ON u.UserID = d.UserID
+         WHERE a.PatientID = :patient_id
+         ORDER BY a.AppointmentDate DESC, a.AppointmentTime DESC'
+);
+$appointmentStatement->execute(['patient_id' => $currentPatient['PatientID']]);
+$appointments = $appointmentStatement->fetchAll();
+?>
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <link rel="icon" type="image/x-icon" href="../Logo.png">
-            <title>Appointments | BrightSmile Dental Clinic</title>
-            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-            <link rel="stylesheet" href="../Styling/appointments.css">
-    </head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="../Logo.png">
+    <title>Appointments | BrightSmile Dental Clinic</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../Styling/patient-pages.css">
+</head>
+<body>
+    <!-- Main application -->
+    <div class="app-container">
 
-    <body>
-        <!-- Main application -->
-        <div class="app-container">
+        <!-- Sidebar -->
+        <?php
+            include '../Components/Sidebar.php';
+        ?>
 
-            <!-- Sidebar -->
+        <!-- Main content -->
+        <main class="main-content">
+
+            <!-- Header -->
             <?php
-                include '../Components/Sidebar.php';
+                include '../Components/Header.php';
             ?>
 
-            <!-- Main content -->
-            <main class="main-content">
-                <?php
-                    include '../Components/Header.php';
-                ?>
-
-                <!-- Page content -->
-                <section class="page-content">
-                    <!-- Page Heading -->
-                    <div class="page-heading">
-                        <div>
-                            <p class="page-label">APPOINTMENTS</p>
-
-                            <h1>Book Appointment</h1>
-
-                            <p class="page-description">
-                                Schedule your next dental visit with BrightSmile Dental Clinic.
-                            </p>
-                        </div>
+            <!-- Page content -->
+            <section class="page-content patient-page">
+                <div class="page-heading page-heading-row">
+                    <div>
+                        <p class="page-label">PATIENT CARE</p>
+                        <h1>Appointments</h1>
+                        <p class="page-description">Review your upcoming visits and appointment history.</p>
                     </div>
+                    <a class="primary-button" href="book-appointment.php"><span aria-hidden="true">+</span> Book appointment</a>
+                </div>
 
-                    <!-- Booking area -->
-                    <div class="booking-layout">
-
-                        <!-- Left: booking form -->
-                        <div class="booking-card">
-                            <div class="card-heading">
-                                <div>
-                                    <h2>Appointment Details</h2>
-                                    <p>
-                                        Please provide the details for your appointment.
-                                    </p>
-                                </div>
-                                <span class="step-number">1</span>
-                            </div>
-
-                            <form id="appointmentForm">
-                                <!-- Service -->
-                                <div class="form-group">
-                                    <label for="service">
-                                        Select Service
-                                    </label>
-
-                                    <select id="service" name="service" required>
-                                        <option value="">
-                                            Select a dental service
-                                        </option>
-
-                                        <option value="Dental Consultation">
-                                            Dental Consultation
-                                        </option>
-
-                                        <option value="Dental Cleaning">
-                                            Dental Cleaning
-                                        </option>
-
-                                        <option value="Dental Filling">
-                                            Dental Filling
-                                        </option>
-
-                                        <option value="Tooth Extraction">
-                                            Tooth Extraction
-                                        </option>
-
-                                        <option value="Orthodontic Consultation">
-                                            Orthodontic Consultation
-                                        </option>
-
-                                        <option value="Braces Adjustment">
-                                            Braces Adjustment
-                                        </option>
-                                    </select>
-                                </div>
-
-                                <!-- Dentist -->
-                                <div class="form-group">
-                                    <label for="dentist">
-                                        Preferred Dentist
-                                    </label>
-
-                                    <select id="dentist" name="dentist" required>
-                                        <option value="">
-                                            Select a dentist
-                                        </option>
-
-                                        <option value="Any Available Dentist">
-                                            Any Available Dentist
-                                        </option>
-
-                                        <option value="Dr. Tan">
-                                            Dr. Tan
-                                        </option>
-
-                                        <option value="Dr. Lim">
-                                            Dr. Lim
-                                        </option>
-
-                                        <option value="Dr. Wong">
-                                            Dr. Wong
-                                        </option>
-                                    </select>
-                                </div>
-
-                                <!-- Date -->
-                                <div class="form-group">
-                                    <label for="appointment-date">
-                                        Select Date
-                                    </label>
-
-                                    <input
-                                        type="date"
-                                        id="appointment-date"
-                                        name="appointment-date"
-                                        required>
-                                    <small>
-                                        Please select a date from today onwards.
-                                    </small>
-                                </div>
-
-                                <!-- Time -->
-                                <div class="form-group">
-                                    <label>
-                                        Available Time
-                                    </label>
-
-                                    <div class="time-slots">
-                                        <button type="button" class="time-slot">
-                                            9:00 AM
-                                        </button>
-
-                                        <button type="button" class="time-slot">
-                                            10:00 AM
-                                        </button>
-
-                                        <button type="button" class="time-slot">
-                                            11:00 AM
-                                        </button>
-
-                                        <button type="button" class="time-slot">
-                                            2:00 PM
-                                        </button>
-
-                                        <button type="button" class="time-slot">
-                                            3:00 PM
-                                        </button>
-
-                                        <button type="button" class="time-slot">
-                                            4:00 PM
-                                        </button>
-                                    </div>
-
-                                    <input
-                                        type="hidden"
-                                        id="selected-time"
-                                        name="selected-time"
-                                        required>
-                                    <small>
-                                        Available times will depend on the selected dentist and date.
-                                    </small>
-                                </div>
-
-                                <!-- Reason -->
-                                <div class="form-group">
-                                    <label for="reason">
-                                        Reason for Visit
-                                    </label>
-
-                                    <textarea
-                                        id="reason"
-                                        name="reason"
-                                        rows="4"
-                                        placeholder="Briefly describe the reason for your visit..."></textarea>
-
-                                </div>
-
-                                <!-- Buttons -->
-                                <div class="form-actions">
-                                    <button
-                                        type="reset"
-                                        class="cancel-button">
-                                        Clear
-                                    </button>
-
-                                    <button
-                                        type="submit"
-                                        class="confirm-button">
-                                        Confirm Appointment
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-
-                        <!-- Right: Summary -->
-                        <div class="summary-column">
-                            <!-- Appointment Summary -->
-                            <div class="summary-card">
-                                <div class="card-heading">
-                                    <div>
-                                        <h2>Appointment Summary</h2>
-
-                                        <p>
-                                            Review your appointment details.
-                                        </p>
-                                    </div>
-                                    <span class="step-number">2</span>
-                                </div>
-
-                                <div class="summary-content">
-                                    <div class="summary-row">
-                                        <span>Service</span>
-
-                                        <strong id="summary-service">
-                                            Not selected
-                                        </strong>
-                                    </div>
-
-                                    <div class="summary-row">
-                                        <span>Dentist</span>
-                                        <strong id="summary-dentist">
-                                            Not selected
-                                        </strong>
-                                    </div>
-
-                                    <div class="summary-row">
-                                        <span>Date</span>
-
-                                        <strong id="summary-date">
-                                            Not selected
-                                        </strong>
-                                    </div>
-
-                                    <div class="summary-row">
-                                        <span>Time</span>
-
-                                        <strong id="summary-time">
-                                            Not selected
-                                        </strong>
-                                    </div>
-
-                                    <div class="summary-divider"></div>
-
-                                    <div class="status-row">
-                                        <span>Appointment Status</span>
-
-                                        <span class="pending-badge">
-                                            Pending
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Important Information -->
-                            <div class="notice-card">
-                                <div class="notice-icon">
-                                    !
-                                </div>
-
-                                <div>
-                                    <h3>Before Your Appointment</h3>
-                                    <ul>
-                                        <li>
-                                            Please arrive 10–15 minutes early.
-                                        </li>
-                                        <li>
-                                            Bring your identification or relevant dental records.
-                                        </li>
-                                        <li>
-                                            Your appointment will remain pending until confirmed by the clinic.
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <section class="metric-strip" aria-label="Appointment summary">
+                    <div><span>UPCOMING</span><strong><?= $upcomingCount ?></strong><small>Pending or confirmed visits</small></div>
+                    <div><span>COMPLETED</span><strong><?= $completedCount ?></strong><small>Visits recorded</small></div>
+                    <div><span>REQUESTS</span><strong><?= $pendingCount ?></strong><small>Awaiting confirmation</small></div>
                 </section>
-            </main>
-        </div>
 
-        <!-- Bootstrap JavaScript -->
-        <script
-            src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js">
-        </script>
+                <?php if ($flash): ?><p class="empty-state" role="status"><?= escape_html($flash['message']) ?></p><?php endif; ?>
+                <section class="table-panel">
+                    <div class="table-toolbar">
+                        <div>
+                            <h2>All appointments</h2>
+                            <p>Your scheduled and previous clinic visits</p>
+                        </div>
+                        <div class="table-filters">
+                            <label class="search-field">
+                                <span class="visually-hidden">Search appointments</span>
+                                <span aria-hidden="true">⌕</span>
+                                <input id="appointment-search" type="search" placeholder="Search appointments">
+                            </label>
+                            <label>
+                                <span class="visually-hidden">Filter by status</span>
+                                <select id="appointment-status">
+                                    <option value="all">All statuses</option>
+                                    <option value="confirmed">Confirmed</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="table-scroll">
+                        <table class="data-table" id="appointments-table">
+                            <thead>
+                                <tr><th>Appointment</th><th>Dentist</th><th>Date &amp; time</th><th>Location</th><th>Status</th></tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($appointments as $appointment): ?>
+                                    <?php $statusClass = strtolower($appointment['AppointmentStatus']); ?>
+                                    <tr data-status="<?= escape_html($statusClass) ?>">
+                                        <td><strong><?= escape_html($appointment['ServiceName']) ?></strong><small>BrightSmile Clinic</small></td>
+                                        <td><?= escape_html($appointment['DentistName']) ?></td>
+                                        <td><?= escape_html(date('d M Y', strtotime($appointment['AppointmentDate']))) ?><small><?= escape_html(date('g:i A', strtotime($appointment['AppointmentTime']))) ?></small></td>
+                                        <td>BrightSmile Clinic</td>
+                                        <td><span class="status-pill <?= escape_html($statusClass) ?>"><?= escape_html($appointment['AppointmentStatus']) ?></span>
+                                            <?php if ($appointment['AppointmentStatus'] === 'Pending'): ?>
+                                                <form action="cancel-appointment.php" method="post">
+                                                    <input type="hidden" name="csrf_token" value="<?= escape_html(csrf_token()) ?>">
+                                                    <input type="hidden" name="appointment_id" value="<?= (int) $appointment['AppointmentID'] ?>">
+                                                    <button class="text-link" type="submit">Cancel</button>
+                                                </form>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                        <p class="empty-state" id="appointments-empty" hidden>No appointments match your filters.</p>
+                    </div>
+                    <div class="table-footnote">Showing <?= count($appointments) ?> appointments</div>
+                </section>
+            </section>
+        </main>
+    </div>
+    <script>
+        const searchInput = document.getElementById('appointment-search');
+        const statusFilter = document.getElementById('appointment-status');
+        const appointmentRows = [...document.querySelectorAll('#appointments-table tbody tr')];
+        const emptyState = document.getElementById('appointments-empty');
 
-        <!-- Simple Appointment Interaction -->
-        <script>
-            const service = document.getElementById("service");
-            const dentist = document.getElementById("dentist");
-            const date = document.getElementById("appointment-date");
+        function filterAppointments() {
+            const query = searchInput.value.trim().toLowerCase();
+            const status = statusFilter.value;
+            let visibleCount = 0;
 
-            const summaryService =
-                document.getElementById("summary-service");
-
-            const summaryDentist =
-                document.getElementById("summary-dentist");
-
-            const summaryDate =
-                document.getElementById("summary-date");
-
-            const summaryTime =
-                document.getElementById("summary-time");
-
-            const timeSlots =
-                document.querySelectorAll(".time-slot");
-
-            const selectedTime =
-                document.getElementById("selected-time");
-
-            /* Update service summary */
-            service.addEventListener("change", function () {
-                summaryService.textContent =
-                    this.value || "Not selected";
+            appointmentRows.forEach((row) => {
+                const matchesText = row.textContent.toLowerCase().includes(query);
+                const matchesStatus = status === 'all' || row.dataset.status === status;
+                row.hidden = !(matchesText && matchesStatus);
+                if (!row.hidden) visibleCount += 1;
             });
 
-            /* Update dentist summary */
-            dentist.addEventListener("change", function () {
-                summaryDentist.textContent =
-                    this.value || "Not selected";
-            });
+            emptyState.hidden = visibleCount > 0;
+        }
 
-            /* Update date summary */
-            date.addEventListener("change", function () {
-                if (this.value) {
-                    const selectedDate =
-                        new Date(this.value + "T00:00:00");
-
-                    summaryDate.textContent =
-                        selectedDate.toLocaleDateString(
-                            "en-GB",
-                            {
-                                day: "2-digit",
-                                month: "short",
-                                year: "numeric"
-                            }
-                        );
-                } else {
-                    summaryDate.textContent = "Not selected";
-                }
-            });
-
-            /* Select appointment time */
-            timeSlots.forEach(function (slot) {
-                slot.addEventListener("click", function () {
-                    timeSlots.forEach(function (item) {
-                        item.classList.remove("selected");
-                    });
-
-                    this.classList.add("selected");
-
-                    selectedTime.value =
-                        this.textContent.trim();
-
-                    summaryTime.textContent =
-                        this.textContent.trim();
-                });
-            });
-
-            /* Prevent selecting past dates */
-            const today =
-                new Date().toISOString().split("T")[0];
-            date.setAttribute("min", today);
-
-            /* Form submission */
-            document.getElementById("appointmentForm")
-                .addEventListener("submit", function (event) {
-                    event.preventDefault();
-                    if (!selectedTime.value) {
-                        alert("Please select an available appointment time.");
-                        return;
-                    }
-                    alert(
-                        "Your appointment request has been submitted successfully."
-                    );
-                });
-
-            /* Reset summary */
-            document.getElementById("appointmentForm")
-                .addEventListener("reset", function () {
-                    setTimeout(function () {
-
-                        summaryService.textContent = "Not selected";
-                        summaryDentist.textContent = "Not selected";
-                        summaryDate.textContent = "Not selected";
-                        summaryTime.textContent = "Not selected";
-
-                        timeSlots.forEach(function (slot) {
-                            slot.classList.remove("selected");
-                        });
-
-                        selectedTime.value = "";
-                    }, 0);
-                });
-        </script>
-
-        <script src="https://kit.fontawesome.com/f3ce044c74.js" crossorigin="anonymous"></script>
-    </body>
+        searchInput.addEventListener('input', filterAppointments);
+        statusFilter.addEventListener('change', filterAppointments);
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/f3ce044c74.js" crossorigin="anonymous"></script>
+</body>
 </html>

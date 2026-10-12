@@ -1,0 +1,200 @@
+:root {
+    color-scheme: light;
+    --color-primary: #42B1CC;
+    --color-primary-hover: #329db7;
+    --color-primary-soft: #eaf8fb;
+    --color-primary-subtle: #f1fafc;
+    --color-canvas: #f5f8f8;
+    --color-surface: #ffffff;
+    --color-border: #e3eaea;
+    --color-text: #29383d;
+    --color-text-strong: #263a40;
+    --color-text-muted: #7c8b90;
+    --color-text-faint: #98a3a9;
+    --color-danger: #c65353;
+    --color-success: #287d60;
+    --color-success-soft: #e6f4ef;
+    --color-warning: #9a6a15;
+    --color-warning-soft: #fff3dd;
+    --color-danger-soft: #fce9e7;
+    --font-family-base: "Segoe UI", Arial, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--color-canvas);
+    color: var(--color-text);
+    font-family: var(--font-family-base);
+}
+
+a {
+    color: inherit;
+}
+
+.patient-page h1,
+.page-header h1,
+.welcome-section h1,
+.table-toolbar h2,
+.surface-panel h2,
+.section-title h2,
+.service-info h3,
+.summary-card h2 {
+    color: var(--color-text-strong);
+}
+
+.page-description,
+.page-header p,
+.welcome-section p,
+.service-info p,
+.table-toolbar p,
+.surface-panel .panel-intro,
+.card-description {
+    color: var(--color-text-muted);
+}
+
+.nav-title,
+.help-box span,
+.user-info span,
+.card-label,
+.table-footnote,
+.empty-state,
+.metric-strip small {
+    color: var(--color-text-faint);
+}
+
+.sidebar,
+.top-header,
+.header-container,
+.header,
+.metric-strip > div,
+.surface-panel,
+.table-panel,
+.summary-card,
+.service-card,
+.booking-card,
+.login-box {
+    background-color: var(--color-surface);
+}
+
+.sidebar,
+.top-header,
+.summary-card,
+.service-card,
+.booking-card {
+    border-color: var(--color-border);
+}
+
+.nav-item {
+    color: var(--color-text-muted);
+}
+
+.nav-item:hover,
+.nav-item.active {
+    background-color: var(--color-primary-soft);
+    color: var(--color-primary);
+}
+
+.logout-button:hover {
+    color: var(--color-danger);
+}
+
+.notification-button {
+    background-color: var(--color-primary-subtle);
+    color: var(--color-text-muted);
+}
+
+.notification-dot,
+.brand-section {
+    background-color: var(--color-primary);
+}
+
+.user-avatar,
+.help-icon,
+.section-number {
+    background-color: var(--color-primary-soft);
+    color: var(--color-primary);
+}
+
+.page-label,
+.patient-page .page-label,
+.section-number,
+.metric-strip strong,
+.text-link,
+.service-bottom strong,
+.price-note > span {
+    color: var(--color-primary);
+}
+
+.primary-button,
+.primary-button:visited,
+.primary-button:hover,
+.login-button,
+.login-button:hover,
+.send-button,
+.send-button:hover,
+.confirm-button,
+.confirm-button:hover,
+.progress-value {
+    border-color: var(--color-primary);
+    background-color: var(--color-primary);
+    color: var(--color-surface);
+}
+
+.primary-button:hover,
+.login-button:hover,
+.send-button:hover,
+.confirm-button:hover {
+    background-color: var(--color-primary-hover);
+}
+
+.service-icon,
+.appointment-icon,
+.treatment-icon,
+.records-icon,
+.action-icon,
+.time-slot.selected {
+    background-color: var(--color-primary-soft);
+    color: var(--color-primary);
+}
+
+.time-slot.selected {
+    border-color: var(--color-primary);
+}
+
+.treatment-banner {
+    background-color: var(--color-primary);
+}
+
+.login-button,
+.send-button,
+.confirm-button {
+    font-family: var(--font-family-base);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--color-primary);
+    outline-color: var(--color-primary);
+}
+
+.status-pill.confirmed,
+.status-pill.completed {
+    background-color: var(--color-success-soft);
+    color: var(--color-success);
+}
+
+.status-pill.pending {
+    background-color: var(--color-warning-soft);
+    color: var(--color-warning);
+}
+
+.status-pill.cancelled {
+    background-color: var(--color-danger-soft);
+    color: var(--color-danger);
+}
