@@ -1,3 +1,6 @@
+<?php
+require_once __DIR__ . '/../includes/patient_bootstrap.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -28,10 +31,6 @@
                 <div class="page-content">
 
                     <section class="page-header">
-                        <span class="page-label">
-                            GET IN TOUCH
-                        </span>
-
                         <h1>
                             Contact BrightSmile
                         </h1>

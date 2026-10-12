@@ -1,11 +1,44 @@
+<?php
+require_once __DIR__ . '/../includes/view_helpers.php';
+$headerName = $currentPatient['FullName'];
+$headerRole = $_SESSION['role'] ?? 'Patient';
+$headerBreadcrumbs = [
+    'index.php' => 'Dashboard',
+    'appointments.php' => 'Appointments',
+    'book-appointment.php' => 'Book Appointment',
+    'contact.php' => 'Contact',
+    'dental-records.php' => 'Dental Records',
+    'orthodontics.php' => 'Orthodontics',
+    'profile.php' => 'My Profile',
+    'services.php' => 'Services',
+];
+$headerBreadcrumb = $headerBreadcrumbs[basename($_SERVER['SCRIPT_NAME'] ?? '')] ?? '';
+$headerNameParts = preg_split('/\s+/', trim($headerName), -1, PREG_SPLIT_NO_EMPTY);
+$headerInitials = strtoupper(substr($headerNameParts[0] ?? '', 0, 1)
+    . (count($headerNameParts) > 1 ? substr($headerNameParts[count($headerNameParts) - 1], 0, 1) : ''));
+?>
 <link rel="stylesheet" href="../Styling/header.css">
+<link rel="stylesheet" href="../global.css">
+<link rel="stylesheet" href="../Styling/app-shell.css">
 
 <div class="header-container">
-<!-- Top header -->
-                <header class="top-header">
+    <!-- Top header -->
+    <header class="top-header">
+
                     <div class="mobile-logo">
                         <!-- Empty on desktop -->
                     </div>
+
+                    <?php if ($headerBreadcrumb !== ''): ?>
+                        <nav class="header-breadcrumb" aria-label="Breadcrumb">
+                            <ol>
+                                <?php if ($headerBreadcrumb !== 'Dashboard'): ?>
+                                    <li><a href="index.php">Dashboard</a></li>
+                                <?php endif; ?>
+                                <li aria-current="page"><?= escape_html($headerBreadcrumb) ?></li>
+                            </ol>
+                        </nav>
+                    <?php endif; ?>
 
                     <button 
                             class="navbar-toggler burger-icon"
@@ -31,18 +64,18 @@
                         <!-- User -->
                         <div class="user-profile">
                             <div class="user-avatar">
-                                JL
+                                <?= escape_html($headerInitials) ?>
                             </div>
                             <div class="user-info">
-                                <strong>Joshua Lee</strong>
-                                <span>Patient</span>
+                                <strong><?= escape_html($headerName) ?></strong>
+                                <span><?= escape_html($headerRole) ?></span>
                             </div>
                         </div>
                     </div>
                 </header>
 
                 <div class="burger-navbar collapse" id="mainmenu">
-                    <?php include 'SidebarNavItems.php'; ?>
+                    <?php include "SidebarNavItems.php"; ?>
 
                     <div class="help-box">
                         <div class="help-icon">
@@ -55,7 +88,7 @@
                         </div>
                     </div>
 
-                    <a href="authentication.php" class="logout-button">
+                    <a href="logout.php" class="logout-button">
                         <span>↪</span>
                         <span>Log Out</span>
                     </a>

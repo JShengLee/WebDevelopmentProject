@@ -1,3 +1,33 @@
+<?php
+require_once __DIR__ . '/../includes/patient_bootstrap.php';
+$flash = take_flash();
+
+$upcomingStatement = $pdo->prepare(
+        "SELECT COUNT(*) FROM appointment
+         WHERE PatientID = :patient_id AND AppointmentStatus IN ('Pending', 'Confirmed')
+             AND TIMESTAMP(AppointmentDate, AppointmentTime) >= NOW()"
+);
+$upcomingStatement->execute(['patient_id' => $currentPatient['PatientID']]);
+$upcomingCount = (int) $upcomingStatement->fetchColumn();
+$completedStatement = $pdo->prepare("SELECT COUNT(*) FROM appointment WHERE PatientID = :patient_id AND AppointmentStatus = 'Completed'");
+$completedStatement->execute(['patient_id' => $currentPatient['PatientID']]);
+$completedCount = (int) $completedStatement->fetchColumn();
+$pendingStatement = $pdo->prepare("SELECT COUNT(*) FROM appointment WHERE PatientID = :patient_id AND AppointmentStatus = 'Pending'");
+$pendingStatement->execute(['patient_id' => $currentPatient['PatientID']]);
+$pendingCount = (int) $pendingStatement->fetchColumn();
+$appointmentStatement = $pdo->prepare(
+        'SELECT a.AppointmentID, a.AppointmentDate, a.AppointmentTime, a.AppointmentStatus,
+                        s.ServiceName, u.FullName AS DentistName
+         FROM appointment a
+         INNER JOIN service s ON s.ServiceID = a.ServiceID
+         INNER JOIN dentist d ON d.DentistID = a.DentistID
+         INNER JOIN user u ON u.UserID = d.UserID
+         WHERE a.PatientID = :patient_id
+         ORDER BY a.AppointmentDate DESC, a.AppointmentTime DESC'
+);
+$appointmentStatement->execute(['patient_id' => $currentPatient['PatientID']]);
+$appointments = $appointmentStatement->fetchAll();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,10 +39,23 @@
     <link rel="stylesheet" href="../Styling/patient-pages.css">
 </head>
 <body>
+    <!-- Main application -->
     <div class="app-container">
-        <?php include '../Components/Sidebar.php'; ?>
+
+        <!-- Sidebar -->
+        <?php
+            include '../Components/Sidebar.php';
+        ?>
+
+        <!-- Main content -->
         <main class="main-content">
-            <?php include '../Components/Header.php'; ?>
+
+            <!-- Header -->
+            <?php
+                include '../Components/Header.php';
+            ?>
+
+            <!-- Page content -->
             <section class="page-content patient-page">
                 <div class="page-heading page-heading-row">
                     <div>
@@ -24,11 +67,12 @@
                 </div>
 
                 <section class="metric-strip" aria-label="Appointment summary">
-                    <div><span>UPCOMING</span><strong>1</strong><small>Next visit: 16 Oct 2026</small></div>
-                    <div><span>COMPLETED</span><strong>2</strong><small>Visits recorded</small></div>
-                    <div><span>REQUESTS</span><strong>1</strong><small>Awaiting confirmation</small></div>
+                    <div><span>UPCOMING</span><strong><?= $upcomingCount ?></strong><small>Pending or confirmed visits</small></div>
+                    <div><span>COMPLETED</span><strong><?= $completedCount ?></strong><small>Visits recorded</small></div>
+                    <div><span>REQUESTS</span><strong><?= $pendingCount ?></strong><small>Awaiting confirmation</small></div>
                 </section>
 
+                <?php if ($flash): ?><p class="empty-state" role="status"><?= escape_html($flash['message']) ?></p><?php endif; ?>
                 <section class="table-panel">
                     <div class="table-toolbar">
                         <div>
@@ -59,16 +103,29 @@
                                 <tr><th>Appointment</th><th>Dentist</th><th>Date &amp; time</th><th>Location</th><th>Status</th></tr>
                             </thead>
                             <tbody>
-                                <tr data-status="confirmed"><td><strong>General check-up</strong><small>Routine examination</small></td><td>Dr. Sarah Lim</td><td>16 Oct 2026<small>10:00 AM</small></td><td>BrightSmile Clinic</td><td><span class="status-pill confirmed">Confirmed</span></td></tr>
-                                <tr data-status="pending"><td><strong>Braces adjustment</strong><small>Orthodontics</small></td><td>Dr. Sarah Lim</td><td>23 Oct 2026<small>2:00 PM</small></td><td>BrightSmile Clinic</td><td><span class="status-pill pending">Pending</span></td></tr>
-                                <tr data-status="completed"><td><strong>Dental cleaning</strong><small>Preventive care</small></td><td>Dr. Marcus Tan</td><td>21 Aug 2026<small>11:30 AM</small></td><td>BrightSmile Clinic</td><td><span class="status-pill completed">Completed</span></td></tr>
-                                <tr data-status="completed"><td><strong>Orthodontic review</strong><small>Treatment review</small></td><td>Dr. Sarah Lim</td><td>24 Jul 2026<small>9:00 AM</small></td><td>BrightSmile Clinic</td><td><span class="status-pill completed">Completed</span></td></tr>
-                                <tr data-status="cancelled"><td><strong>Dental consultation</strong><small>General dentistry</small></td><td>Dr. Marcus Tan</td><td>12 Jun 2026<small>3:00 PM</small></td><td>BrightSmile Clinic</td><td><span class="status-pill cancelled">Cancelled</span></td></tr>
+                                <?php foreach ($appointments as $appointment): ?>
+                                    <?php $statusClass = strtolower($appointment['AppointmentStatus']); ?>
+                                    <tr data-status="<?= escape_html($statusClass) ?>">
+                                        <td><strong><?= escape_html($appointment['ServiceName']) ?></strong><small>BrightSmile Clinic</small></td>
+                                        <td><?= escape_html($appointment['DentistName']) ?></td>
+                                        <td><?= escape_html(date('d M Y', strtotime($appointment['AppointmentDate']))) ?><small><?= escape_html(date('g:i A', strtotime($appointment['AppointmentTime']))) ?></small></td>
+                                        <td>BrightSmile Clinic</td>
+                                        <td><span class="status-pill <?= escape_html($statusClass) ?>"><?= escape_html($appointment['AppointmentStatus']) ?></span>
+                                            <?php if ($appointment['AppointmentStatus'] === 'Pending'): ?>
+                                                <form action="cancel-appointment.php" method="post">
+                                                    <input type="hidden" name="csrf_token" value="<?= escape_html(csrf_token()) ?>">
+                                                    <input type="hidden" name="appointment_id" value="<?= (int) $appointment['AppointmentID'] ?>">
+                                                    <button class="text-link" type="submit">Cancel</button>
+                                                </form>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
                             </tbody>
                         </table>
                         <p class="empty-state" id="appointments-empty" hidden>No appointments match your filters.</p>
                     </div>
-                    <div class="table-footnote">Showing 5 appointments</div>
+                    <div class="table-footnote">Showing <?= count($appointments) ?> appointments</div>
                 </section>
             </section>
         </main>

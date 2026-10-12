@@ -25,7 +25,7 @@
                         </div>
                     </a>
 
-                    <a href="authentication.php" class="logout-button">
+                    <a href="logout.php" class="logout-button">
                         <span><i class="fa-solid fa-arrow-right-from-bracket"></i></span>
                         <span>Log Out</span>
                     </a>

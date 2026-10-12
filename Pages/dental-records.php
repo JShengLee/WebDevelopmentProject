@@ -1,3 +1,35 @@
+<?php
+require_once __DIR__ . '/../includes/patient_bootstrap.php';
+$recordStatement = $pdo->prepare(
+    'SELECT r.RecordID, r.RecordDate, r.Diagnosis, r.ClinicalNotes, duser.FullName AS DentistName,
+            s.ServiceName
+     FROM dentalrecord r
+     INNER JOIN dentist d ON d.DentistID = r.DentistID
+     INNER JOIN user duser ON duser.UserID = d.UserID
+     LEFT JOIN appointment a ON a.AppointmentID = r.AppointmentID
+     LEFT JOIN service s ON s.ServiceID = a.ServiceID
+     WHERE r.PatientID = :patient_id
+     ORDER BY r.RecordDate DESC, r.RecordID DESC'
+);
+$recordStatement->execute(['patient_id' => $currentPatient['PatientID']]);
+$records = $recordStatement->fetchAll();
+$treatmentStatement = $pdo->prepare('SELECT RecordID, TreatmentName, TreatmentDetails FROM treatment WHERE RecordID IN (SELECT RecordID FROM dentalrecord WHERE PatientID = :patient_id) ORDER BY TreatmentDate DESC');
+$treatmentStatement->execute(['patient_id' => $currentPatient['PatientID']]);
+$treatmentsByRecord = [];
+foreach ($treatmentStatement->fetchAll() as $treatment) {
+    $treatmentsByRecord[$treatment['RecordID']][] = $treatment;
+}
+$prescriptionStatement = $pdo->prepare('SELECT RecordID, MedicationName, Dosage, Instructions FROM prescription WHERE RecordID IN (SELECT RecordID FROM dentalrecord WHERE PatientID = :patient_id) ORDER BY PrescriptionID');
+$prescriptionStatement->execute(['patient_id' => $currentPatient['PatientID']]);
+$prescriptionsByRecord = [];
+foreach ($prescriptionStatement->fetchAll() as $prescription) {
+    $prescriptionsByRecord[$prescription['RecordID']][] = $prescription;
+}
+$lastRecord = $records[0] ?? null;
+$activePlanStatement = $pdo->prepare('SELECT COUNT(*) FROM orthodonticrecord WHERE PatientID = :patient_id');
+$activePlanStatement->execute(['patient_id' => $currentPatient['PatientID']]);
+$activePlanCount = (int) $activePlanStatement->fetchColumn();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,14 +41,26 @@
     <link rel="stylesheet" href="../Styling/patient-pages.css">
 </head>
 <body>
+    <!-- Main application -->
     <div class="app-container">
-        <?php include '../Components/Sidebar.php'; ?>
+
+        <!-- Sidebar -->
+        <?php
+            include '../Components/Sidebar.php';
+        ?>
+
+        <!-- Main content -->
         <main class="main-content">
-            <?php include '../Components/Header.php'; ?>
+
+            <!-- Header -->
+            <?php
+                include '../Components/Header.php';
+            ?>
+
+            <!-- Page content -->
             <section class="page-content patient-page">
                 <div class="page-heading page-heading-row">
                     <div>
-                        <p class="page-label">YOUR CARE HISTORY</p>
                         <h1>Dental Records</h1>
                         <p class="page-description">A clear history of your visits, treatments, and care notes.</p>
                     </div>
@@ -24,9 +68,9 @@
                 </div>
 
                 <section class="metric-strip" aria-label="Dental record summary">
-                    <div><span>RECORDED VISITS</span><strong>4</strong><small>Since February 2025</small></div>
-                    <div><span>ACTIVE CARE PLAN</span><strong>1</strong><small>Orthodontic treatment</small></div>
-                    <div><span>LAST VISIT</span><strong>21</strong><small>August 2026 · Dental cleaning</small></div>
+                    <div><span>RECORDED VISITS</span><strong><?= count($records) ?></strong><small>Available clinical records</small></div>
+                    <div><span>ACTIVE CARE PLAN</span><strong><?= $activePlanCount ?></strong><small>Orthodontic records</small></div>
+                    <div><span>LAST VISIT</span><strong><?= $lastRecord ? escape_html(date('d M', strtotime($lastRecord['RecordDate']))) : '—' ?></strong><small><?= $lastRecord ? escape_html(date('Y', strtotime($lastRecord['RecordDate']))) . ' · ' . escape_html($lastRecord['ServiceName'] ?: 'Dental visit') : 'No recorded visits' ?></small></div>
                 </section>
 
                 <section class="table-panel">
@@ -45,10 +89,30 @@
                         <table class="data-table" id="records-table">
                             <thead><tr><th>Date</th><th>Visit</th><th>Provider</th><th>Clinical note</th><th>Record type</th></tr></thead>
                             <tbody>
-                                <tr data-type="general"><td>21 Aug 2026</td><td><strong>Dental cleaning</strong><small>Preventive care</small></td><td>Dr. Marcus Tan</td><td>Routine scale and polish completed.</td><td>General dentistry</td></tr>
-                                <tr data-type="orthodontics"><td>24 Jul 2026</td><td><strong>Orthodontic review</strong><small>Follow-up visit</small></td><td>Dr. Sarah Lim</td><td>Alignment progressing well; elastics reviewed.</td><td>Orthodontics</td></tr>
-                                <tr data-type="orthodontics"><td>19 Jun 2026</td><td><strong>Braces adjustment</strong><small>Adjustment visit</small></td><td>Dr. Sarah Lim</td><td>Wire adjusted; continue prescribed elastic wear.</td><td>Orthodontics</td></tr>
-                                <tr data-type="general"><td>12 Mar 2026</td><td><strong>Dental examination</strong><small>Routine check-up</small></td><td>Dr. Marcus Tan</td><td>No new concerns noted during examination.</td><td>General dentistry</td></tr>
+                                <?php foreach ($records as $record): ?>
+                                    <?php
+                                        $recordType = preg_match('/ortho|brace/i', (string) $record['ServiceName']) ? 'orthodontics' : 'general';
+                                        $recordTreatments = $treatmentsByRecord[$record['RecordID']] ?? [];
+                                        $recordPrescriptions = $prescriptionsByRecord[$record['RecordID']] ?? [];
+                                    ?>
+                                    <tr data-type="<?= escape_html($recordType) ?>">
+                                        <td><?= escape_html(date('d M Y', strtotime($record['RecordDate']))) ?></td>
+                                        <td><strong><?= escape_html($recordTreatments[0]['TreatmentName'] ?? $record['ServiceName'] ?? 'Dental visit') ?></strong><small><?= escape_html($recordType === 'orthodontics' ? 'Orthodontics' : 'General dentistry') ?></small></td>
+                                        <td><?= escape_html($record['DentistName']) ?></td>
+                                        <td>
+                                            <?php if ($record['Diagnosis']): ?><div><?= escape_html($record['Diagnosis']) ?></div><?php endif; ?>
+                                            <?php if ($record['ClinicalNotes']): ?><div><?= escape_html($record['ClinicalNotes']) ?></div><?php endif; ?>
+                                            <?php foreach ($recordTreatments as $treatment): ?>
+                                                <div><strong><?= escape_html($treatment['TreatmentName']) ?>:</strong> <?= escape_html($treatment['TreatmentDetails']) ?></div>
+                                            <?php endforeach; ?>
+                                            <?php foreach ($recordPrescriptions as $prescription): ?>
+                                                <div><strong>Prescription:</strong> <?= escape_html($prescription['MedicationName']) ?><?= $prescription['Dosage'] ? ' · ' . escape_html($prescription['Dosage']) : '' ?><?= $prescription['Instructions'] ? ' · ' . escape_html($prescription['Instructions']) : '' ?></div>
+                                            <?php endforeach; ?>
+                                            <?php if (!$record['Diagnosis'] && !$record['ClinicalNotes'] && !$recordTreatments && !$recordPrescriptions): ?>—<?php endif; ?>
+                                        </td>
+                                        <td><?= $recordType === 'orthodontics' ? 'Orthodontics' : 'General dentistry' ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
                             </tbody>
                         </table>
                         <p class="empty-state" id="records-empty" hidden>No records match this type.</p>
