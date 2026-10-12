@@ -1,0 +1,544 @@
+:root {
+    --app-primary: var(--color-primary, #42B1CC);
+    --app-primary-hover: var(--color-primary-hover, #329db7);
+    --app-primary-soft: var(--color-primary-soft, #eaf8fb);
+    --app-canvas: var(--color-canvas, #f5f8f8);
+    --app-surface: var(--color-surface, #fff);
+    --app-border: var(--color-border, #e3eaea);
+    --app-text: var(--color-text, #29383d);
+    --app-muted: var(--color-text-muted, #7c8b90);
+}
+
+body {
+    background: var(--app-canvas);
+    color: var(--app-text);
+}
+
+.app-container {
+    min-height: 100dvh;
+    align-items: stretch;
+    letter-spacing: 0;
+}
+
+.app-container * {
+    letter-spacing: 0;
+}
+
+.sidebar {
+    position: sticky;
+    inset: 0 auto auto 0;
+    z-index: 20;
+    flex: 0 0 248px;
+    width: 248px;
+    height: 100dvh;
+    min-height: 100dvh;
+    padding: 20px 12px 14px;
+    overflow: hidden;
+    border: 0;
+    border-right: 1px solid var(--app-border);
+    background: var(--app-surface);
+}
+
+.sidebar-logo {
+    padding: 4px 12px 26px;
+}
+
+.sidebar-logo img {
+    width: min(100%, 160px);
+}
+
+.sidebar-nav {
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.nav-title {
+    margin: 16px 0 7px;
+    padding: 0 12px;
+    color: var(--app-muted);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.nav-title:first-child {
+    margin-top: 0;
+}
+
+.second-title {
+    margin-top: 24px;
+}
+
+.nav-item {
+    min-height: 38px;
+    gap: 10px;
+    margin: 2px 0;
+    padding: 0 12px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: var(--app-muted);
+    font-size: 13px;
+    font-weight: 500;
+    transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.nav-item:hover {
+    background: #f5f9fa;
+    color: var(--app-text);
+}
+
+.nav-item.active {
+    border-color: var(--app-border);
+    background: var(--app-primary-soft);
+    color: var(--app-primary-hover);
+    font-weight: 600;
+}
+
+.nav-icon {
+    display: inline-grid;
+    width: 18px;
+    flex: 0 0 18px;
+    place-items: center;
+    font-size: 15px;
+}
+
+.sidebar-bottom {
+    padding-top: 12px;
+    border-top: 1px solid var(--app-border);
+}
+
+.help-box {
+    gap: 9px;
+    margin: 0 0 6px;
+    padding: 10px;
+    border: 1px solid var(--app-border);
+    border-radius: 6px;
+    background: var(--app-surface);
+}
+
+.help-icon {
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+    border-radius: 6px;
+    background: var(--app-primary-soft);
+    color: var(--app-primary-hover);
+}
+
+.help-box strong {
+    color: var(--app-text);
+    font-size: 12px;
+}
+
+.help-box span {
+    color: var(--app-muted);
+    font-size: 11px;
+}
+
+.logout-button {
+    min-height: 38px;
+    gap: 10px;
+    padding: 0 12px;
+    border-radius: 6px;
+    color: var(--app-muted);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.logout-button:hover {
+    background: #f7f8f9;
+    color: var(--color-danger, #c65353);
+}
+
+.main-content {
+    height: 100dvh;
+    min-width: 0;
+    margin-left: 0;
+    overflow-y: auto;
+    background: var(--app-canvas);
+}
+
+.header-container {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: var(--app-surface);
+}
+
+.top-header {
+    position: relative;
+    height: 64px;
+    min-height: 64px;
+    padding: 0 28px;
+    border: 0;
+    border-bottom: 1px solid var(--app-border);
+    background: var(--app-surface);
+    gap: 20px;
+    justify-content: space-between;
+}
+
+.header-breadcrumb {
+    order: -1;
+    min-width: 0;
+    color: var(--app-muted);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.header-breadcrumb ol {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.header-breadcrumb li + li::before {
+    margin-right: 9px;
+    color: #aab5b8;
+    content: "/";
+}
+
+.header-breadcrumb a {
+    color: var(--app-muted);
+    text-decoration: none;
+}
+
+.header-breadcrumb a:hover {
+    color: var(--app-text);
+}
+
+.header-breadcrumb [aria-current="page"] {
+    color: var(--app-text);
+}
+
+.header-right {
+    gap: 16px;
+}
+
+.notification-button {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--app-border);
+    border-radius: 6px;
+    background: var(--app-surface);
+    color: var(--app-muted);
+    font-size: 16px;
+    transition: background-color 120ms ease, color 120ms ease;
+}
+
+.notification-button:hover {
+    background: #f5f9fa;
+    color: var(--app-text);
+}
+
+.notification-dot {
+    top: 7px;
+    right: 7px;
+    width: 6px;
+    height: 6px;
+    border: 1px solid var(--app-surface);
+}
+
+.user-profile {
+    gap: 9px;
+}
+
+.user-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--app-primary-soft);
+    color: var(--app-primary-hover);
+}
+
+.user-info strong {
+    color: var(--app-text);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.user-info span {
+    color: var(--app-muted);
+    font-size: 11px;
+}
+
+.burger-navbar {
+    border-bottom: 1px solid var(--app-border);
+    background: var(--app-surface);
+}
+
+.page-content {
+    width: min(100%, 1440px);
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 30px 32px 48px;
+}
+
+.page-heading,
+.page-header,
+.welcome-section {
+    margin-bottom: 24px;
+}
+
+.page-heading h1,
+.page-header h1,
+.welcome-section h1,
+.patient-page h1 {
+    margin-top: 0;
+    margin-bottom: 7px;
+    color: var(--app-text);
+    font-size: 27px;
+    font-weight: 650;
+    line-height: 1.25;
+}
+
+.page-description,
+.page-header p,
+.welcome-section p {
+    color: var(--app-muted);
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.welcome-section {
+    align-items: flex-end;
+    gap: 18px;
+}
+
+.summary-grid,
+.dashboard-grid,
+.metric-strip {
+    gap: 14px;
+}
+
+.app-container :is(.summary-card, .dashboard-card, .metric-strip > div, .surface-panel, .table-panel, .booking-card, .notice-card, .service-card) {
+    border: 1px solid var(--app-border);
+    border-radius: 8px;
+    background: var(--app-surface);
+    box-shadow: none;
+}
+
+.summary-card,
+.dashboard-card,
+.surface-panel {
+    padding: 20px;
+}
+
+.summary-grid .summary-card {
+    min-height: 150px;
+}
+
+.metric-strip > div {
+    padding: 16px 18px;
+}
+
+.section-heading h2,
+.table-toolbar h2,
+.surface-panel h2 {
+    color: var(--app-text);
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.section-heading p,
+.table-toolbar p,
+.surface-panel .panel-intro {
+    color: var(--app-muted);
+}
+
+.appointment-details,
+.action-button,
+.activity-item {
+    border-radius: 6px;
+}
+
+.primary-button,
+.secondary-button,
+.send-button,
+.confirm-button,
+.login-button {
+    min-height: 38px;
+    border-radius: 6px;
+    font-weight: 600;
+    box-shadow: none;
+}
+
+.primary-button:hover,
+.send-button:hover,
+.confirm-button:hover,
+.login-button:hover {
+    background: var(--app-primary-hover);
+    box-shadow: none;
+}
+
+.app-container :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    border: 1px solid var(--app-border);
+    border-radius: 6px;
+    background: var(--app-surface);
+    color: var(--app-text);
+}
+
+.app-container :is(input, select, textarea):focus {
+    border-color: var(--app-primary);
+    outline: 3px solid var(--app-primary-soft);
+    outline-offset: 1px;
+    box-shadow: none;
+}
+
+.app-container :is(button, a, input, select, textarea):focus-visible {
+    outline: 3px solid var(--app-primary-soft);
+    outline-offset: 2px;
+}
+
+.data-table th {
+    background: #f7f9f9;
+    color: var(--app-muted);
+}
+
+.data-table :is(th, td) {
+    border-bottom-color: var(--app-border);
+}
+
+.records-icon {
+    background: #f1f5f5;
+    color: #64777b;
+}
+
+@media (max-width: 1000px) {
+    .sidebar {
+        flex-basis: 224px;
+        width: 224px;
+    }
+
+    .main-content {
+        margin-left: 0;
+    }
+
+    .page-content {
+        padding-right: 24px;
+        padding-left: 24px;
+    }
+}
+
+@media (max-width: 760px) {
+    .app-container {
+        display: block;
+    }
+
+    .sidebar {
+        display: none;
+    }
+
+    .main-content {
+        height: auto;
+        min-height: 100dvh;
+        overflow: visible;
+    }
+
+    .top-header {
+        height: auto;
+        min-height: 58px;
+        padding: 0 16px;
+        flex-wrap: wrap;
+    }
+
+    .burger-icon {
+        display: block;
+        width: 36px;
+        height: 36px;
+        margin-right: auto;
+        padding: 0;
+        border: 1px solid var(--app-border);
+        border-radius: 6px;
+        background: var(--app-surface);
+        color: var(--app-text);
+        font-size: 16px;
+    }
+
+    .header-breadcrumb {
+        order: 4;
+        flex: 0 0 100%;
+        padding: 0 0 10px;
+        font-size: 12px;
+    }
+
+    .middle-logo {
+        z-index: 1;
+    }
+
+    .header-right {
+        gap: 9px;
+    }
+
+    .page-content {
+        padding: 24px 18px 36px;
+    }
+
+    .welcome-section,
+    .page-heading-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .welcome-section .primary-button,
+    .page-heading-row .primary-button {
+        align-self: flex-start;
+    }
+
+    .summary-grid,
+    .dashboard-grid,
+    .booking-layout,
+    .contact-grid,
+    .orthodontic-overview,
+    .service-grid,
+    .profile-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .metric-strip {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .table-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .top-header {
+        padding: 0 14px;
+    }
+
+    .header-right {
+        gap: 7px;
+    }
+
+    .notification-button,
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+    }
+
+    .page-content {
+        padding: 20px 14px 30px;
+    }
+
+    .page-heading h1,
+    .page-header h1,
+    .welcome-section h1,
+    .patient-page h1 {
+        font-size: 24px;
+    }
+
+    .metric-strip {
+        grid-template-columns: 1fr;
+    }
+
+    .table-filters {
+        width: 100%;
+        align-items: stretch;
+        flex-direction: column;
+    }
+}

@@ -20,12 +20,12 @@
                     </a>
 
                     <a href="orthodontics.php" class="nav-item<?php echo $currentPage === 'orthodontics.php' ? ' active' : ''; ?>">
-                        <span class="nav-icon"><i class="fas fa-tooth"></i></span>
+                        <span class="nav-icon"><i class="fa-solid fa-teeth"></i></span>
                         <span>Orthodontics</span>
                     </a>
 
                     <a href="services.php" class="nav-item<?php echo $currentPage === 'services.php' ? ' active' : ''; ?>">
-                        <span class="nav-icon"><i class="fas fa-concierge-bell"></i></span>
+                        <span class="nav-icon"><i class="fas fa-tooth"></i></span>
                         <span>Services</span>
                     </a>
 

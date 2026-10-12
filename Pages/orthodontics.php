@@ -1,3 +1,17 @@
+<?php
+require_once __DIR__ . '/../includes/patient_bootstrap.php';
+$orthodonticStatement = $pdo->prepare(
+    'SELECT o.TreatmentType, o.StartDate, o.CurrentStage, o.ProgressNotes, o.NextAdjustmentDate, u.FullName AS DentistName
+     FROM orthodonticrecord o
+     INNER JOIN dentist d ON d.DentistID = o.DentistID
+     INNER JOIN user u ON u.UserID = d.UserID
+     WHERE o.PatientID = :patient_id
+     ORDER BY o.OrthoRecordID DESC'
+);
+$orthodonticStatement->execute(['patient_id' => $currentPatient['PatientID']]);
+$treatmentHistory = $orthodonticStatement->fetchAll();
+$currentTreatment = $treatmentHistory[0] ?? null;
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -29,7 +43,6 @@
             <section class="page-content patient-page">
                 <div class="page-heading page-heading-row">
                     <div>
-                        <p class="page-label">YOUR TREATMENT</p>
                         <h1>Orthodontics</h1>
                         <p class="page-description">Track your braces treatment and keep up with your next adjustment.</p>
                     </div>
@@ -38,17 +51,16 @@
 
                 <div class="orthodontic-overview">
                     <section class="treatment-banner">
-                        <span class="eyebrow">ACTIVE TREATMENT · BRACES</span>
-                        <h2>Your smile is moving forward</h2>
-                        <p>Your treatment is progressing as planned. Keep wearing your elastics as advised and attend your scheduled adjustment visits.</p>
-                        <div class="progress-line"><span>Treatment progress</span><strong>65%</strong></div>
-                        <div class="progress-track" role="progressbar" aria-label="Treatment progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="65"><span></span></div>
+                        <span class="eyebrow"><?= $currentTreatment ? 'ACTIVE TREATMENT · ' . escape_html($currentTreatment['TreatmentType']) : 'TREATMENT' ?></span>
+                        <h2><?= $currentTreatment ? escape_html($currentTreatment['CurrentStage'] ?: $currentTreatment['TreatmentType']) : 'No orthodontic treatment recorded' ?></h2>
+                        <p><?= $currentTreatment ? escape_html($currentTreatment['ProgressNotes'] ?: 'Your current treatment details are shown below.') : 'Your orthodontic care updates will appear here.' ?></p>
+                        <?php if ($currentTreatment): ?><div class="progress-line"><span>Current treatment stage</span><strong><?= escape_html($currentTreatment['CurrentStage'] ?: 'In progress') ?></strong></div><?php endif; ?>
                     </section>
                     <section class="surface-panel next-visit">
                         <div>
                             <span class="eyebrow">NEXT ADJUSTMENT</span>
-                            <strong>23 October 2026</strong>
-                            <p>2:00 PM · Dr. Sarah Lim</p>
+                            <strong><?= $currentTreatment && $currentTreatment['NextAdjustmentDate'] ? escape_html(date('d F Y', strtotime($currentTreatment['NextAdjustmentDate']))) : 'Not scheduled' ?></strong>
+                            <p><?= $currentTreatment ? escape_html($currentTreatment['DentistName']) : 'No orthodontist assigned' ?></p>
                         </div>
                         <a class="text-link" href="appointments.php">View appointment <span aria-hidden="true">→</span></a>
                     </section>
@@ -59,19 +71,20 @@
                         <h2>Treatment overview</h2>
                         <p class="panel-intro">Your current orthodontic plan</p>
                         <dl class="detail-list">
-                            <div><dt>Treatment type</dt><dd>Fixed metal braces</dd></div>
-                            <div><dt>Started</dt><dd>14 February 2025</dd></div>
-                            <div><dt>Estimated completion</dt><dd>February 2027</dd></div>
-                            <div><dt>Orthodontist</dt><dd>Dr. Sarah Lim</dd></div>
+                            <div><dt>Treatment type</dt><dd><?= escape_html($currentTreatment['TreatmentType'] ?? 'Not recorded') ?></dd></div>
+                            <div><dt>Started</dt><dd><?= $currentTreatment && $currentTreatment['StartDate'] ? escape_html(date('d F Y', strtotime($currentTreatment['StartDate']))) : 'Not recorded' ?></dd></div>
+                            <div><dt>Current stage</dt><dd><?= escape_html($currentTreatment['CurrentStage'] ?? 'Not recorded') ?></dd></div>
+                            <div><dt>Orthodontist</dt><dd><?= escape_html($currentTreatment['DentistName'] ?? 'Not assigned') ?></dd></div>
                         </dl>
                     </section>
                     <section class="surface-panel">
                         <h2>Recent milestones</h2>
                         <p class="panel-intro">Notes from your orthodontic visits</p>
                         <div class="timeline">
-                            <div class="timeline-item"><span class="timeline-dot"></span><div><strong>Wire changed and elastics reviewed</strong><small>24 July 2026 · Progress is on track; continue night-time elastic wear.</small></div></div>
-                            <div class="timeline-item"><span class="timeline-dot"></span><div><strong>Alignment improving</strong><small>19 June 2026 · Lower arch alignment continues to improve.</small></div></div>
-                            <div class="timeline-item"><span class="timeline-dot"></span><div><strong>Braces fitted</strong><small>14 February 2025 · Initial appliances placed.</small></div></div>
+                            <?php foreach ($treatmentHistory as $treatmentUpdate): ?>
+                                <div class="timeline-item"><span class="timeline-dot"></span><div><strong><?= escape_html($treatmentUpdate['CurrentStage'] ?: $treatmentUpdate['TreatmentType']) ?></strong><small><?= $treatmentUpdate['StartDate'] ? escape_html(date('d F Y', strtotime($treatmentUpdate['StartDate'])) . ' · ') : '' ?><?= escape_html($treatmentUpdate['ProgressNotes'] ?: $treatmentUpdate['TreatmentType']) ?></small></div></div>
+                            <?php endforeach; ?>
+                            <?php if (!$treatmentHistory): ?><p>No treatment milestones recorded.</p><?php endif; ?>
                         </div>
                     </section>
                 </div>

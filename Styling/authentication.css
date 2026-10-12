@@ -9,146 +9,56 @@ body {
     font-family: "Segoe UI", Arial, sans-serif;
     background-color: #f5f8fa;
     color: #263238;
-    min-height: 100vh;
+    min-height: 100dvh;
 }
 
 /* Main login container */
 .login-container {
-    min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
 }
-
-/* Left branding section */
-.brand-section {
-    width: 48%;
-    background-color: #42B1CC;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 60px;
-    position: relative;
-    overflow: hidden;
-}
-
-/* Decorative circles */
-.brand-section::before {
-    content: "";
-    position: absolute;
-    width: 420px;
-    height: 420px;
-    border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.08);
-    top: -150px;
-    right: -150px;
-}
-
-.brand-section::after {
-    content: "";
-    position: absolute;
-    width: 300px;
-    height: 300px;
-    border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.06);
-    bottom: -120px;
-    left: -120px;
-}
-
-
-/* Brand content */
-.brand-content {
-    width: 100%;
-    max-width: 520px;
-    position: relative;
-    z-index: 2;
-}
-
-
-/* Logo */
-.logo {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-}
-
-.logo-icon {
-    width: 54px;
-    height: 54px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.logo-icon img {
-    width: 54px;
-    height: 54px;
-    object-fit: contain;
-    display: block;
-}
-
-/* Brand message */
-.brand-message {
-    margin-top: 100px;
-}
-
-.brand-message h2 {
-    margin-top: 20px;
-    font-size: 48px;
-    line-height: 1.1;
-    font-weight: 700;
-    letter-spacing: -1.5px;
-}
-
-.brand-message p {
-    margin-top: 22px;
-    max-width: 440px;
-    font-size: 15px;
-    line-height: 1.8;
-    opacity: 0.9;
-}
-
-/* System highlights */
-
-.system-highlights {
-    margin-top: 55px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.highlight-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.highlight-check {
-    width: 25px;
-    height: 25px;
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-/* Right login section */
 
 .login-section {
-    width: 52%;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 50px;
+    margin-inline: auto;
+}
+
+.logo {
+    gap: 8px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.logo-icon {
+    aspect-ratio: 11/10;
+    width: 60px;
+
+    img {
+        width: 100%;
+        height: 100%;
+    }
+}
+
+.logo-text h1 {
+    font-size: 1.5rem;
 }
 
 .login-box {
     width: 100%;
     max-width: 450px;
+    border-radius: 20px;
+    padding: 8px;
+
+    .content-box {
+        padding: 16px;
+        border-radius: 12px;
+        background: #eff9ff;
+    }
 }
 
 /* Login header */
@@ -156,17 +66,10 @@ body {
     margin-bottom: 34px;
 }
 
-.welcome-label {
-    color: #42B1CC;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1.5px;
-}
-
 .login-header h2 {
     margin-top: 10px;
     color: #1f2933;
-    font-size: 30px;
+    font-size: 1.5rem;
     font-weight: 700;
     letter-spacing: -0.7px;
 }
@@ -351,8 +254,12 @@ body {
 
 /* Public links */
 .public-links {
-    margin-top: 32px;
+    gap: 6px;
+    margin-top: 8px;
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .public-links > span {
@@ -364,7 +271,6 @@ body {
     display: flex;
     justify-content: center;
     gap: 22px;
-    margin-top: 9px;
 }
 
 .links a {

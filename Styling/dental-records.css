@@ -1,0 +1,5 @@
+@media (max-width: 1000px) {
+    #records-table {
+        min-width: 760px;
+    }
+}

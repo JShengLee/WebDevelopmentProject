@@ -1,3 +1,30 @@
+<?php
+require_once __DIR__ . '/../includes/patient_bootstrap.php';
+$nextAppointmentStatement = $pdo->prepare(
+        "SELECT a.AppointmentDate, a.AppointmentTime, a.AppointmentStatus, s.ServiceName, u.FullName AS DentistName
+         FROM appointment a
+         INNER JOIN service s ON s.ServiceID = a.ServiceID
+         INNER JOIN dentist d ON d.DentistID = a.DentistID
+         INNER JOIN user u ON u.UserID = d.UserID
+         WHERE a.PatientID = :patient_id AND a.AppointmentStatus IN ('Pending', 'Confirmed')
+             AND TIMESTAMP(a.AppointmentDate, a.AppointmentTime) >= NOW()
+         ORDER BY a.AppointmentDate, a.AppointmentTime LIMIT 1"
+);
+$nextAppointmentStatement->execute(['patient_id' => $currentPatient['PatientID']]);
+$nextAppointment = $nextAppointmentStatement->fetch();
+$recordCountStatement = $pdo->prepare('SELECT COUNT(*) FROM dentalrecord WHERE PatientID = :patient_id');
+$recordCountStatement->execute(['patient_id' => $currentPatient['PatientID']]);
+$recordCount = (int) $recordCountStatement->fetchColumn();
+$treatmentStatement = $pdo->prepare('SELECT TreatmentType, CurrentStage, NextAdjustmentDate FROM orthodonticrecord WHERE PatientID = :patient_id ORDER BY OrthoRecordID DESC LIMIT 1');
+$treatmentStatement->execute(['patient_id' => $currentPatient['PatientID']]);
+$currentTreatment = $treatmentStatement->fetch();
+$recentRecordsStatement = $pdo->prepare(
+        'SELECT RecordDate, Diagnosis, ClinicalNotes FROM dentalrecord
+         WHERE PatientID = :patient_id ORDER BY RecordDate DESC, RecordID DESC LIMIT 3'
+);
+$recentRecordsStatement->execute(['patient_id' => $currentPatient['PatientID']]);
+$recentRecords = $recentRecordsStatement->fetchAll();
+?>
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -30,11 +57,8 @@
                     <!-- Welcome section -->
                     <section class="welcome-section">
                         <div>
-                            <span class="page-label">
-                                PATIENT DASHBOARD
-                            </span>
                             <h1>
-                                Good day, Joshua 👋
+                                Good day, <?= escape_html($currentPatient['FullName']) ?>
                             </h1>
                             <p>
                                 Here's a quick overview of your dental care.
@@ -64,11 +88,11 @@
                             </p>
 
                             <h2>
-                                16 Oct
+                                <?= $nextAppointment ? escape_html(date('d M', strtotime($nextAppointment['AppointmentDate']))) : 'None' ?>
                             </h2>
 
                             <p class="card-description">
-                                10:00 AM · General Check-up
+                                <?= $nextAppointment ? escape_html(date('g:i A', strtotime($nextAppointment['AppointmentTime'])) . ' · ' . $nextAppointment['ServiceName']) : 'No upcoming appointment' ?>
                             </p>
                         </div>
 
@@ -79,25 +103,21 @@
                                     %
                                 </div>
 
-                                <span class="card-status">
-                                    Ongoing
-                                </span>
+                                <span class="card-status"><?= $currentTreatment ? 'Ongoing' : 'No plan' ?></span>
                             </div>
 
                             <p class="card-label">
                                 TREATMENT PROGRESS
                             </p>
 
-                            <h2>
-                                65%
-                            </h2>
+                                <h2><?= escape_html($currentTreatment['CurrentStage'] ?? '—') ?></h2>
 
                             <div class="progress-bar">
-                                <div class="progress-value"></div>
+                                <div class="progress-value"<?= $currentTreatment ? '' : ' style="width: 0"' ?>></div>
                             </div>
 
                             <p class="card-description">
-                                Orthodontic treatment
+                                <?= escape_html($currentTreatment['TreatmentType'] ?? 'No orthodontic treatment') ?>
                             </p>
                         </div>
 
@@ -118,7 +138,7 @@
                             </p>
 
                             <h2>
-                                4
+                                <?= $recordCount ?>
                             </h2>
 
                             <p class="card-description">
@@ -149,34 +169,27 @@
                             </div>
 
                             <div class="appointment-details">
-                                <div class="doctor-avatar">
-                                    DR
-                                </div>
+                                <div class="doctor-avatar">DR</div>
 
                                 <div class="doctor-info">
-                                    <strong>
-                                        Dr. Sarah Lim
-                                    </strong>
+                                    <strong><?= escape_html($nextAppointment['DentistName'] ?? 'No appointment') ?></strong>
 
                                     <span>
-                                        General Dentistry
+                                        <?= escape_html($nextAppointment['ServiceName'] ?? 'Book a visit to see your provider') ?>
                                     </span>
                                 </div>
 
                                 <div class="appointment-info">
-                                    <strong>
-                                        16 October 2026
-                                    </strong>
+                                    <strong><?= $nextAppointment ? escape_html(date('d F Y', strtotime($nextAppointment['AppointmentDate']))) : 'No upcoming visit' ?></strong>
 
                                     <span>
-                                        10:00 AM · BrightSmile Clinic
+                                        <?= $nextAppointment ? escape_html(date('g:i A', strtotime($nextAppointment['AppointmentTime'])) . ' · BrightSmile Clinic') : 'Your scheduled visits will appear here' ?>
                                     </span>
                                 </div>
                             </div>
 
                             <div class="appointment-status">
-                                <span class="status-dot"></span>
-                                Confirmed
+                                <?php if ($nextAppointment): ?><span class="status-dot"></span><?= escape_html($nextAppointment['AppointmentStatus']) ?><?php else: ?>No upcoming appointment<?php endif; ?>
                             </div>
                         </div>
 
@@ -265,6 +278,7 @@
                         </div>
 
                         <div class="activity-list">
+                            <?php foreach ($recentRecords as $recentRecord): ?>
                             <div class="activity-item">
                                 <div class="activity-marker">
                                     ✓
@@ -272,58 +286,20 @@
 
                                 <div class="activity-content">
                                     <strong>
-                                        Dental check-up completed
+                                        Dental visit recorded
                                     </strong>
 
                                     <span>
-                                        General dental examination
+                                        <?= escape_html($recentRecord['Diagnosis'] ?: $recentRecord['ClinicalNotes'] ?: 'Clinical record added') ?>
                                     </span>
                                 </div>
 
                                 <time>
-                                    08 Sep 2026
+                                    <?= escape_html(date('d M Y', strtotime($recentRecord['RecordDate']))) ?>
                                 </time>
                             </div>
-
-                            <div class="activity-item">
-                                <div class="activity-marker">
-                                    +
-                                </div>
-
-                                <div class="activity-content">
-                                    <strong>
-                                        Appointment confirmed
-                                    </strong>
-
-                                    <span>
-                                        General check-up with Dr. Sarah Lim
-                                    </span>
-                                </div>
-
-                                <time>
-                                    05 Sep 2026
-                                </time>
-                            </div>
-
-                            <div class="activity-item">
-                                <div class="activity-marker">
-                                    ◇
-                                </div>
-
-                                <div class="activity-content">
-                                    <strong>
-                                        Orthodontic record updated
-                                    </strong>
-
-                                    <span>
-                                        Braces adjustment visit recorded
-                                    </span>
-                                </div>
-
-                                <time>
-                                    28 Aug 2026
-                                </time>
-                            </div>
+                            <?php endforeach; ?>
+                            <?php if (!$recentRecords): ?><p>No recent records yet.</p><?php endif; ?>
                         </div>
                     </section>
                 </div>
