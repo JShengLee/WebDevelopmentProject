@@ -1,8 +1,9 @@
-<?php include "../dbconnection.php"?>
+<?php 
+    require_once __DIR__ . '/../includes/patient_bootstrap.php';
+?>
 
 <?php
     if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["action"] ?? "") === "addService"){
-        $serviceID = (int) trim($_POST["serviceID"]);
         $serviceName = trim($_POST["serviceName"]);
         $description = trim($_POST["description"]);
         $price = (float) trim($_POST["price"]);
@@ -10,23 +11,18 @@
         $category = trim($_POST["category"]);
 
         try{
-            $addService = "INSERT INTO service (ServiceID, ServiceName, Description, Price, Duration, Category)
-                        VALUES (?, ?, ?, ?, ?, ?)";
+            $addService = "INSERT INTO service (ServiceName, Description, Price, Duration, Category)
+                        VALUES (?, ?, ?, ?, ?)";
 
-            $stmtAddService = $conn->prepare($addService);
+            $stmtAddService = $pdo->prepare($addService);
 
-            $stmtAddService->bind_param(
-                "issdis",
-                $serviceID,
-                $serviceName,
+            $stmtAddService->execute(
+                [$serviceName,
                 $description,
                 $price,
                 $duration,
-                $category
+                $category]
             );
-
-            $stmtAddService->execute();
-            $stmtAddService->close();
 
             echo"<script>
                     alert('Service added successfully!');
@@ -34,7 +30,7 @@
                 </script>";
 
             exit;
-        } catch (mysqli_sql_exception $e){
+        } catch (PDOException $e){
 
             error_log($e->getMessage());
 
@@ -55,20 +51,16 @@
         try{
             $editService = "UPDATE service SET ServiceName = ?, Description = ?, Price = ?, Duration = ?, Category = ? WHERE ServiceID = ?";
 
-            $stmtEditService = $conn->prepare($editService);
+            $stmtEditService = $pdo->prepare($editService);
 
-            $stmtEditService->bind_param(
-                "ssdisi",
-                $serviceName,
+            $stmtEditService->execute(
+                [$serviceName,
                 $description,
                 $price,
                 $duration,
                 $category,
-                $serviceID
+                $serviceID]
             );
-
-            $stmtEditService->execute();
-            $stmtEditService->close();
 
             echo"<script>
                     alert('Changes have been saved.');
@@ -76,7 +68,7 @@
                 </script>";
 
             exit;
-        } catch (mysqli_sql_exception $e){
+        } catch (PDOException $e){
 
             error_log($e->getMessage());
 
@@ -93,15 +85,11 @@
 
             $deleteService = "DELETE FROM service WHERE serviceID = ?";
 
-            $stmtDeleteService = $conn->prepare($deleteService);
+            $stmtDeleteService = $pdo->prepare($deleteService);
 
-            $stmtDeleteService->bind_param(
-                "i",
-                $serviceID
+            $stmtDeleteService->execute(
+                [$serviceID]
             );
-
-            $stmtDeleteService->execute();
-            $stmtDeleteService->close();
 
             echo"<script>
                     alert('The service has been deleted.');
@@ -109,7 +97,7 @@
                 </script>";
 
             exit;
-        } catch (mysqli_sql_exception $e){
+        } catch (PDOException $e){
 
             error_log($e->getMessage());
 
@@ -159,10 +147,10 @@
 
                                     <?php
                                         $catesql = "SELECT DISTINCT Category FROM service ORDER BY Category ASC";
-                                        $cateresult = $conn->query($catesql);
+                                        $cateresult = $pdo->query($catesql);
                                         
                                         $cateList = [];
-                                        while ($cate = $cateresult->fetch_assoc()){
+                                        while ($cate = $cateresult->fetch()){
                                             $cateList[] = $cate;
                                         }
 
@@ -191,7 +179,7 @@
                                 <a onclick=
                                     "document.getElementById('search').value = ''; 
                                     document.getElementById('searchForm').submit();">
-                                    <span>
+                                    <span class="cancel-search">
                                         <i class="far fa-times-circle"></i>
                                     </span>
                                 </a>
@@ -221,10 +209,10 @@
                                     <form method="POST" id="addServiceForm">
                                         <input type="hidden" name="action" value="addService">
 
-                                        <div class="mb-3">
+                                        <!-- <div class="mb-3">
                                             <label for="serviceID" class="form-label">ServiceID</label>
                                             <input type="text" class="form-control" id="serviceID" name="serviceID" required>
-                                        </div>
+                                        </div> -->
 
                                         <div class="mb-3">
                                             <label for="serviceName" class="form-label">Service Name</label>
@@ -283,13 +271,13 @@
 
                                 $searchTerm = "%" . $search . "%";
 
-                                $stmt = $conn->prepare($sql);
-                                $stmt->bind_param("sisssis", $category, $search, $search, $searchTerm, $search, $search, $search);
+                                $stmt = $pdo->prepare($sql);
+                                $stmt->execute([$category, $search, $search, $searchTerm, $search, $search, $search]);
                             } else {
                                 $sql = "SELECT * FROM service
                                 WHERE Category = ?";
-                                $stmt = $conn->prepare($sql);
-                                $stmt->bind_param("s", $category);
+                                $stmt = $pdo->prepare($sql);
+                                $stmt->execute([$category]);
                             }
                         } else {
                             if ($search !== ""){
@@ -303,16 +291,14 @@
 
                                 $searchTerm = "%" . $search . "%";
 
-                                $stmt = $conn->prepare($sql);
-                                $stmt->bind_param("isssis", $search, $search, $searchTerm, $search, $search, $search);
+                                $stmt = $pdo->prepare($sql);
+                                $stmt->execute([$search, $search, $searchTerm, $search, $search, $search]);
                             } else { 
                                 $sql = "SELECT * FROM service";
-                                $stmt = $conn->prepare($sql);
+                                $stmt = $pdo->prepare($sql);
+                                $stmt->execute();
                             }
                         }
-
-                        $stmt->execute();
-                        $result = $stmt->get_result();
                     ?>
 
                     <div class="modal fade" id="editServiceModal" tabindex="-1">
@@ -417,7 +403,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php while ($service = $result->fetch_assoc()): ?> 
+                                <?php while ($service = $stmt->fetch()): ?> 
                                     <tr>
                                         <td><?= $service["ServiceID"]?></td>
                                         <td><?= $service["ServiceName"]?></td>

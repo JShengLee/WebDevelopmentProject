@@ -1,4 +1,6 @@
-<?php include "../dbconnection.php"?>
+<?php 
+    require_once __DIR__ . '/../includes/patient_bootstrap.php';
+?>
 
 <?php
     if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["action"] ?? "") === "addDoctor"){
@@ -13,41 +15,33 @@
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
         try{
-            $conn->begin_transaction();
+            $pdo->beginTransaction();
 
             $sqlUser = "INSERT INTO user (UserID, FullName, Email, PasswordHash, Phone, Role)
                         VALUES (?, ?, ?, ?, ?, 'Dentist')";
             
-            $stmtUser = $conn->prepare($sqlUser);
+            $stmtUser = $pdo->prepare($sqlUser);
 
-            $stmtUser->bind_param(
-                "issss",
-                $userID,
+            $stmtUser->execute(
+                [$userID,
                 $fullName,
                 $email,
                 $passwordHash,
-                $phone
+                $phone]
             );
-
-            $stmtUser->execute();
-            $stmtUser->close();
 
             $sqlDentist = "INSERT INTO dentist (UserID, Specialty, DeptID)
                             VALUES (?, ?, ?)";
             
-            $stmtDentist = $conn->prepare($sqlDentist);
+            $stmtDentist = $pdo->prepare($sqlDentist);
 
-            $stmtDentist->bind_param(
-                "isi",
-                $userID,
+            $stmtDentist->execute(
+               [ $userID,
                 $specialty,
-                $deptID
+                $deptID]
             );
 
-            $stmtDentist->execute();
-            $stmtDentist->close();
-
-            $conn->commit();
+            $pdo->commit();
 
             echo"<script>
                     alert('Doctor added successfully!');
@@ -55,8 +49,10 @@
                 </script>";
 
             exit;
-        } catch (mysqli_sql_exception $e){
-            $conn->rollback();
+        } catch (PDOException $e){
+            if ($pdo->inTransaction()){
+                $pdo->rollBack();
+            }
 
             error_log($e->getMessage());
 
@@ -75,38 +71,30 @@
         $deptID = (int) $_POST["editDeptID"];
 
         try{
-            $conn->begin_transaction();
+            $pdo->beginTransaction();
 
             $editUser = "UPDATE user SET FullName = ?, Email = ?, Phone = ? WHERE UserID = ?";
 
-            $stmtEditUser = $conn->prepare($editUser);
+            $stmtEditUser = $pdo->prepare($editUser);
 
-            $stmtEditUser->bind_param(
-                "sssi",
-                $fullName,
+            $stmtEditUser->execute(
+                [$fullName,
                 $email,
                 $phone,
-                $userID
+                $userID]
             );
-
-            $stmtEditUser->execute();
-            $stmtEditUser->close();
 
             $editDentist = "UPDATE dentist SET Specialty = ?, DeptID = ? WHERE UserID = ?";
 
-            $stmtEditDentist = $conn->prepare($editDentist);
+            $stmtEditDentist = $pdo->prepare($editDentist);
 
-            $stmtEditDentist->bind_param(
-                "sii",
-                $specialty,
+            $stmtEditDentist->execute(
+                [$specialty,
                 $deptID,
-                $userID
+                $userID]
             );
 
-            $stmtEditDentist->execute();
-            $stmtEditDentist->close();
-
-            $conn->commit();
+            $pdo->commit();
 
             echo"<script>
                     alert('Changes have been saved.');
@@ -114,8 +102,10 @@
                 </script>";
 
             exit;
-        } catch (mysqli_sql_exception $e){
-            $conn->rollback();
+        } catch (PDOException $e){
+            if ($pdo->inTransaction()){
+                $pdo->rollBack();
+            }
 
             error_log($e->getMessage());
 
@@ -129,33 +119,25 @@
         $userID = (int) trim($_POST["deleteUserID"]);
 
         try{
-            $conn->begin_transaction();
+            $pdo->beginTransaction();
 
             $deleteDentist = "DELETE FROM dentist WHERE UserID = ?";
 
-            $stmtDeleteDentist = $conn->prepare($deleteDentist);
+            $stmtDeleteDentist = $pdo->prepare($deleteDentist);
 
-            $stmtDeleteDentist->bind_param(
-                "i",
-                $userID
+            $stmtDeleteDentist->execute(
+                [$userID]
             );
-
-            $stmtDeleteDentist->execute();
-            $stmtDeleteDentist->close();
 
             $deleteUser = "DELETE FROM user WHERE UserID = ?";
 
-            $stmtDeleteUser = $conn->prepare($deleteUser);
+            $stmtDeleteUser = $pdo->prepare($deleteUser);
 
-            $stmtDeleteUser->bind_param(
-                "i",
-                $userID
+            $stmtDeleteUser->execute(
+                [$userID]
             );
 
-            $stmtDeleteUser->execute();
-            $stmtDeleteUser->close();
-
-            $conn->commit();
+            $pdo->commit();
 
             echo"<script>
                     alert('The user has been deleted.');
@@ -163,8 +145,10 @@
                 </script>";
 
             exit;
-        } catch (mysqli_sql_exception $e){
-            $conn->rollback();
+        } catch (PDOException $e){
+            if ($pdo->inTransaction()){
+                $pdo->rollBack();
+            }
 
             error_log($e->getMessage());
 
@@ -214,10 +198,10 @@
 
                                     <?php
                                         $deptsql = "SELECT DeptID, DepartmentName FROM department";
-                                        $deptresult = $conn->query($deptsql);
+                                        $deptresult = $pdo->query($deptsql);
                                         
                                         $departmentList = [];
-                                        while ($dept = $deptresult->fetch_assoc()){
+                                        while ($dept = $deptresult->fetch()){
                                             $departmentList[] = $dept;
                                         }
 
@@ -246,7 +230,7 @@
                                 <a onclick=
                                     "document.getElementById('search').value = ''; 
                                     document.getElementById('searchForm').submit();">
-                                    <span>
+                                    <span class="cancel-search">
                                         <i class="far fa-times-circle"></i>
                                     </span>
                                 </a>
@@ -271,15 +255,26 @@
                                         </span>
                                     </a>
                                 </div>
+                                
+                                <?php
+                                    $autoID = $pdo->query(
+                                        "SELECT DentistID from dentist ORDER BY DentistID DESC LIMIT 1"
+                                    );
+
+                                    $autoIDRow = $autoID->fetch();
+
+                                    $newID = $autoIDRow ? ((int) $autoIDRow["DentistID"] + 1) : 2001;
+                                ?>
 
                                 <div class="modal-body">
                                     <form method="POST" id="addDoctorForm">
                                         <input type="hidden" name="action" value="addDoctor">
+                                        <input type="hidden" id="userID" name="userID" value="<?=$newID?>">
 
-                                        <div class="mb-3">
+                                        <!-- <div class="mb-3">
                                             <label for="userID" class="form-label">UserID</label>
-                                            <input type="text" class="form-control" id="userID" name="userID" required>
-                                        </div>
+                                            <input type="text" class="form-control" id="userID" name="userID" value="" readonly>
+                                        </div> -->
 
                                         <div class="mb-3">
                                             <label for="fullName" class="form-label">Full Name</label>
@@ -356,15 +351,15 @@
 
                                 $searchTerm = "%" . $search . "%";
 
-                                $stmt = $conn->prepare($sql);
-                                $stmt->bind_param("isssss", $department, $searchTerm, $search, $search, $search, $search);
+                                $stmt = $pdo->prepare($sql);
+                                $stmt->execute([$department, $searchTerm, $search, $search, $search, $search]);
                             } else {
                                 $sql = "SELECT user.FullName, user.UserID, user.Email, user.Phone, dentist.Specialty, dentist.DeptID, department.DepartmentName 
                                 FROM user JOIN dentist ON user.UserID = dentist.UserID 
                                 JOIN department ON dentist.DeptID = department.DeptID
                                 WHERE department.DeptID = ?";
-                                $stmt = $conn->prepare($sql);
-                                $stmt->bind_param("i", $department);
+                                $stmt = $pdo->prepare($sql);
+                                $stmt->execute([$department]);
                             }
                         } else {
                             if ($search !== ""){
@@ -379,18 +374,19 @@
 
                                 $searchTerm = "%" . $search . "%";
 
-                                $stmt = $conn->prepare($sql);
-                                $stmt->bind_param("sssss", $searchTerm, $search, $search, $search, $search);
+                                $stmt = $pdo->prepare($sql);
+                                $stmt->execute([$searchTerm, $search, $search, $search, $search]);
                             } else { 
                                 $sql = "SELECT user.FullName, user.UserID, user.Email, user.Phone, dentist.Specialty, dentist.DeptID, department.DepartmentName 
                                 FROM user JOIN dentist ON user.UserID = dentist.UserID 
                                 JOIN department ON dentist.DeptID = department.DeptID";
-                                $stmt = $conn->prepare($sql);
+                                $stmt = $pdo->prepare($sql);
+                                $stmt->execute();
                             }
                         }
 
-                        $stmt->execute();
-                        $result = $stmt->get_result();
+                        // $stmt->execute();
+                        // $result = $stmt->fetch();
                     ?>
 
                     <div class="modal fade" id="editDoctorModal" tabindex="-1">
@@ -505,7 +501,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php while ($dentist = $result->fetch_assoc()): ?>
+                                <?php while ($dentist = $stmt->fetch()): ?>
                                     <tr>
                                         <td><?= $dentist["UserID"]?></td>
                                         <td><?= $dentist["FullName"]?></td>

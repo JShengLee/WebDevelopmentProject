@@ -1,3 +1,7 @@
+<?php
+    require_once __DIR__ . '/../includes/patient_bootstrap.php';
+    // include "../dbconnection.php";
+?>
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -41,11 +45,11 @@
                     </section>
 
                     <section class="summary-grid">
-                        <!-- Available Doctors -->
+                        <!-- Dentist Summary -->
                         <div class="summary-card">
                             <div class="section-heading">
                                 <h2>
-                                    Doctors
+                                    Dentists
                                 </h2>
                                 <a href="admin_dentist_list.php">View all</a>
                             </div>
@@ -67,12 +71,12 @@
                                                 r="80">
                                             </circle>
 
-                                            <g id="gaugeSegments"></g>
+                                            <g id="dentistGaugeSegments"></g>
 
                                         </svg>
                                         <!-- The gauge texts are edited in the gaugefunction.js file bcz it will be retrieving the info from the database -->
                                         <div class="gauge-text">
-                                            <span id="totalValue"></span>
+                                            <span id="dentistTotalValue"></span>
                                         </div>
                                     </div>
                                 </div>
@@ -82,59 +86,86 @@
                             </div>
                         </div>
 
-                        <!-- Treatment Progress -->
+                        <!-- Service Summary -->
                         <div class="summary-card">
-                            <div class="card-top">
-                                <div class="card-icon treatment-icon">
-                                    %
-                                </div>
-
-                                <span class="card-status">
-                                    Ongoing
-                                </span>
+                            <div class="section-heading">
+                                <h2>
+                                    Services
+                                </h2>
+                                <a href="admin_service_list.php">View all</a>
                             </div>
-
-                            <p class="card-label">
-                                TREATMENT PROGRESS
-                            </p>
-
-                            <h2>
-                                65%
-                            </h2>
-
-                            <div class="progress-bar">
-                                <div class="progress-value"></div>
-                            </div>
-
-                            <p class="card-description">
-                                Orthodontic treatment
-                            </p>
-                        </div>
-
-                        <!-- Dental Records -->
-                        <div class="summary-card">
-                            <div class="card-top">
-                                <div class="card-icon records-icon">
-                                    +
-                                </div>
-
-                                <span class="card-status">
-                                    Updated
-                                </span>
-                            </div>
-
-                            <p class="card-label">
-                                DENTAL RECORDS
-                            </p>
-
-                            <h2>
-                                4
+                            <!-- <h2>
+                                18 Sep
                             </h2>
 
                             <p class="card-description">
-                                Recorded dental visits
-                            </p>
+                                10:00 AM · General Check-up
+                            </p> -->
+                            <div class="card-content">
+                                <div class="doctor-summary">
+                                    <div class="doctor-gauge">
+                                        <svg class="gauge-circle" viewBox="0 0 200 200">
+                                            <circle
+                                                class="gauge-background"
+                                                cx="100"
+                                                cy="100"
+                                                r="80">
+                                            </circle>
+
+                                            <g id="serviceGaugeSegments"></g>
+
+                                        </svg>
+                                        <!-- The gauge texts are edited in the gaugefunction.js file bcz it will be retrieving the info from the database -->
+                                        <div class="gauge-text">
+                                            <span id="serviceTotalValue"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="roleAmount">
+                                    
+                                </div>
+                            </div>
                         </div>
+
+                        <!-- Patient Summary -->
+                        <div class="summary-card">
+                            <div class="section-heading">
+                                <h2>
+                                    Patients
+                                </h2>
+                                <a href="admin_patient_list.php">View all</a>
+                            </div>
+                            <!-- <h2>
+                                18 Sep
+                            </h2>
+
+                            <p class="card-description">
+                                10:00 AM · General Check-up
+                            </p> -->
+                            <div class="card-content">
+                                <div class="doctor-summary">
+                                    <div class="doctor-gauge">
+                                        <svg class="gauge-circle" viewBox="0 0 200 200">
+                                            <circle
+                                                class="gauge-background"
+                                                cx="100"
+                                                cy="100"
+                                                r="80">
+                                            </circle>
+
+                                            <g id="patientGaugeSegments"></g>
+
+                                        </svg>
+                                        <!-- The gauge texts are edited in the gaugefunction.js file bcz it will be retrieving the info from the database -->
+                                        <div class="gauge-text">
+                                            <span id="patientTotalValue"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="roleAmount">
+                                    
+                                </div>
+                            </div>
                     </section>
 
                     <!-- Dentist Carousel -->
@@ -153,23 +184,22 @@
         <script>
 
             <?php
-                include "../dbconnection.php";
 
-                $sql = "SELECT * FROM dentist;";
-                $stmt = $conn->prepare($sql);
+                $sql = "SELECT COUNT(*) AS Total FROM dentist;";
+                $stmt = $pdo->prepare($sql);
                 $stmt->execute();
 
-                $result = $stmt->get_result();
+                $result = $stmt->fetch();
 
-                $rows = $result->num_rows;
+                $rows = $result["Total"];
 
                 $dentistCount = [];
 
                 $sqlCount = "SELECT Specialty, COUNT(*) AS Amount FROM dentist GROUP BY Specialty";
 
-                $count = $conn->query($sqlCount);
+                $count = $pdo->query($sqlCount);
 
-                while ($row = $count->fetch_assoc()){
+                while ($row = $count->fetch()){
                     $dentistCount[$row["Specialty"]] = $row["Amount"];
                 }
             ?>
@@ -177,9 +207,8 @@
             const dentistCount = <?= json_encode($dentistCount) ?>;
             let maximumValue = <?= $rows ?>;
 
-            const gaugeSegments = document.getElementById("gaugeSegments");
-            const valueText = document.getElementById("totalValue");
-            const totalText = document.getElementById("maximumValue");
+            const gaugeSegments = document.getElementById("dentistGaugeSegments");
+            const valueText = document.getElementById("dentistTotalValue");
 
             const radius = 80;
             const circumference = 2 * Math.PI * radius;
