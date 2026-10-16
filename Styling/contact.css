@@ -1,0 +1,494 @@
+/* General */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background-color: #f6f9fa;
+    color: #263238;
+}
+
+a {
+    text-decoration: none;
+}
+
+button {
+    font-family: inherit;
+}
+
+/* Application Container */
+.app-container {
+    display: flex;
+}
+
+/* Main content */
+.main-content {
+    flex: 1;
+    min-width: 0;
+    height: 100dvh;
+    overflow-y: scroll;
+}
+
+/* Top header */
+.top-header {
+    position: sticky;
+    top: 0;
+    height: 76px;
+    background-color: white;
+    border-bottom: 1px solid #e8eef1;
+    padding: 0 38px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+}
+
+/* Notification */
+.notification-button {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background-color: #f6fafb;
+    border-radius: 9px;
+    color: #71818a;
+    cursor: pointer;
+    font-size: 19px;
+}
+
+.notification-dot {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #42B1CC;
+}
+
+/* User */
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #e1f4f7;
+    color: #329ab2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.user-info strong {
+    display: block;
+    color: #34434d;
+    font-size: 13px;
+}
+
+.user-info span {
+    display: block;
+    margin-top: 2px;
+    color: #98a3a9;
+    font-size: 11px;
+}
+
+/* Mobile logo & middle logo & burger icon */
+.mobile-logo,
+.middle-logo,
+.burger-icon {
+    display: none;
+}
+
+/* Page */
+.page-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 38px;
+}
+
+.page-header {
+    margin-bottom: 30px;
+}
+
+.page-label {
+    color: #42B1CC;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.4px;
+}
+
+.page-header h1 {
+    margin-top: 8px;
+    color: #26343c;
+    font-size: 30px;
+    letter-spacing: -0.5px;
+}
+
+.page-header p {
+    margin-top: 8px;
+    color: #89969d;
+    font-size: 14px;
+}
+
+/* Contact grid */
+.contact-grid {
+    display: grid;
+    grid-template-columns: 0.85fr 1.4fr;
+    gap: 20px;
+    align-items: start;
+}
+
+/* Information Cards */
+.contact-information {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.info-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 18px;
+    background-color: white;
+    border: 1px solid #e8eef0;
+    border-radius: 11px;
+}
+
+.info-icon {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 9px;
+    background-color: #eaf8fb;
+    color: #42B1CC;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.info-card h3 {
+    color: #46545c;
+    font-size: 14px;
+    font-weight: 650;
+}
+
+.info-card p {
+    margin-top: 6px;
+    color: #9aa5aa;
+    font-size: 12px;
+}
+
+.info-card strong {
+    display: block;
+    margin-top: 3px;
+    color: #5c6970;
+    font-size: 12px;
+}
+
+.extra-hours {
+    margin-top: 11px !important;
+}
+
+.closed {
+    margin-top: 12px !important;
+    color: #b0b8bc !important;
+}
+
+/* Form card */
+.contact-form-card {
+    background-color: white;
+    border: 1px solid #e8eef0;
+    border-radius: 12px;
+    padding: 25px;
+}
+
+.form-heading {
+    margin-bottom: 24px;
+}
+
+.form-heading h2 {
+    color: #3e4d55;
+    font-size: 18px;
+}
+
+.form-heading p {
+    margin-top: 6px;
+    color: #9aa5aa;
+    font-size: 12px;
+}
+
+/* Form */
+.contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 7px;
+    color: #526169;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    border: 1px solid #dfe7ea;
+    border-radius: 8px;
+    background-color: #fbfcfc;
+    color: #46545c;
+    font-family: inherit;
+    font-size: 12px;
+    outline: none;
+    transition: 0.2s ease;
+}
+
+.form-group input,
+.form-group select {
+    height: 45px;
+    padding: 0 12px;
+}
+
+.form-group textarea {
+    padding: 12px;
+    resize: vertical;
+    min-height: 120px;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: #aeb7bb;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: #42B1CC;
+    background-color: white;
+    box-shadow: 0 0 0 3px rgba(66, 177, 204, 0.09);
+}
+
+/* Send button */
+.send-button {
+    height: 47px;
+    border: none;
+    border-radius: 8px;
+    background-color: #42B1CC;
+    color: white;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.send-button:hover {
+    background-color: #329db7;
+    box-shadow: 0 5px 12px rgba(66, 177, 204, 0.18);
+}
+
+/* Response note */
+.response-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 18px;
+    padding: 14px;
+    background-color: #f0f9fb;
+    border: 1px solid #dceff3;
+    border-radius: 9px;
+}
+
+.response-note span {
+    color: #42B1CC;
+    font-size: 16px;
+}
+
+.response-note p {
+    color: #78868d;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+/* Tablet */
+@media (max-width: 1000px) {
+    .page-content {
+        padding: 30px;
+    }
+
+    .contact-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Mobile */
+@media (max-width: 750px) {
+    /*Mobile header*/
+    .top-header {
+        height: 65px;
+        padding: 0 20px;
+        justify-content: space-between;
+    }
+
+    /*Show hamburger*/
+    .navbar-toggler {
+        display: block;
+    }
+
+    .burger-icon {
+        margin-right: auto;
+    }
+
+    /*Center logo / name*/
+    .middle-logo {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .middle-logo .mobile-logo {
+        display: block;
+    }
+
+    .middle-logo .mobile-logo img {
+        width: 45px;
+        height: auto;
+        display: block;
+    }
+
+    .middle-logo p {
+        display: block;
+        margin-bottom: 0;
+        white-space: nowrap;
+        color: #34434d;
+        font-size: 10px;
+        font-weight: 600;
+    }
+
+    /*Right header*/
+    .header-right {
+        gap: 12px;
+    }
+
+    .user-info {
+        display: none;
+    }
+
+    .page-content {
+        padding: 25px 20px;
+    }
+
+    .page-header h1 {
+        font-size: 27px;
+    }
+
+    .page-header p {
+        font-size: 13px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Small mobile */
+@media (max-width: 450px) {
+
+    .page-content {
+        padding: 22px 16px;
+    }
+
+    .top-header {
+        padding: 0 16px;
+    }
+
+    /* Smaller center logo */
+    .middle-logo {
+        gap: 4px;
+    }
+
+    .middle-logo .mobile-logo img {
+        width: 38px;
+    }
+
+    .middle-logo p {
+        font-size: 9px;
+    }
+
+    /* Header */
+    .header-right {
+        gap: 8px;
+    }
+
+    .notification-button {
+        width: 34px;
+        height: 34px;
+        font-size: 16px;
+    }
+
+    .user-avatar {
+        width: 34px;
+        height: 34px;
+    }
+    
+    .page-header h1 {
+        font-size: 25px;
+    }
+
+    .contact-form-card {
+        padding: 19px;
+    }
+
+    .info-card h3 {
+        font-size: 13px;
+    }
+
+    .info-card p,
+    .info-card strong {
+        font-size: 11px;
+    }
+
+    .form-group label {
+        font-size: 11px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        font-size: 12px;
+    }
+}
