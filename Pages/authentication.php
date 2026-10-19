@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_id'] = (int) $user['UserID'];
             $_SESSION['role'] = $user['Role'];
             $_SESSION['full_name'] = $user['FullName'];
-            header('Location: ' . ($user['Role'] === 'Dentist' ? '../dentist_dashboard.html' : '../admin_dashboard.html'));
+            header('Location: ' . ($user['Role'] === 'Dentist' ? 'dentist_dashboard.php' : 'admin_dashboard.php'));
             exit;
         }
     } else {

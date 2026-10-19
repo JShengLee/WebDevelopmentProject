@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/view_helpers.php';
+require_once __DIR__ . '/../includes/patient_bootstrap.php';
 $headerName = $currentPatient['FullName'];
 $headerRole = $_SESSION['role'] ?? 'Patient';
 $headerBreadcrumbs = [
@@ -11,6 +12,11 @@ $headerBreadcrumbs = [
     'orthodontics.php' => 'Orthodontics',
     'profile.php' => 'My Profile',
     'services.php' => 'Services',
+    'dentist_dashboard.php' => 'Dashboard',
+    'dentist_schedules.php' => 'Schedules',
+    'dentist_patients.php' => 'Patients',
+    'dentist_patient_record.php' => 'Patient Record',
+    'dentist_profile.php'=> 'My Profile',
     "admin_dashboard.php" => "Dashboard",
     "admin_dentist_list.php" => "Dentist List",
     "admin_service_list.php" => "Service List",
@@ -42,7 +48,7 @@ $headerInitials = strtoupper(substr($headerNameParts[0] ?? '', 0, 1)
                                 ?>
                                         <li><a href="index.php">Dashboard</a></li>
                                     <?php elseif ($headerRole === "Dentist"): ?>
-                                        <li><a href="dentist_dashboard.html">Dashboard</a></li>
+                                        <li><a href="dentist_dashboard.php">Dashboard</a></li>
                                     <?php elseif ($headerRole === "Admin"): ?>
                                         <li><a href="admin_dashboard.php">Dashboard</a></li>
                                 <?php
@@ -91,16 +97,18 @@ $headerInitials = strtoupper(substr($headerNameParts[0] ?? '', 0, 1)
                 <div class="burger-navbar collapse" id="mainmenu">
                     <?php include "SidebarNavItems.php"; ?>
 
-                    <div class="help-box">
-                        <div class="help-icon">
-                            ?
-                        </div>
+                    <?php if ($headerRole !== 'Dentist'): ?>
+                        <div class="help-box">
+                            <div class="help-icon">
+                                ?
+                            </div>
 
-                        <div>
-                            <strong>Need help?</strong>
-                            <span>Contact the clinic</span>
+                            <div>
+                                <strong>Need help?</strong>
+                                <span>Contact the clinic</span>
+                            </div>
                         </div>
-                    </div>
+                    <?php endif; ?>
 
                     <a href="logout.php" class="logout-button">
                         <span>↪</span>
