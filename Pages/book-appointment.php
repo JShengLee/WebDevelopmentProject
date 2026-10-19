@@ -21,8 +21,6 @@
             "SELECT d.DentistID, u.FullName FROM dentist d INNER JOIN user u ON u.UserID = d.UserID WHERE u.Role = 'Dentist' ORDER BY u.FullName"
         )->fetchAll();
         ?>
-            include '../Components/Sidebar.php';
-        ?>
 
         <!-- Main content -->
         <main class="main-content">
