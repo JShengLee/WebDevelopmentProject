@@ -4,30 +4,50 @@
 
 <?php
     if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["action"] ?? "") === "addPatient"){
-        $serviceID = (int) trim($_POST["serviceID"]);
-        $serviceName = trim($_POST["serviceName"]);
-        $description = trim($_POST["description"]);
-        $price = (float) trim($_POST["price"]);
-        $duration = (int) trim($_POST["duration"]);
-        $category = trim($_POST["category"]);
+        $userID = (int) trim($_POST["userID"]);
+        $fullName = trim($_POST["fullName"]);
+        $email = trim($_POST["email"]);
+        $password = $_POST["password"];
+        $phone = trim($_POST["phone"]);
+        $icnum = trim($_POST["icnum"]);
+        $gender = trim($_POST["gender"]);
+        $address = trim($_POST["address"]);
+
+        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
         try{
-            $addPatient = "INSERT INTO service (ServiceID, ServiceName, Description, Price, Duration, Category)
-                        VALUES (?, ?, ?, ?, ?, ?)";
+            $pdo->beginTransaction();
 
+            $addUser = "INSERT INTO user (UserID, FullName, Email, PasswordHash, Phone, Role)
+                        VALUES (?, ?, ?, ?, ?, 'Patient')";
+
+            $stmtAddUser = $pdo->prepare($addUser);
+
+            $stmtAddUser->execute(
+                [$userID,
+                $fullName,
+                $email,
+                $passwordHash,
+                $phone]
+            );
+
+            $addPatient = "INSERT INTO patient (PatientID, UserID, ICNum, Gender, Address, Approval)
+                        VALUES (?, ?, ?, ?, ?, 'Yes')";
+    
             $stmtAddPatient = $pdo->prepare($addPatient);
 
             $stmtAddPatient->execute(
-                [$serviceID,
-                $serviceName,
-                $description,
-                $price,
-                $duration,
-                $category]
+                [$userID,
+                $userID,
+                $icnum,
+                $gender,
+                $address]
             );
 
+            $pdo->commit();
+
             echo"<script>
-                    alert('Service added successfully!');
+                    alert('Patient added successfully!');
                     window.location.href = window.location.pathname;    
                 </script>";
 
@@ -37,7 +57,7 @@
             error_log($e->getMessage());
 
             echo"<script>
-                    alert('Unable to add service. Please check the details and try again.');
+                    alert('Unable to add patient. Please check the details and try again.');
                 </script>";
         }
     }
@@ -51,18 +71,30 @@
         $category = trim($_POST["editCategory"]);
 
         try{
-            $editPatient = "UPDATE service SET ServiceName = ?, Description = ?, Price = ?, Duration = ?, Category = ? WHERE ServiceID = ?";
+            $pdo->beginTransaction();
 
-            $stmtEditPatient = $pdo->prepare($editPatient);
+            $editUser = "UPDATE user SET FullName = ?, Email = ?, Phone = ? WHERE UserID = ?";
 
-            $stmtEditPatient->execute(
-                [$serviceName,
-                $description,
-                $price,
-                $duration,
-                $category,
-                $serviceID]
+            $stmtEditUser = $pdo->prepare($editUser);
+
+            $stmtEditUser->execute(
+                [$fullName,
+                $email,
+                $phone,
+                $userID]
             );
+
+            $editDentist = "UPDATE dentist SET Specialty = ?, DeptID = ? WHERE UserID = ?";
+
+            $stmtEditDentist = $pdo->prepare($editDentist);
+
+            $stmtEditDentist->execute(
+                [$specialty,
+                $deptID,
+                $userID]
+            );
+
+            $pdo->commit();
 
             echo"<script>
                     alert('Changes have been saved.');
@@ -71,6 +103,9 @@
 
             exit;
         } catch (PDOException $e){
+            if ($pdo->inTransaction()){
+                $pdo->rollBack();
+            }
 
             error_log($e->getMessage());
 
@@ -84,22 +119,36 @@
         $serviceID = (int) trim($_POST["deleteServiceID"]);
 
         try{
+            $pdo->beginTransaction();
 
-            $deletePatient = "DELETE FROM service WHERE serviceID = ?";
+            $deleteDentist = "DELETE FROM dentist WHERE UserID = ?";
 
-            $stmtDeletePatient = $pdo->prepare($deletePatient);
+            $stmtDeleteDentist = $pdo->prepare($deleteDentist);
 
-            $stmtDeletePatient->execute(
-                [$serviceID]
+            $stmtDeleteDentist->execute(
+                [$userID]
             );
 
+            $deleteUser = "DELETE FROM user WHERE UserID = ?";
+
+            $stmtDeleteUser = $pdo->prepare($deleteUser);
+
+            $stmtDeleteUser->execute(
+                [$userID]
+            );
+
+            $pdo->commit();
+
             echo"<script>
-                    alert('The service has been deleted.');
+                    alert('The user has been deleted.');
                     window.location.href = window.location.pathname;
                 </script>";
 
             exit;
         } catch (PDOException $e){
+            if ($pdo->inTransaction()){
+                $pdo->rollBack();
+            }
 
             error_log($e->getMessage());
 
@@ -119,7 +168,7 @@
             $stmtApprovePatient->execute([$userID]);
 
             echo"<script>
-                    alert('The service has been deleted.');
+                    alert('The patient has been approved.');
                     window.location.href = window.location.pathname;
                 </script>";
 
@@ -204,44 +253,66 @@
                                     </a>
                                 </div>
 
+                                <?php
+                                    $autoID = $pdo->query(
+                                        "SELECT PatientID from patient ORDER BY PatientID DESC LIMIT 1"
+                                    );
+
+                                    $autoIDRow = $autoID->fetch();
+
+                                    $newID = $autoIDRow ? ((int) $autoIDRow["PatientID"] + 1) : 3001;
+                                ?>
+
                                 <div class="modal-body">
                                     <form method="POST" id="addPatientForm">
                                         <input type="hidden" name="action" value="addPatient">
+                                        <input type="hidden" id="userID" name="userID" value="<?=$newID?>">
 
                                         <div class="mb-3">
-                                            <label for="serviceID" class="form-label">ServiceID</label>
-                                            <input type="text" class="form-control" id="serviceID" name="serviceID" required>
+                                            <label for="fullName" class="form-label">Full Name</label>
+                                            <input type="text" class="form-control" id="fullName" name="fullName" required>
                                         </div>
 
                                         <div class="mb-3">
-                                            <label for="serviceName" class="form-label">Service Name</label>
-                                            <input type="text" class="form-control" id="serviceName" name="serviceName" required>
+                                            <label for="email" class="form-label">E-mail</label>
+                                            <input type="text" class="form-control" id="email" name="email" required>
                                         </div>
 
                                         <div class="mb-3">
-                                            <label for="description" class="form-label">Description</label>
-                                            <input type="text" class="form-control" id="description" name="description" required>
+                                            <label for="password" class="form-label">Password</label>
+                                            <input type="text" class="form-control" id="password" name="password" readonly
+                                                value="TemporaryPassword123">
                                         </div>
 
                                         <div class="mb-3">
-                                            <label for="price" class="form-label">Price (RM)</label>
-                                            <input type="number" class="form-control" id="price" name="price" step="any" min="0" required value="0.00">
+                                            <label for="phone" class="form-label">Phone No.</label>
+                                            <input type="text" class="form-control" id="phone" name="phone">
                                         </div>
 
                                         <div class="mb-3">
-                                            <label for="duration" class="form-label">Duration</label>
-                                            <input type="text" class="form-control" id="duration" name="duration" required>
+                                            <label for="icnum" class="form-label">IC Number</label>
+                                            <input type="text" class="form-control" id="icnum" name="icnum" required>
                                         </div>
 
                                         <div class="mb-3">
-                                            <label for="category" class="form-label">Category</label>
-                                            <input type="text" class="form-control" id="category" name="category" required>
+                                            <label for="gender" class="form-label">Gender</label>
+                                            <!-- <input type="text" class="form-control" id="specialty" name="specialty" required> -->
+                                             <select class="form-select" id="gender" name="gender" required>
+                                                <option value="">Select Gender</option>
+                                                <option value="Male">Male</option>
+                                                <option value="Female">Female</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="address" class="form-label">Address</label>
+                                            <input type="text" class="form-control" id="address" name="address">
                                         </div>
 
                                         <div class="modal-footer">
                                             <a class="primary-button"
                                                 onclick="document.getElementById('addPatientForm').requestSubmit(); return false;">
-                                                    Add Service
+                                                    Add Patient
                                             </a>
                                         </div>
                                     </form>
@@ -289,16 +360,16 @@
 
                                 <div class="modal-body">
                                     <form method="POST" id="editPatientForm">
-                                        <input type="hidden" name="action" value="editService">
+                                        <input type="hidden" name="action" value="editPatient">
 
                                         <div class="mb-3">
-                                            <label for="editServiceID" class="form-label">ServiceID</label>
-                                            <input type="text" class="form-control" id="editServiceID" name="editServiceID" required>
+                                            <label for="editUserID" class="form-label">UserID</label>
+                                            <input type="text" class="form-control" id="editUserID" name="editUserID" readonly>
                                         </div>
 
                                         <div class="mb-3">
-                                            <label for="editServiceName" class="form-label">Service Name</label>
-                                            <input type="text" class="form-control" id="editServiceName" name="editServiceName" required>
+                                            <label for="editFullName" class="form-label">Full Name</label>
+                                            <input type="text" class="form-control" id="editFullName" name="editFullName" required>
                                         </div>
 
                                         <div class="mb-3">

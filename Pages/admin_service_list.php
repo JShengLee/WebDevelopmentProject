@@ -118,7 +118,7 @@
         <title>Admin Service List | BrightSmile Dental Clinic</title>
 
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="../Styling/admin_dentist_list.css?v=8">
+        <link rel="stylesheet" href="../Styling/admin_dentist_list.css?v=10">
     </head>
 
     <body>
@@ -320,7 +320,7 @@
 
                                         <div class="mb-3">
                                             <label for="editServiceID" class="form-label">ServiceID</label>
-                                            <input type="text" class="form-control" id="editServiceID" name="editServiceID" required>
+                                            <input type="text" class="form-control" id="editServiceID" name="editServiceID" readonly>
                                         </div>
 
                                         <div class="mb-3">

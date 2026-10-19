@@ -80,7 +80,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div id="roleAmount">
+                                <div id="dentistRoleAmount">
                                     
                                 </div>
                             </div>
@@ -121,7 +121,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div id="roleAmount">
+                                <div id="serviceRoleAmount">
                                     
                                 </div>
                             </div>
@@ -162,7 +162,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div id="roleAmount">
+                                <div id="patientRoleAmount">
                                     
                                 </div>
                             </div>
@@ -184,7 +184,7 @@
         <script>
 
             <?php
-
+                //This is for the dentist'
                 $sql = "SELECT COUNT(*) AS Total FROM dentist;";
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute();
@@ -202,13 +202,69 @@
                 while ($row = $count->fetch()){
                     $dentistCount[$row["Specialty"]] = $row["Amount"];
                 }
+
+                //This is for the service
+                $servicesql = "SELECT COUNT(*) AS Total FROM service;";
+
+                $servicestmt = $pdo->prepare($servicesql);
+
+                $servicestmt->execute();
+
+                $serviceresult = $servicestmt->fetch();
+
+                $servicerows = $serviceresult["Total"];
+
+                $serviceCount = [];
+
+                $servicesqlcount = "SELECT Category, COUNT(*) AS Amount FROM service GROUP BY Category";
+
+                $servicecountstmt = $pdo->query($servicesqlcount);
+
+                while ($row = $servicecountstmt->fetch()){
+                    $serviceCount[$row["Category"]] = $row["Amount"];
+                }
+
+                //This is for the patient
+                $patientsql = "SELECT COUNT(*) AS Total FROM patient;";
+
+                $patientstmt = $pdo->prepare($patientsql);
+
+                $patientstmt->execute();
+
+                $patientresult = $patientstmt->fetch();
+
+                $patientrows = $patientresult["Total"];
+
+                $patientCount = [];
+
+                $patientsqlcount = "SELECT Approval, COUNT(*) AS Amount FROM patient GROUP BY Approval";
+
+                $patientcountstmt = $pdo->query($patientsqlcount);
+
+                while ($row = $patientcountstmt->fetch()){
+                    $patientCount[$row["Approval"]] = $row["Amount"];
+                }
+
+
             ?>
 
             const dentistCount = <?= json_encode($dentistCount) ?>;
-            let maximumValue = <?= $rows ?>;
+            const maximumValue = <?= $rows ?>;
+
+            const serviceCount = <?=json_encode($serviceCount)?>;
+            const serviceMax = <?=$servicerows?>;
+
+            const patientCount = <?=json_encode($patientCount)?>;
+            const patientMax = <?=$patientrows?>;
 
             const gaugeSegments = document.getElementById("dentistGaugeSegments");
             const valueText = document.getElementById("dentistTotalValue");
+
+            const serviceGaugeSegments = document.getElementById("serviceGaugeSegments");
+            const serviceValueText  =document.getElementById("serviceTotalValue");
+
+            const patientGaugeSegments = document.getElementById("patientGaugeSegments");
+            const patientValueText  =document.getElementById("patientTotalValue");
 
             const radius = 80;
             const circumference = 2 * Math.PI * radius;
@@ -226,8 +282,12 @@
             let colorIndex = 0;
 
             valueText.textContent = maximumValue;
+            serviceValueText.textContent = serviceMax;
+            patientValueText.textContent = patientMax;
 
-            const roleAmount = document.getElementById("roleAmount");
+            const dentistRoleAmount = document.getElementById("dentistRoleAmount");
+            const serviceRoleAmount = document.getElementById("serviceRoleAmount");
+            const patientRoleAmount = document.getElementById("patientRoleAmount");
 
             for (const specialty in dentistCount){
                 const amount = dentistCount[specialty];
@@ -270,10 +330,110 @@
                     <span class="role-count">${amount}</span>
                 `;
 
-                roleAmount.appendChild(role);
+                dentistRoleAmount.appendChild(role);
 
                 colorIndex++;
             }
+
+            let serviceCurrentOffset = 0;
+            let serviceColorIndex = 0;
+
+            for (const category in serviceCount){
+                const amount = serviceCount[category];
+                const percentage = serviceMax > 0 ? amount / serviceMax : 0;
+                const segmentLength = circumference * percentage;
+                const circle = document.createElementNS(
+                    "http://www.w3.org/2000/svg",
+                    "circle"
+                );
+
+                circle.setAttribute("cx", "100");
+                circle.setAttribute("cy", "100");
+                circle.setAttribute("r", "80");
+
+                circle.setAttribute("fill", "none");
+                circle.setAttribute("stroke", colors[serviceColorIndex]);
+                circle.setAttribute("stroke-width", "15");
+                circle.setAttribute("stroke-linecap", "butt");
+
+                circle.setAttribute(
+                    "stroke-dasharray",
+                    `${segmentLength} ${circumference - segmentLength}`
+                );
+
+                circle.setAttribute(
+                    "stroke-dashoffset",
+                    -serviceCurrentOffset
+                );
+
+                serviceGaugeSegments.appendChild(circle);
+
+                serviceCurrentOffset += segmentLength;
+
+
+                const role = document.createElement("div");
+                role.classList.add("role-item");
+                role.innerHTML = `
+                    <span class="role-color" style="background-color: ${colors[serviceColorIndex]}"></span>
+                    <span class="role-name">${category}</span>
+                    <span class="role-count">${amount}</span>
+                `;
+
+                serviceRoleAmount.appendChild(role);
+
+                serviceColorIndex++;
+            } 
+
+            let patientCurrentOffset = 0;
+            let patientColorIndex = 0;
+
+            for (const approval in patientCount){
+                const amount = patientCount[approval];
+                const value = approval === "Yes" ? "Approved" : "Pending";
+
+                const patientcolors = approval === "Yes" ? "#4CAF50" : "#E76F51";
+
+                const percentage = patientMax > 0 ? amount / patientMax : 0;
+                const segmentLength = circumference * percentage;
+                const circle = document.createElementNS(
+                    "http://www.w3.org/2000/svg",
+                    "circle"
+                );
+
+                circle.setAttribute("cx", "100");
+                circle.setAttribute("cy", "100");
+                circle.setAttribute("r", "80");
+
+                circle.setAttribute("fill", "none");
+                circle.setAttribute("stroke", patientcolors);
+                circle.setAttribute("stroke-width", "15");
+                circle.setAttribute("stroke-linecap", "butt");
+
+                circle.setAttribute(
+                    "stroke-dasharray",
+                    `${segmentLength} ${circumference - segmentLength}`
+                );
+
+                circle.setAttribute(
+                    "stroke-dashoffset",
+                    -patientCurrentOffset
+                );
+
+                patientGaugeSegments.appendChild(circle);
+
+                patientCurrentOffset += segmentLength;
+
+
+                const role = document.createElement("div");
+                role.classList.add("role-item");
+                role.innerHTML = `
+                    <span class="role-color" style="background-color: ${patientcolors}"></span>
+                    <span class="role-name">${value}</span>
+                    <span class="role-count">${amount}</span>
+                `;
+
+                patientRoleAmount.appendChild(role);
+            } 
 
         </script>
     </body>

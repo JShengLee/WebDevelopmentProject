@@ -30,13 +30,14 @@
                 $phone]
             );
 
-            $sqlDentist = "INSERT INTO dentist (UserID, Specialty, DeptID)
-                            VALUES (?, ?, ?)";
+            $sqlDentist = "INSERT INTO dentist (DentistID, UserID, Specialty, DeptID)
+                            VALUES (?, ?, ?, ?)";
             
             $stmtDentist = $pdo->prepare($sqlDentist);
 
             $stmtDentist->execute(
                [ $userID,
+                $userID,
                 $specialty,
                 $deptID]
             );
