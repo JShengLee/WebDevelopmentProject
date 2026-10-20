@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/patient_helpers.php';
+require_once __DIR__ . '/../includes/role_id_helpers.php';
 $flash = take_flash();
 $activeForm = ($_GET['mode'] ?? '') === 'register' ? 'register' : 'login';
 $loginError = '';
@@ -102,23 +103,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             try {
                 $pdo->beginTransaction();
+                $userId = generate_role_user_id($pdo, 'Patient');
                 $userStatement = $pdo->prepare(
-                    'INSERT INTO user (FullName, Email, PasswordHash, Phone, ic_number, Role)
-                     VALUES (:full_name, :email, :password_hash, :phone, :ic_number, \'Patient\')'
+                    'INSERT INTO user (UserID, FullName, Email, PasswordHash, Phone, ic_number, Role)
+                     VALUES (:user_id, :full_name, :email, :password_hash, :phone, :ic_number, \'Patient\')'
                 );
                 $userStatement->execute([
+                    'user_id' => $userId,
                     'full_name' => $fullName,
                     'email' => $registrationEmail,
                     'password_hash' => password_hash($password, PASSWORD_DEFAULT),
                     'phone' => $phone !== '' ? $phone : null,
                     'ic_number' => $normalizedIcNumber,
                 ]);
-                $userId = $pdo->lastInsertId();
-
                 $patientStatement = $pdo->prepare(
-                    'INSERT INTO patient (UserID, DateOfBirth, Approval) VALUES (:user_id, :date_of_birth, \'No\')'
+                    'INSERT INTO patient (PatientID, UserID, DateOfBirth, Approval)
+                     VALUES (:patient_id, :user_id, :date_of_birth, \'No\')'
                 );
                 $patientStatement->execute([
+                    'patient_id' => $userId,
                     'user_id' => $userId,
                     'date_of_birth' => $dateOfBirth !== '' ? $dateOfBirth : null,
                 ]);
@@ -127,7 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 set_flash('success', 'Registration submitted successfully! Your account is currently awaiting admin approval. Please wait until your registration is approved before logging in.');
                 header('Location: authentication.php');
                 exit;
-            } catch (PDOException $exception) {
+            } catch (Throwable $exception) {
                 if ($pdo->inTransaction()) {
                     $pdo->rollBack();
                 }
