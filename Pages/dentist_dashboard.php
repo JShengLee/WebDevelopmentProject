@@ -28,12 +28,23 @@ $stmt = $pdo->prepare($sqlWaiting);
 $stmt->execute(['dentist_id' => $dentistID]);
 $waitingCount = $stmt->fetchColumn();
 
-// 3. Count active orthodontic records
+// 3. Count patients whose latest record WITH THIS DENTIST is not completed
 $sqlOrtho = "SELECT COUNT(*) AS total
-             FROM orthodonticrecord
-             WHERE DentistID = :dentist_id";
+             FROM orthodonticrecord o1
+             WHERE o1.DentistID = :dentist_id_1
+             AND o1.StartDate = (
+                 SELECT MAX(o2.StartDate)
+                 FROM orthodonticrecord o2
+                 WHERE o2.PatientID = o1.PatientID
+                   AND o2.DentistID = :dentist_id_2
+             )
+             AND o1.CurrentStage != 'Completed'";
+
 $stmt = $pdo->prepare($sqlOrtho);
-$stmt->execute(['dentist_id' => $dentistID]);
+$stmt->execute([
+    'dentist_id_1' => $dentistID,
+    'dentist_id_2' => $dentistID
+]);
 $orthodonticCount = $stmt->fetchColumn();
 
 // 4. Retrieve today's appointments

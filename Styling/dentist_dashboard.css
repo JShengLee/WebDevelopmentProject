@@ -392,19 +392,19 @@ button {
     font-weight: 600;
 }
 
-.appointment-icon {
-    background-color: #eaf8fb;
-    color: #42B1CC;
+.card-icon.appointment-icon {
+    background-color: #eaf8fb !important;
+    color: #42B1CC !important;
 }
 
-.treatment-icon {
-    background-color: #eef8f1;
-    color: #5aa873;
+.card-icon.treatment-icon {
+    background-color: #eef8f1 !important;
+    color: #5aa873 !important;
 }
 
-.records-icon {
-    background-color: #f4f0fa;
-    color: #8c70ad;
+.card-icon.records-icon {
+    background-color: #f4f0fa !important;
+    color: #8c70ad !important;
 }
 
 .card-status {
@@ -483,9 +483,23 @@ button {
 /* APPOINTMENT LIST */
 
 .appointment-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    max-height: 380px; /* Adjust height to fit ~4 to 5 rows comfortably */
+    overflow-y: auto;  /* Adds a vertical scrollbar when content exceeds max-height */
+    padding-right: 8px; /* Prevents scrollbar from overlapping text */
+}
+
+/* Optional: Custom clean scrollbar styling */
+.appointment-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.appointment-list::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 4px;
+}
+
+.appointment-list::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
 }
 
 .appointment-row {

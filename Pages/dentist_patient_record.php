@@ -299,11 +299,6 @@ if ($patientID) {
 
                 <!-- Page heading -->
                 <section class="page-heading">
-                    <a href="dentist_patients.php" class="back-link">
-                        <i class="fa-solid fa-arrow-left"></i>
-                        Back to <strong>PATIENTS</strong>
-                    </a>
-
                     <h1>Patient Dental Record</h1>
 
                     <p>

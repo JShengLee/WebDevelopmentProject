@@ -3,29 +3,40 @@ require_once __DIR__ . '/../includes/view_helpers.php';
 require_once __DIR__ . '/../includes/patient_bootstrap.php';
 $headerName = $currentPatient['FullName'];
 $headerRole = $_SESSION['role'] ?? 'Patient';
-$headerBreadcrumbs = [
-    'index.php' => 'Dashboard',
-    'appointments.php' => 'Appointments',
-    'book-appointment.php' => 'Book Appointment',
-    'contact.php' => 'Contact',
-    'dental-records.php' => 'Dental Records',
-    'orthodontics.php' => 'Orthodontics',
-    'profile.php' => 'My Profile',
-    'services.php' => 'Services',
-    'dentist_dashboard.php' => 'Dashboard',
-    'dentist_schedules.php' => 'Schedules',
-    'dentist_patients.php' => 'Patients',
-    'dentist_patient_record.php' => 'Patient Record',
-    'dentist_profile.php'=> 'My Profile',
-    "admin_dashboard.php" => "Dashboard",
-    "admin_dentist_list.php" => "Dentist List",
-    "admin_service_list.php" => "Service List",
-    "admin_patient_list.php" => "Patient List"
+
+// Define dynamic dashboard target per role
+$dashboardPage = match ($headerRole) {
+    'Dentist' => 'dentist_dashboard.php',
+    'Admin'   => 'admin_dashboard.php',
+    default   => 'index.php',
+};
+
+// Map script names to full breadcrumb chains (excluding Dashboard, which is prepended automatically)
+$headerBreadcrumbsMap = [
+    'appointments.php'           => [['label' => 'Appointments']],
+    'book-appointment.php'       => [['label' => 'Appointments', 'url' => 'appointments.php'], ['label' => 'Book Appointment']],
+    'contact.php'                => [['label' => 'Contact']],
+    'dental-records.php'         => [['label' => 'Dental Records']],
+    'orthodontics.php'           => [['label' => 'Orthodontics']],
+    'profile.php'                => [['label' => 'My Profile']],
+    'services.php'               => [['label' => 'Services']],
+    'dentist_schedules.php'      => [['label' => 'Schedules']],
+    'dentist_patients.php'       => [['label' => 'Patients']],
+    'dentist_patient_record.php' => [['label' => 'Patients', 'url' => 'dentist_patients.php'], ['label' => 'Patient Record']],
+    'dentist_profile.php'        => [['label' => 'My Profile']],
+    'admin_dentist_list.php'     => [['label' => 'Dentist List']],
+    'admin_service_list.php'     => [['label' => 'Service List']],
+    'admin_patient_list.php'     => [['label' => 'Patient List']],
 ];
-$headerBreadcrumb = $headerBreadcrumbs[basename($_SERVER['SCRIPT_NAME'] ?? '')] ?? '';
+
+$currentPage = basename($_SERVER['SCRIPT_NAME'] ?? '');
+$pageBreadcrumbs = $headerBreadcrumbsMap[$currentPage] ?? [];
+
 $headerNameParts = preg_split('/\s+/', trim($headerName), -1, PREG_SPLIT_NO_EMPTY);
-$headerInitials = strtoupper(substr($headerNameParts[0] ?? '', 0, 1)
-    . (count($headerNameParts) > 1 ? substr($headerNameParts[count($headerNameParts) - 1], 0, 1) : ''));
+$headerInitials = strtoupper(
+    substr($headerNameParts[0] ?? '', 0, 1) . 
+    (count($headerNameParts) > 1 ? substr($headerNameParts[count($headerNameParts) - 1], 0, 1) : '')
+);
 ?>
 <link rel="stylesheet" href="../Styling/header.css">
 <link rel="stylesheet" href="../global.css">
@@ -34,94 +45,87 @@ $headerInitials = strtoupper(substr($headerNameParts[0] ?? '', 0, 1)
 <div class="header-container">
     <!-- Top header -->
     <header class="top-header">
+        <div class="mobile-logo">
+            <!-- Empty on desktop -->
+        </div>
 
-                    <div class="mobile-logo">
-                        <!-- Empty on desktop -->
-                    </div>
-
-                    <?php if ($headerBreadcrumb !== ''): ?>
-                        <nav class="header-breadcrumb" aria-label="Breadcrumb">
-                            <ol>
-                                <?php 
-                                    if ($headerBreadcrumb !== 'Dashboard'): 
-                                        if ($headerRole === "Patient"):
-                                ?>
-                                        <li><a href="index.php">Dashboard</a></li>
-                                    <?php elseif ($headerRole === "Dentist"): ?>
-                                        <li><a href="dentist_dashboard.php">Dashboard</a></li>
-                                    <?php elseif ($headerRole === "Admin"): ?>
-                                        <li><a href="admin_dashboard.php">Dashboard</a></li>
-                                <?php
-                                        endif; 
-                                    endif; 
-                                ?>
-                                <li aria-current="page"><?= escape_html($headerBreadcrumb) ?></li>
-                            </ol>
-                        </nav>
+        <nav class="header-breadcrumb" aria-label="Breadcrumb">
+            <ol>
+                <li><a href="<?= $dashboardPage ?>">Dashboard</a></li>
+                <?php foreach ($pageBreadcrumbs as $index => $crumb): ?>
+                    <?php if ($index === count($pageBreadcrumbs) - 1): ?>
+                        <li aria-current="page"><?= escape_html($crumb['label']) ?></li>
+                    <?php else: ?>
+                        <li><a href="<?= $crumb['url'] ?>"><?= escape_html($crumb['label']) ?></a></li>
                     <?php endif; ?>
+                <?php endforeach; ?>
+            </ol>
+        </nav>
 
-                    <button 
-                            class="navbar-toggler burger-icon"
-                            type="button" 
-                            data-bs-toggle="collapse" 
-                            data-bs-target="#mainmenu"
-                            id="burger-icon"><i class="fa-solid fa-bars"></i></button>
+        <button 
+            class="navbar-toggler burger-icon"
+            type="button" 
+            data-bs-toggle="collapse" 
+            data-bs-target="#mainmenu"
+            id="burger-icon"
+        >
+            <i class="fa-solid fa-bars"></i>
+        </button>
 
-                    <div class="middle-logo">
-                        <div class="mobile-logo">
-                            <img src="../Logo.png" alt="BrightSmile Dental Clinic Logo">
-                        </div>
-                        <p>BrightSmile Dental</p>
-                    </div>
+        <div class="middle-logo">
+            <div class="mobile-logo">
+                <img src="../Logo.png" alt="BrightSmile Dental Clinic Logo">
+            </div>
+            <p>BrightSmile Dental</p>
+        </div>
 
-                    <div class="header-right">
-                        <!-- Notification -->
-                        <button class="notification-button">
-                            <span><i class="fa-regular fa-bell"></i></span>
-                            <span class="notification-dot"></span>
-                        </button>
+        <div class="header-right">
+            <!-- Notification -->
+            <button class="notification-button">
+                <span><i class="fa-regular fa-bell"></i></span>
+                <span class="notification-dot"></span>
+            </button>
 
-                        <!-- User -->
-                        <div class="user-profile">
-                            <div class="user-avatar">
-                                <?= escape_html($headerInitials) ?>
-                            </div>
-                            <div class="user-info">
-                                <strong><?= escape_html($headerName) ?></strong>
-                                <span><?= escape_html($headerRole) ?></span>
-                            </div>
-                        </div>
-                    </div>
-                </header>
-
-                <div class="burger-navbar collapse" id="mainmenu">
-                    <?php include "SidebarNavItems.php"; ?>
-
-                    <?php if ($headerRole !== 'Dentist'): ?>
-                        <div class="help-box">
-                            <div class="help-icon">
-                                ?
-                            </div>
-
-                            <div>
-                                <strong>Need help?</strong>
-                                <span>Contact the clinic</span>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-
-                    <a href="logout.php" class="logout-button">
-                        <span>↪</span>
-                        <span>Log Out</span>
-                    </a>
+            <!-- User -->
+            <div class="user-profile">
+                <div class="user-avatar">
+                    <?= escape_html($headerInitials) ?>
                 </div>
+                <div class="user-info">
+                    <strong><?= escape_html($headerName) ?></strong>
+                    <span><?= escape_html($headerRole) ?></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="burger-navbar collapse" id="mainmenu">
+        <?php include "SidebarNavItems.php"; ?>
+
+        <?php if ($headerRole !== 'Dentist'): ?>
+            <div class="help-box">
+                <div class="help-icon">
+                    ?
+                </div>
+                <div>
+                    <strong>Need help?</strong>
+                    <span>Contact the clinic</span>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <a href="logout.php" class="logout-button">
+            <span>↪</span>
+            <span>Log Out</span>
+        </a>
+    </div>
 </div>
 
 <script>
     // Toggle the burger icon between bars and times
     const button = document.getElementById("burger-icon");
 
-    button.addEventListener("click", function(){
+    button.addEventListener("click", function () {
         const icon = button.querySelector("i");
         if (icon) {
             icon.classList.toggle("fa-bars");
