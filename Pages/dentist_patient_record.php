@@ -71,12 +71,6 @@ if ($patientID) {
             'age' => $age,
             'gender' => $row['Gender'] ?: '-',
             'phone' => $row['Phone'] ?: '-',
-            'patient_code' => 'P' . str_pad(
-                $row['PatientID'],
-                3,
-                '0',
-                STR_PAD_LEFT
-            ),
             'initials' => mb_strtoupper($initials),
             'treatment' => 'No treatment recorded'
         ];
@@ -329,7 +323,7 @@ if ($patientID) {
                             <h2><?= escape_html($patient['name']) ?></h2>
 
                             <span class="patient-code">
-                                Patient ID: <?= escape_html($patient['patient_code']) ?>
+                                Patient ID: <?= escape_html($patient['id']) ?>
                             </span>
 
                             <div class="patient-meta">

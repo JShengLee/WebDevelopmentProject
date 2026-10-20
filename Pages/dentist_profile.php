@@ -110,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Retrieve updated dentist account data using PDO
 $sql = "SELECT
-            u.UserID, u.FullName, u.Email, u.Phone, u.Role,
+            u.UserID, u.FullName, u.Email, u.Phone, u.ic_number,
             d.DentistID, d.DeptID, d.Specialty, dep.DepartmentName
         FROM dentist d
         JOIN `user` u ON d.UserID = u.UserID
@@ -221,16 +221,6 @@ $departments =$deptStmt->fetchAll();
 
                             <div class="profile-grid">
                                 <div class="form-group">
-                                    <label for="role">Account Role</label>
-                                    <input
-                                        type="text"
-                                        id="role"
-                                        value="<?= escape_html($dentist["Role"]) ?>"
-                                        disabled
-                                    >
-                                </div>
-
-                                <div class="form-group">
                                     <label for="fullName">Full Name</label>
                                     <input
                                         type="text"
@@ -240,6 +230,16 @@ $departments =$deptStmt->fetchAll();
                                         disabled
                                         required
                                         maxlength="100"
+                                    >
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="icNumber">IC Number</label>
+                                    <input
+                                        type="text"
+                                        id="icNumber"
+                                        value="<?= escape_html($dentist["ic_number"] ?? '') ?>"
+                                        disabled
                                     >
                                 </div>
 

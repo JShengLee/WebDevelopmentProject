@@ -154,10 +154,6 @@ function getInitials($name) {
                 <div class="page-content">
                     <section class="welcome-section">
                         <div>
-                            <span class="page-label">
-                                DENTIST DASHBOARD
-                            </span>
-
                             <h1>
                                 Good day, Dr. <?= escape_html($dentistName) ?> 👋
                             </h1>

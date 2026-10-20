@@ -56,7 +56,7 @@ foreach ($rows as $row) {
         'raw_id' => $row['AppointmentID'],
         'raw_patient_id' => $row['PatientID'],
         'id' => 'A' . str_pad($row['AppointmentID'], 3, '0', STR_PAD_LEFT),
-        'patient_id' => 'P' . str_pad($row['PatientID'], 3, '0', STR_PAD_LEFT),
+        'patient_id' => $row['PatientID'],
         'date' => $row['AppointmentDate'],
         'start' => $startTime->format('H:i'),
         'end' => $endTime->format('H:i'),
@@ -107,8 +107,6 @@ foreach ($rows as $row) {
             <!-- Page heading -->
             <section class="welcome-section">
                 <div>
-                    <span class="page-label">DENTAL PRACTICE</span>
-
                     <h1>Schedules</h1>
 
                     <p>

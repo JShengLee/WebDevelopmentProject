@@ -259,7 +259,7 @@
     background-color: #eef2f4 !important;
     color: #2b363a !important;
     border-color: #d1dcde !important;
-    -webkit-text-fill-color: #2b363a !important; /* Prevents Chrome/Safari text fading */
+    -webkit-text-fill-color: #2b363a !important;
     cursor: not-allowed;
     opacity: 1;
 }

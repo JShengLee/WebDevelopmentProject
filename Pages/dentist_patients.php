@@ -83,12 +83,6 @@ foreach ($rows as $row) {
 
     $patients[] = [
         'id' => (int) $row['PatientID'],
-        'patientCode' => 'P' . str_pad(
-            $row['PatientID'],
-            3,
-            '0',
-            STR_PAD_LEFT
-        ),
         'name' => $row['FullName'],
         'phone' => $row['Phone'] ?: '-',
         'gender' => $row['Gender'] ?: '-',
@@ -132,10 +126,6 @@ foreach ($rows as $row) {
                     <!-- Page Heading -->
                     <section class="page-heading">
                         <div>
-                            <span class="page-label">
-                                PATIENTS
-                            </span>
-
                             <h1>
                                 Patients & Dental Records
                             </h1>
@@ -210,7 +200,7 @@ foreach ($rows as $row) {
                                                 <!-- Patient ID -->
                                                 <td>
                                                     <strong>
-                                                        <?= escape_html($patient['patientCode']) ?>
+                                                        <?= escape_html($patient['id']) ?>
                                                     </strong>
                                                 </td>
 
