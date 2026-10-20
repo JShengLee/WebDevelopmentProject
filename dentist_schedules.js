@@ -188,12 +188,9 @@ document.addEventListener("DOMContentLoaded", function () {
             appointmentContainer.className = "hour-appointments";
 
             // Find appointments starting within this hour
-            const hourlyAppointments = appointments.filter(
-                function (appointment) {
-                    return appointment.start >= startTime &&
-                           appointment.start < endTime;
-                }
-            );
+            const hourlyAppointments = appointments.filter(function (appointment) {
+                return appointment.start < endTime && appointment.end > startTime;
+            });
 
             if (hourlyAppointments.length === 0) {
                 const emptySlot = document.createElement("div");
@@ -304,6 +301,18 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("modalPhone").textContent = appointment.phone;
         document.getElementById("modalStatus").textContent = appointment.status;
         document.getElementById("modalNotes").textContent = appointment.notes;
+
+        // Show 'Start New Visit' button ONLY if status is Confirmed AND no dental record exists yet
+        if (startVisitButton) {
+            const isConfirmed = appointment.status.toLowerCase() === "confirmed";
+            const hasExistingRecord = Boolean(appointment.has_record);
+
+            if (isConfirmed && !hasExistingRecord) {
+                startVisitButton.style.display = "inline-flex";
+            } else {
+                startVisitButton.style.display = "none";
+            }
+        }
 
         modal.classList.add("show");
         modal.setAttribute("aria-hidden", "false");

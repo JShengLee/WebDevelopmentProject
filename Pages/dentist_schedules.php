@@ -5,7 +5,7 @@ require_once __DIR__ . '/../includes/patient_bootstrap.php';
 $currentDentist = require_patient($pdo);
 $dentistID = $currentDentist['DentistID'];
 
-// Retrieve appointments and related patient and service information using PDO
+// Retrieve appointments, patient, service details, and check if a dental record already exists
 $sql = "SELECT
             a.AppointmentID,
             a.PatientID,
@@ -16,11 +16,13 @@ $sql = "SELECT
             u.FullName AS PatientName,
             u.Phone AS PatientPhone,
             s.ServiceName,
-            s.Duration
+            s.Duration,
+            CASE WHEN dr.RecordID IS NOT NULL THEN 1 ELSE 0 END AS HasRecord
         FROM appointment a
         JOIN patient p ON a.PatientID = p.PatientID
         JOIN user u ON p.UserID = u.UserID
         JOIN service s ON a.ServiceID = s.ServiceID
+        LEFT JOIN dentalrecord dr ON a.AppointmentID = dr.AppointmentID
         WHERE a.DentistID = :dentist_id
         ORDER BY a.AppointmentDate ASC,
                  a.AppointmentTime ASC";
@@ -65,7 +67,8 @@ foreach ($rows as $row) {
         'treatment' => $row['ServiceName'],
         'phone' => $row['PatientPhone'] ?? '-',
         'status' => $row['AppointmentStatus'],
-        'notes' => $row['AppointmentNotes'] ?? '-'
+        'notes' => $row['AppointmentNotes'] ?? '-',
+        'has_record' => (bool)$row['HasRecord']
     ];
 }
 ?>
