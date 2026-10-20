@@ -234,23 +234,6 @@ CREATE TABLE `user` (
   `Role` enum('Patient','Dentist','Admin') NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
-
---
--- Table structure for table `role_id_sequence`
---
-
-CREATE TABLE `role_id_sequence` (
-  `Role` enum('Patient','Admin','Dentist') NOT NULL,
-  `LastID` int(11) NOT NULL,
-  PRIMARY KEY (`Role`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-INSERT INTO `role_id_sequence` (`Role`, `LastID`) VALUES
-('Patient', 1000),
-('Admin', 2000),
-('Dentist', 3000);
-
 --
 -- Indexes for dumped tables
 --

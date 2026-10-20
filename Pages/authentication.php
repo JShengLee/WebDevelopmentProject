@@ -126,6 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'date_of_birth' => $dateOfBirth !== '' ? $dateOfBirth : null,
                 ]);
                 $pdo->commit();
+                release_role_user_id_lock($pdo);
 
                 set_flash('success', 'Registration submitted successfully! Your account is currently awaiting admin approval. Please wait until your registration is approved before logging in.');
                 header('Location: authentication.php');
@@ -134,6 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($pdo->inTransaction()) {
                     $pdo->rollBack();
                 }
+                release_role_user_id_lock($pdo);
                 $registrationError = (string) $exception->getCode() === '23000'
                     ? 'An account with this email address or IC number already exists.'
                     : 'Your account could not be created. Please try again.';
