@@ -1,17 +1,12 @@
 Table dentalrecord:
 Add 2 column:
 1. (name, type)
-oralHygiene, enum(Good, Fair, Needs Improvement)
+oralHygiene, varchar(150)
 
 2. (name, type)
-gumCondition, enum(Healthy, Inflammation Observed, Further Assessment Required)
+gumCondition, varchar(150)
 
-
-Table toothrecord:
-Update 1 column:
-ConditionDescription type change to enum(Healthy, Cavity, Treated)
-
-
+=== IF NEEDED ===
 Table tooth:
 Data inserted:
 INSERT INTO `tooth` (`ToothID`, `ToothNumber`, `ToothName`) VALUES

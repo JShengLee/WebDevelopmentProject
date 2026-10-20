@@ -88,8 +88,6 @@ foreach ($rows as $row) {
     <link
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
         rel="stylesheet">
-
-    <link rel="stylesheet" href="../Styling/dentist_dashboard.css">
     <link rel="stylesheet" href="../Styling/dentist_schedules.css">
 </head>
 

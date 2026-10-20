@@ -270,7 +270,6 @@ if ($patientID) {
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
         rel="stylesheet">
 
-    <link rel="stylesheet" href="../Styling/dentist_patients.css">
     <link rel="stylesheet" href="../Styling/dentist_patient_record.css">
 </head>
 
