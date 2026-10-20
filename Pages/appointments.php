@@ -59,7 +59,6 @@ $appointments = $appointmentStatement->fetchAll();
             <section class="page-content patient-page">
                 <div class="page-heading page-heading-row">
                     <div>
-                        <p class="page-label">PATIENT CARE</p>
                         <h1>Appointments</h1>
                         <p class="page-description">Review your upcoming visits and appointment history.</p>
                     </div>

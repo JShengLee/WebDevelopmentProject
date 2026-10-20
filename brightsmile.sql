@@ -131,7 +131,8 @@ CREATE TABLE `patient` (
   `UserID` int(11) NOT NULL,
   `DateOfBirth` date DEFAULT NULL,
   `Gender` varchar(20) DEFAULT NULL,
-  `Address` varchar(255) DEFAULT NULL
+  `Address` varchar(255) DEFAULT NULL,
+  `Approval` enum('Yes','No') NOT NULL DEFAULT 'No'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -227,10 +228,28 @@ CREATE TABLE `user` (
   `UserID` int(11) NOT NULL,
   `FullName` varchar(100) NOT NULL,
   `Email` varchar(150) NOT NULL,
+  `ic_number` varchar(12) DEFAULT NULL,
   `PasswordHash` varchar(255) NOT NULL,
   `Phone` varchar(20) DEFAULT NULL,
   `Role` enum('Patient','Dentist','Admin') NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `role_id_sequence`
+--
+
+CREATE TABLE `role_id_sequence` (
+  `Role` enum('Patient','Admin','Dentist') NOT NULL,
+  `LastID` int(11) NOT NULL,
+  PRIMARY KEY (`Role`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+INSERT INTO `role_id_sequence` (`Role`, `LastID`) VALUES
+('Patient', 1000),
+('Admin', 2000),
+('Dentist', 3000);
 
 --
 -- Indexes for dumped tables
@@ -346,7 +365,8 @@ ALTER TABLE `treatment`
 --
 ALTER TABLE `user`
   ADD PRIMARY KEY (`UserID`),
-  ADD UNIQUE KEY `Email` (`Email`);
+  ADD UNIQUE KEY `Email` (`Email`),
+  ADD UNIQUE KEY `uq_user_ic_number` (`ic_number`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -356,7 +376,7 @@ ALTER TABLE `user`
 -- AUTO_INCREMENT for table `admin`
 --
 ALTER TABLE `admin`
-  MODIFY `AdminID` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `AdminID` int(11) NOT NULL;
 
 --
 -- AUTO_INCREMENT for table `appointment`
@@ -374,7 +394,7 @@ ALTER TABLE `dentalrecord`
 -- AUTO_INCREMENT for table `dentist`
 --
 ALTER TABLE `dentist`
-  MODIFY `DentistID` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `DentistID` int(11) NOT NULL;
 
 --
 -- AUTO_INCREMENT for table `department`
@@ -398,7 +418,7 @@ ALTER TABLE `orthodonticrecord`
 -- AUTO_INCREMENT for table `patient`
 --
 ALTER TABLE `patient`
-  MODIFY `PatientID` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `PatientID` int(11) NOT NULL;
 
 --
 -- AUTO_INCREMENT for table `prescription`
@@ -440,7 +460,7 @@ ALTER TABLE `treatment`
 -- AUTO_INCREMENT for table `user`
 --
 ALTER TABLE `user`
-  MODIFY `UserID` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `UserID` int(11) NOT NULL;
 
 --
 -- Constraints for dumped tables

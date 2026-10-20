@@ -1,10 +1,10 @@
 <?php 
     require_once __DIR__ . '/../includes/patient_bootstrap.php';
+    require_once __DIR__ . '/../includes/role_id_helpers.php';
 ?>
 
 <?php
     if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["action"] ?? "") === "addPatient"){
-        $userID = (int) trim($_POST["userID"]);
         $fullName = trim($_POST["fullName"]);
         $email = trim($_POST["email"]);
         $password = $_POST["password"];
@@ -17,9 +17,10 @@
 
         try{
             $pdo->beginTransaction();
+            $userID = generate_role_user_id($pdo, 'Patient');
 
-            $addUser = "INSERT INTO user (UserID, FullName, Email, PasswordHash, Phone, Role)
-                        VALUES (?, ?, ?, ?, ?, 'Patient')";
+            $addUser = "INSERT INTO user (UserID, FullName, Email, ic_number, PasswordHash, Phone, Role)
+                        VALUES (?, ?, ?, ?, ?, ?, 'Patient')";
 
             $stmtAddUser = $pdo->prepare($addUser);
 
@@ -27,19 +28,19 @@
                 [$userID,
                 $fullName,
                 $email,
+                preg_replace('/[^0-9]/', '', $icnum),
                 $passwordHash,
                 $phone]
             );
 
-            $addPatient = "INSERT INTO patient (PatientID, UserID, ICNum, Gender, Address, Approval)
-                        VALUES (?, ?, ?, ?, ?, 'Yes')";
+            $addPatient = "INSERT INTO patient (PatientID, UserID, Gender, Address, Approval)
+                        VALUES (?, ?, ?, ?, 'Yes')";
     
             $stmtAddPatient = $pdo->prepare($addPatient);
 
             $stmtAddPatient->execute(
                 [$userID,
                 $userID,
-                $icnum,
                 $gender,
                 $address]
             );
@@ -52,7 +53,10 @@
                 </script>";
 
             exit;
-        } catch (PDOException $e){
+        } catch (Throwable $e){
+            if ($pdo->inTransaction()){
+                $pdo->rollBack();
+            }
 
             error_log($e->getMessage());
 
@@ -253,20 +257,9 @@
                                     </a>
                                 </div>
 
-                                <?php
-                                    $autoID = $pdo->query(
-                                        "SELECT PatientID from patient ORDER BY PatientID DESC LIMIT 1"
-                                    );
-
-                                    $autoIDRow = $autoID->fetch();
-
-                                    $newID = $autoIDRow ? ((int) $autoIDRow["PatientID"] + 1) : 3001;
-                                ?>
-
                                 <div class="modal-body">
                                     <form method="POST" id="addPatientForm">
                                         <input type="hidden" name="action" value="addPatient">
-                                        <input type="hidden" id="userID" name="userID" value="<?=$newID?>">
 
                                         <div class="mb-3">
                                             <label for="fullName" class="form-label">Full Name</label>
@@ -540,7 +533,7 @@
                             $stmt = $pdo->prepare($sql);
                             $stmt->execute([$search, $searchTerm, $search, $searchTerm]);
                         } else { 
-                            $sql = "SELECT * FROM user JOIN patient ON user.UserID = patient.PatientID WHERE patient.Approval = 'Yes'";
+                            $sql = "SELECT * FROM user JOIN patient ON user.UserID = patient.UserID WHERE patient.Approval = 'Yes'";
                             $stmt = $pdo->prepare($sql);
                             $stmt->execute();
                         }
@@ -558,7 +551,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php while ($patient = $stmt->fetch()): ?> 
+                                <?php while ($patient = $stmt->fetch()):?> 
                                     <tr>
                                         <td><?= $patient["UserID"]?></td>
                                         <td><?= $patient["FullName"]?></td>
