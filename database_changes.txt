@@ -1,0 +1,44 @@
+Table dentalrecord:
+Add 2 column:
+1. (name, type)
+oralHygiene, varchar(150)
+
+2. (name, type)
+gumCondition, varchar(150)
+
+=== IF NEEDED ===
+Table tooth:
+Data inserted:
+INSERT INTO `tooth` (`ToothID`, `ToothNumber`, `ToothName`) VALUES
+(1, '11', 'Central Incisor'),
+(2, '12', 'Lateral Incisor'),
+(3, '13', 'Canine'),
+(4, '14', 'First Premolar'),
+(5, '15', 'Second Premolar'),
+(6, '16', 'First Molar'),
+(7, '17', 'Second Molar'),
+(8, '18', 'Third Molar (Wisdom Tooth)'),
+(9, '21', 'Central Incisor'),
+(10, '22', 'Lateral Incisor'),
+(11, '23', 'Canine'),
+(12, '24', 'First Premolar'),
+(13, '25', 'Second Premolar'),
+(14, '26', 'First Molar'),
+(15, '27', 'Second Molar'),
+(16, '28', 'Third Molar (Wisdom Tooth)'),
+(17, '31', 'Central Incisor'),
+(18, '32', 'Lateral Incisor'),
+(19, '33', 'Canine'),
+(20, '34', 'First Premolar'),
+(21, '35', 'Second Premolar'),
+(22, '36', 'First Molar'),
+(23, '37', 'Second Molar'),
+(24, '38', 'Third Molar (Wisdom Tooth)'),
+(25, '41', 'Central Incisor'),
+(26, '42', 'Lateral Incisor'),
+(27, '43', 'Canine'),
+(28, '44', 'First Premolar'),
+(29, '45', 'Second Premolar'),
+(30, '46', 'First Molar'),
+(31, '47', 'Second Molar'),
+(32, '48', 'Third Molar (Wisdom Tooth)');

@@ -42,9 +42,19 @@
 
 <?php elseif (($_SESSION['role'] ?? '') === 'Dentist'): ?>
 
-<a href="index.php" class="nav-item">
+<a href="dentist_dashboard.php" class="nav-item">
     <span class="nav-icon"><i class="fas fa-home"></i></span>
     <span>Dashboard</span>
+</a>
+
+<a href="dentist_schedules.php" class="nav-item">
+    <span class="nav-icon"><i class="fas fa-calendar-alt"></i></span>
+    <span>Schedules</span>
+</a>
+
+<a href="dentist_patients.php" class="nav-item">
+    <span class="nav-icon"><i class="fas fa-user-injured"></i></span>
+    <span>Patients</span>
 </a>
 
 <?php elseif (($_SESSION['role'] ?? '') === 'Admin'): ?>
@@ -75,7 +85,21 @@
     ACCOUNT
 </p>
 
-<a href="#" class="nav-item">
+<?php
+    // Determine the correct profile page URL based on role
+    $role = $_SESSION['role'] ?? '';
+    $profile_page = '#';
+
+    if ($role === 'Patient') {
+        $profile_page = 'profile.php';
+    } elseif ($role === 'Dentist') {
+        $profile_page = 'dentist_profile.php';
+    } elseif ($role === 'Admin') {
+        $profile_page = 'admin_profile.php';
+    }
+?>
+
+<a href="<?php echo htmlspecialchars($profile_page); ?>" class="nav-item">
     <span class="nav-icon"><i class="fas fa-user"></i></span>
     <span>My Profile</span>
 </a>
