@@ -1,35 +1,13 @@
 <?php
 require_once __DIR__ . '/../includes/patient_helpers.php';
-require_once __DIR__ . '/../includes/role_id_helpers.php';
 $flash = take_flash();
 $activeForm = ($_GET['mode'] ?? '') === 'register' ? 'register' : 'login';
 $loginError = '';
 $registrationError = '';
 $fullName = '';
 $registrationEmail = '';
-$icNumber = '';
 $phone = '';
 $dateOfBirth = '';
-
-function derive_malaysian_ic_date_of_birth(string $icDigits): ?string
-{
-    if (!preg_match('/^[0-9]{12}$/D', $icDigits)) {
-        return null;
-    }
-
-    $yearDigits = (int) substr($icDigits, 0, 2);
-    $year = $yearDigits <= (int) date('y') ? 2000 + $yearDigits : 1900 + $yearDigits;
-    $dateValue = sprintf('%04d-%02d-%02d', $year, (int) substr($icDigits, 2, 2), (int) substr($icDigits, 4, 2));
-    $date = DateTimeImmutable::createFromFormat('!Y-m-d', $dateValue);
-    $dateErrors = DateTimeImmutable::getLastErrors();
-
-    if (!$date || ($dateErrors && ($dateErrors['warning_count'] > 0 || $dateErrors['error_count'] > 0))
-        || $date->format('Y-m-d') !== $dateValue || $date > new DateTimeImmutable('today')) {
-        return null;
-    }
-
-    return $dateValue;
-}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $activeForm = ($_POST['form_action'] ?? '') === 'register' ? 'register' : 'login';
@@ -50,18 +28,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$user || !password_verify($password, $user['PasswordHash'])) {
             $loginError = 'Email or password is incorrect.';
         } elseif ($user['Role'] === 'Patient') {
-            $patientStatement = $pdo->prepare('SELECT PatientID, Approval FROM patient WHERE UserID = :user_id');
+            $patientStatement = $pdo->prepare('SELECT PatientID FROM patient WHERE UserID = :user_id');
             $patientStatement->execute(['user_id' => $user['UserID']]);
-            $patient = $patientStatement->fetch();
+            $patientId = $patientStatement->fetchColumn();
 
-            if (!$patient) {
+            if (!$patientId) {
                 $loginError = 'This patient account is missing its patient profile. Please contact the clinic.';
-            } elseif ($patient['Approval'] !== 'Yes') {
-                $loginError = 'Your registration is still pending approval by an administrator.';
             } else {
                 session_regenerate_id(true);
                 $_SESSION['user_id'] = (int) $user['UserID'];
-                $_SESSION['patient_id'] = (int) $patient['PatientID'];
+                $_SESSION['patient_id'] = (int) $patientId;
                 $_SESSION['role'] = $user['Role'];
                 $_SESSION['full_name'] = $user['FullName'];
                 header('Location: index.php');
@@ -72,70 +48,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_id'] = (int) $user['UserID'];
             $_SESSION['role'] = $user['Role'];
             $_SESSION['full_name'] = $user['FullName'];
-            header('Location: ' . ($user['Role'] === 'Dentist' ? 'dentist_dashboard.php' : 'admin_dashboard.php'));
+            header('Location: ' . ($user['Role'] === 'Dentist' ? '../dentist_dashboard.html' : '../admin_dashboard.html'));
             exit;
         }
     } else {
         $fullName = trim($_POST['full_name'] ?? '');
         $registrationEmail = trim($_POST['email'] ?? '');
-        $icNumber = trim($_POST['ic_number'] ?? '');
-        $normalizedIcNumber = str_replace('-', '', $icNumber);
         $phone = trim($_POST['phone'] ?? '');
-        $validIcFormat = preg_match('/^(?:[0-9]{12}|[0-9]{6}-[0-9]{2}-[0-9]{4})$/D', $icNumber) === 1;
-        $dateOfBirth = $validIcFormat ? (derive_malaysian_ic_date_of_birth($normalizedIcNumber) ?? '') : '';
+        $dateOfBirth = trim($_POST['date_of_birth'] ?? '');
         $password = $_POST['password'] ?? '';
         $confirmPassword = $_POST['confirm_password'] ?? '';
 
-        if ($fullName === '') {
-            $registrationError = 'Enter your full name.';
-        } elseif (!filter_var($registrationEmail, FILTER_VALIDATE_EMAIL)) {
-            $registrationError = 'Enter a valid email address.';
-        } elseif (!$validIcFormat) {
-            $registrationError = 'Enter a valid 12-digit IC number, with or without hyphens.';
-        } elseif ($dateOfBirth === '') {
-            $registrationError = 'The IC number must contain a valid date of birth that is not in the future.';
-        } elseif ($phone !== '' && !preg_match('/^[0-9]{10,11}$/D', $phone)) {
-            $registrationError = 'Enter a phone number containing 10 or 11 digits only.';
+        if ($fullName === '' || !filter_var($registrationEmail, FILTER_VALIDATE_EMAIL)) {
+            $registrationError = 'Enter your name and a valid email address.';
         } elseif (strlen($password) < 8) {
             $registrationError = 'Password must contain at least 8 characters.';
         } elseif ($password !== $confirmPassword) {
             $registrationError = 'The passwords do not match.';
+        } elseif ($dateOfBirth !== '' && (!DateTime::createFromFormat('!Y-m-d', $dateOfBirth)
+            || DateTime::createFromFormat('!Y-m-d', $dateOfBirth)->format('Y-m-d') !== $dateOfBirth)) {
+            $registrationError = 'Enter a valid date of birth.';
         } else {
             try {
                 $pdo->beginTransaction();
-                $userId = generate_role_user_id($pdo, 'Patient');
                 $userStatement = $pdo->prepare(
-                    'INSERT INTO user (UserID, FullName, Email, PasswordHash, Phone, ic_number, Role)
-                     VALUES (:user_id, :full_name, :email, :password_hash, :phone, :ic_number, \'Patient\')'
+                    'INSERT INTO user (FullName, Email, PasswordHash, Phone, Role)
+                     VALUES (:full_name, :email, :password_hash, :phone, \'Patient\')'
                 );
                 $userStatement->execute([
-                    'user_id' => $userId,
                     'full_name' => $fullName,
                     'email' => $registrationEmail,
                     'password_hash' => password_hash($password, PASSWORD_DEFAULT),
                     'phone' => $phone !== '' ? $phone : null,
-                    'ic_number' => $normalizedIcNumber,
                 ]);
+                $userId = $pdo->lastInsertId();
+
                 $patientStatement = $pdo->prepare(
-                    'INSERT INTO patient (PatientID, UserID, DateOfBirth, Approval)
-                     VALUES (:patient_id, :user_id, :date_of_birth, \'No\')'
+                    'INSERT INTO patient (UserID, DateOfBirth) VALUES (:user_id, :date_of_birth)'
                 );
                 $patientStatement->execute([
-                    'patient_id' => $userId,
                     'user_id' => $userId,
                     'date_of_birth' => $dateOfBirth !== '' ? $dateOfBirth : null,
                 ]);
+                $patientId = $pdo->lastInsertId();
                 $pdo->commit();
 
-                set_flash('success', 'Registration submitted successfully! Your account is currently awaiting admin approval. Please wait until your registration is approved before logging in.');
-                header('Location: authentication.php');
+                session_regenerate_id(true);
+                $_SESSION['user_id'] = (int) $userId;
+                $_SESSION['patient_id'] = (int) $patientId;
+                $_SESSION['role'] = 'Patient';
+                $_SESSION['full_name'] = $fullName;
+                header('Location: index.php');
                 exit;
-            } catch (Throwable $exception) {
+            } catch (PDOException $exception) {
                 if ($pdo->inTransaction()) {
                     $pdo->rollBack();
                 }
                 $registrationError = (string) $exception->getCode() === '23000'
-                    ? 'An account with this email address or IC number already exists.'
+                    ? 'An account with this email address already exists.'
                     : 'Your account could not be created. Please try again.';
             }
         }
@@ -174,6 +144,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <!-- Login Header -->
                         <div class="login-header">
                             <h2>Sign in to your account</h2>
+
+                            <p>
+                                Please enter your details to access the
+                                BrightSmile management system.
+                            </p>
                         </div>
 
                         <!-- Login Form -->
@@ -261,13 +236,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <form class="login-form" action="authentication.php" method="post">
                                 <input type="hidden" name="form_action" value="register">
                                 <input type="hidden" name="csrf_token" value="<?= escape_html(csrf_token()) ?>">
-                                <div class="form-group"><label for="full_name">Full Name (as per IC)</label><input id="full_name" name="full_name" value="<?= escape_html($fullName) ?>" placeholder="Enter your full name (e.g. Joshua Lee Jia Sheng)" autocomplete="name" required></div>
-                                <div class="form-group"><label for="register_email">Email Address</label><input id="register_email" name="email" type="email" value="<?= escape_html($registrationEmail) ?>" placeholder="Enter your email address (e.g. joshua@example.com)" autocomplete="email" required></div>
-                                <div class="form-group"><label for="ic_number">IC Number</label><input id="ic_number" name="ic_number" type="text" value="<?= escape_html($icNumber) ?>" placeholder="Enter your IC number (e.g. 980102105123 or 980102-10-5123)" pattern="(?:[0-9]{12}|[0-9]{6}-[0-9]{2}-[0-9]{4})" maxlength="14" autocomplete="off" required></div>
-                                <div class="form-group"><label for="phone">Phone Number</label><input id="phone" name="phone" type="tel" value="<?= escape_html($phone) ?>" placeholder="Enter your phone number (e.g. 0123456789)" inputmode="numeric" pattern="[0-9]{10,11}" maxlength="11" autocomplete="tel"></div>
-                                <div class="form-group"><label for="date_of_birth">Date of Birth</label><input id="date_of_birth" name="date_of_birth" type="text" value="<?= escape_html($dateOfBirth) ?>" placeholder="Auto-generated from IC number" readonly required></div>
-                                <div class="form-group"><label for="register_password">Password</label><input id="register_password" name="password" type="password" minlength="8" autocomplete="new-password" required placeholder="Enter your password"></div>
-                                <div class="form-group"><label for="confirm_password">Confirm password</label><input id="confirm_password" name="confirm_password" type="password" minlength="8" autocomplete="new-password" required placeholder="Enter your password again"></div>
+                                <div class="form-group"><label for="full_name">Full name</label><input id="full_name" name="full_name" value="<?= escape_html($fullName) ?>" autocomplete="name" required></div>
+                                <div class="form-group"><label for="register_email">Email address</label><input id="register_email" name="email" type="email" value="<?= escape_html($registrationEmail) ?>" autocomplete="email" required></div>
+                                <div class="form-group"><label for="phone">Phone number</label><input id="phone" name="phone" type="tel" value="<?= escape_html($phone) ?>" autocomplete="tel"></div>
+                                <div class="form-group"><label for="date_of_birth">Date of birth</label><input id="date_of_birth" name="date_of_birth" type="date" value="<?= escape_html($dateOfBirth) ?>"></div>
+                                <div class="form-group"><label for="register_password">Password</label><input id="register_password" name="password" type="password" minlength="8" autocomplete="new-password" required></div>
+                                <div class="form-group"><label for="confirm_password">Confirm password</label><input id="confirm_password" name="confirm_password" type="password" minlength="8" autocomplete="new-password" required></div>
                                 <button type="submit" class="login-button">Create account</button>
                             </form>
                         </section>
@@ -280,7 +254,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <!-- Security Notice -->
                     <div class="security-notice">
                         <span class="security-icon">
-                            <i class="fa-solid fa-lock"></i>
+                            🔒
                         </span>
                         <div>
                             <strong>Secure Access</strong>
@@ -295,46 +269,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </main>
     </body>
     <script>
-        <?php if (($flash['type'] ?? '') === 'success'): ?>
-            alert(<?= json_encode($flash['message'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>);
-        <?php endif; ?>
-        <?php if ($loginError === 'Your registration is still pending approval by an administrator.'): ?>
-            alert(<?= json_encode($loginError, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>);
-        <?php endif; ?>
-
-        const icNumberInput = document.getElementById('ic_number');
-        const dateOfBirthInput = document.getElementById('date_of_birth');
-
-        function updateDateOfBirth() {
-            const prefix = icNumberInput.value.replace(/\D/g, '').slice(0, 6);
-            if (prefix.length !== 6) {
-                dateOfBirthInput.value = '';
-                return;
-            }
-
-            const yearDigits = Number(prefix.slice(0, 2));
-            const year = yearDigits <= Number(new Date().getFullYear().toString().slice(-2))
-                ? 2000 + yearDigits
-                : 1900 + yearDigits;
-            const month = Number(prefix.slice(2, 4));
-            const day = Number(prefix.slice(4, 6));
-            const parsedDate = new Date(Date.UTC(year, month - 1, day));
-            const dateValue = `${year.toString().padStart(4, '0')}-${prefix.slice(2, 4)}-${prefix.slice(4, 6)}`;
-            const today = new Date();
-            const todayValue = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-
-            if (parsedDate.getUTCFullYear() !== year || parsedDate.getUTCMonth() !== month - 1
-                || parsedDate.getUTCDate() !== day || dateValue > todayValue) {
-                dateOfBirthInput.value = '';
-                return;
-            }
-
-            dateOfBirthInput.value = dateValue;
-        }
-
-        icNumberInput.addEventListener('input', updateDateOfBirth);
-        updateDateOfBirth();
-
         document.querySelectorAll('[data-auth-mode]').forEach((link) => {
             link.addEventListener('click', (event) => {
                 event.preventDefault();

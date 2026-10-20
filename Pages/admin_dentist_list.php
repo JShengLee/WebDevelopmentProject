@@ -1,10 +1,10 @@
 <?php 
     require_once __DIR__ . '/../includes/patient_bootstrap.php';
-    require_once __DIR__ . '/../includes/role_id_helpers.php';
 ?>
 
 <?php
     if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["action"] ?? "") === "addDoctor"){
+        $userID = (int) trim($_POST["userID"]);
         $fullName = trim($_POST["fullName"]);
         $email = trim($_POST["email"]);
         $password = $_POST["password"];
@@ -16,7 +16,6 @@
 
         try{
             $pdo->beginTransaction();
-            $userID = generate_role_user_id($pdo, 'Dentist');
 
             $sqlUser = "INSERT INTO user (UserID, FullName, Email, PasswordHash, Phone, Role)
                         VALUES (?, ?, ?, ?, ?, 'Dentist')";
@@ -51,7 +50,7 @@
                 </script>";
 
             exit;
-        } catch (Throwable $e){
+        } catch (PDOException $e){
             if ($pdo->inTransaction()){
                 $pdo->rollBack();
             }
@@ -258,9 +257,20 @@
                                     </a>
                                 </div>
                                 
+                                <?php
+                                    $autoID = $pdo->query(
+                                        "SELECT DentistID from dentist ORDER BY DentistID DESC LIMIT 1"
+                                    );
+
+                                    $autoIDRow = $autoID->fetch();
+
+                                    $newID = $autoIDRow ? ((int) $autoIDRow["DentistID"] + 1) : 2001;
+                                ?>
+
                                 <div class="modal-body">
                                     <form method="POST" id="addDoctorForm">
                                         <input type="hidden" name="action" value="addDoctor">
+                                        <input type="hidden" id="userID" name="userID" value="<?=$newID?>">
 
                                         <!-- <div class="mb-3">
                                             <label for="userID" class="form-label">UserID</label>
