@@ -18,6 +18,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const changeVisitButton = document.getElementById("changeVisit");
 
     let activeVisitID = null;
+    let currentOrthoID = null; 
+    let currentTreatmentID = null;
 
     function populateServiceDropdown() {
         const treatmentSelect = document.getElementById("treatmentName");
@@ -165,6 +167,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const treatments = record.treatments || [];
         const treatment = treatments.length > 0 ? treatments[0] : null;
+        currentTreatmentID = treatment?.id || null; // Save Treatment ID if existing
 
         setFieldValue("diagnosisDate", formatInputDate(treatment?.date || record.date));
         setFieldValue("diagnosis", record.diagnosis);
@@ -180,6 +183,8 @@ document.addEventListener("DOMContentLoaded", function () {
         setFieldValue("prescriptionInstructions", prescription?.instructions || "");
 
         const orthodonticRecord = orthodonticRecords.length > 0 ? orthodonticRecords[0] : null;
+        currentOrthoID = orthodonticRecord ? orthodonticRecord.OrthoRecordID : null; // Save Ortho ID
+        
         setFieldValue("treatmentType", orthodonticRecord?.TreatmentType || "");
         setFieldValue("startDate", formatInputDate(orthodonticRecord?.StartDate));
         setFieldValue("currentStage", orthodonticRecord?.CurrentStage || "");
@@ -192,7 +197,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (isNewVisit) {
             resetVisitForms();
-
+            currentTreatmentID = null; // Reset treatment ID for new visit
             // Set the dropdown to the newly created dental record.
             populatePrescriptionDropdown(id, date);
         } else {
@@ -415,14 +420,18 @@ document.addEventListener("DOMContentLoaded", function () {
             const res = await sendRequest({
                 action: "save_treatment",
                 recordID: activeVisitID,
+                treatmentID: currentTreatmentID, // Pass active treatment ID
                 treatmentDate: document.getElementById("diagnosisDate").value,
                 diagnosis: document.getElementById("diagnosis").value,
                 treatmentName: document.getElementById("treatmentName").value,
                 treatmentDetails: document.getElementById("treatmentDetails").value
             });
 
+            if (res.success && res.treatmentID) {
+                currentTreatmentID = res.treatmentID; // Update state with saved TreatmentID
+            }
+
             alert(res.message);
-            // REMOVED location.reload() here so the tab stays open
         });
     }
 
@@ -457,6 +466,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const res = await sendRequest({
                 action: "save_orthodontics",
+                orthoRecordID: currentOrthoID, // Pass the active OrthoRecordID if editing
                 treatmentType: document.getElementById("treatmentType").value,
                 startDate: document.getElementById("startDate").value,
                 currentStage: document.getElementById("currentStage").value,
@@ -464,8 +474,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 progressNotes: document.getElementById("progressNotes").value
             });
 
+            if (res.success && res.orthoRecordID) {
+                currentOrthoID = res.orthoRecordID; // Update state with newly saved ID
+            }
+
             alert(res.message);
-            // REMOVED location.reload() here so the tab stays open
         });
     }
 

@@ -141,6 +141,7 @@ try {
 
         case 'save_treatment':
             $recordID = filter_var($data['recordID'] ?? null, FILTER_VALIDATE_INT);
+            $treatmentID = filter_var($data['treatmentID'] ?? null, FILTER_VALIDATE_INT);
             $treatmentDate = $data['treatmentDate'] ?? date('Y-m-d');
             $diagnosis = $data['diagnosis'] ?? null;
             $treatmentName = $data['treatmentName'] ?? null;
@@ -153,25 +154,68 @@ try {
 
             $pdo->beginTransaction();
 
+            // 1. Always update Diagnosis on the parent dental record
             $diagStmt = $pdo->prepare("UPDATE dentalrecord SET Diagnosis = :diagnosis WHERE RecordID = :record_id");
             $diagStmt->execute([
                 'diagnosis' => $diagnosis,
                 'record_id' => $recordID
             ]);
 
-            $treatStmt = $pdo->prepare(
-                "INSERT INTO treatment (RecordID, TreatmentName, TreatmentDetails, TreatmentDate) 
-                 VALUES (:record_id, :treatment_name, :treatment_details, :treatment_date)"
-            );
-            $treatStmt->execute([
-                'record_id' => $recordID,
-                'treatment_name' => $treatmentName,
-                'treatment_details' => $treatmentDetails,
-                'treatment_date' => $treatmentDate
-            ]);
+            // 2. If treatmentID wasn't passed, check if a treatment already exists for this RecordID
+            if (!$treatmentID) {
+                $checkTreat = $pdo->prepare(
+                    "SELECT TreatmentID FROM treatment WHERE RecordID = :record_id ORDER BY TreatmentID DESC LIMIT 1"
+                );
+                $checkTreat->execute(['record_id' => $recordID]);
+                $existingTreat = $checkTreat->fetch();
+
+                if ($existingTreat) {
+                    $treatmentID = (int) $existingTreat['TreatmentID'];
+                }
+            }
+
+            if ($treatmentID) {
+                // UPDATE existing treatment record
+                $treatStmt = $pdo->prepare(
+                    "UPDATE treatment 
+                     SET TreatmentName = :treatment_name,
+                         TreatmentDetails = :treatment_details,
+                         TreatmentDate = :treatment_date
+                     WHERE TreatmentID = :treatment_id AND RecordID = :record_id"
+                );
+                $treatStmt->execute([
+                    'treatment_name' => $treatmentName,
+                    'treatment_details' => $treatmentDetails,
+                    'treatment_date' => $treatmentDate,
+                    'treatment_id' => $treatmentID,
+                    'record_id' => $recordID
+                ]);
+
+                $message = 'Diagnosis and treatment updated successfully.';
+            } else {
+                // INSERT new treatment record if none exists for this visit
+                $treatStmt = $pdo->prepare(
+                    "INSERT INTO treatment (RecordID, TreatmentName, TreatmentDetails, TreatmentDate) 
+                     VALUES (:record_id, :treatment_name, :treatment_details, :treatment_date)"
+                );
+                $treatStmt->execute([
+                    'record_id' => $recordID,
+                    'treatment_name' => $treatmentName,
+                    'treatment_details' => $treatmentDetails,
+                    'treatment_date' => $treatmentDate
+                ]);
+
+                $treatmentID = (int) $pdo->lastInsertId();
+                $message = 'Diagnosis and treatment saved successfully.';
+            }
 
             $pdo->commit();
-            echo json_encode(['success' => true, 'message' => 'Diagnosis and treatment saved successfully.']);
+
+            echo json_encode([
+                'success' => true,
+                'message' => $message,
+                'treatmentID' => $treatmentID
+            ]);
             break;
 
         case 'save_prescription':
@@ -259,31 +303,77 @@ try {
             break;
 
         case 'save_orthodontics':
-            $treatmentType = $data['treatmentType'] ?? '';
+            $orthoRecordID = filter_var($data['orthoRecordID'] ?? null, FILTER_VALIDATE_INT);
+            $treatmentType = trim($data['treatmentType'] ?? '');
             $startDate = !empty($data['startDate']) ? $data['startDate'] : null;
-            $currentStage = $data['currentStage'] ?? '';
+            $currentStage = trim($data['currentStage'] ?? '');
             $nextAdjustment = !empty($data['nextAdjustment']) ? $data['nextAdjustment'] : null;
-            $progressNotes = $data['progressNotes'] ?? '';
+            $progressNotes = trim($data['progressNotes'] ?? '');
 
-            $stmt = $pdo->prepare(
-                "INSERT INTO orthodonticrecord (PatientID, DentistID, TreatmentType, StartDate, CurrentStage, ProgressNotes, NextAdjustmentDate) 
-                 VALUES (:patient_id, :dentist_id, :treatment_type, :start_date, :current_stage, :progress_notes, :next_adjustment)"
-            );
-            $stmt->execute([
-                'patient_id' => $patientID,
-                'dentist_id' => $dentistID,
-                'treatment_type' => $treatmentType,
-                'start_date' => $startDate,
-                'current_stage' => $currentStage,
-                'progress_notes' => $progressNotes,
-                'next_adjustment' => $nextAdjustment
+            // If orthoRecordID wasn't passed, check if the patient already has an existing orthodontic record
+            if (!$orthoRecordID) {
+                $checkOrtho = $pdo->prepare(
+                    "SELECT OrthoRecordID 
+                     FROM orthodonticrecord 
+                     WHERE PatientID = :patient_id 
+                     ORDER BY OrthoRecordID DESC 
+                     LIMIT 1"
+                );
+                $checkOrtho->execute(['patient_id' => $patientID]);
+                $existingOrtho = $checkOrtho->fetch();
+
+                if ($existingOrtho) {
+                    $orthoRecordID = (int) $existingOrtho['OrthoRecordID'];
+                }
+            }
+
+            if ($orthoRecordID) {
+                // UPDATE existing orthodontic record
+                $stmt = $pdo->prepare(
+                    "UPDATE orthodonticrecord
+                     SET TreatmentType = :treatment_type,
+                         StartDate = :start_date,
+                         CurrentStage = :current_stage,
+                         ProgressNotes = :progress_notes,
+                         NextAdjustmentDate = :next_adjustment
+                     WHERE OrthoRecordID = :ortho_record_id AND PatientID = :patient_id"
+                );
+                $stmt->execute([
+                    'treatment_type' => $treatmentType,
+                    'start_date' => $startDate,
+                    'current_stage' => $currentStage,
+                    'progress_notes' => $progressNotes,
+                    'next_adjustment' => $nextAdjustment,
+                    'ortho_record_id' => $orthoRecordID,
+                    'patient_id' => $patientID
+                ]);
+
+                $message = 'Orthodontic record updated successfully.';
+            } else {
+                // INSERT new orthodontic record if no previous record exists
+                $stmt = $pdo->prepare(
+                    "INSERT INTO orthodonticrecord (PatientID, DentistID, TreatmentType, StartDate, CurrentStage, ProgressNotes, NextAdjustmentDate) 
+                     VALUES (:patient_id, :dentist_id, :treatment_type, :start_date, :current_stage, :progress_notes, :next_adjustment)"
+                );
+                $stmt->execute([
+                    'patient_id' => $patientID,
+                    'dentist_id' => $dentistID,
+                    'treatment_type' => $treatmentType,
+                    'start_date' => $startDate,
+                    'current_stage' => $currentStage,
+                    'progress_notes' => $progressNotes,
+                    'next_adjustment' => $nextAdjustment
+                ]);
+
+                $orthoRecordID = (int) $pdo->lastInsertId();
+                $message = 'Orthodontic record created successfully.';
+            }
+
+            echo json_encode([
+                'success' => true, 
+                'message' => $message,
+                'orthoRecordID' => $orthoRecordID
             ]);
-
-            echo json_encode(['success' => true, 'message' => 'Orthodontic record saved successfully.']);
-            break;
-
-        default:
-            echo json_encode(['success' => false, 'message' => 'Invalid action specified.']);
             break;
     }
 
