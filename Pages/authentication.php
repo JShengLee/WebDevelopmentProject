@@ -187,13 +187,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <!-- Email -->
                             <div class="form-group">
                                 <label for="email">
-                                    Email Address
+                                    Email
                                 </label>
                                 <input
                                     type="email"
                                     id="email"
                                     name="email"
-                                    placeholder="Enter your email address"
+                                    placeholder="Enter your email"
                                     autocomplete="email"
                                     required
                                 >
@@ -264,7 +264,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <input type="hidden" name="form_action" value="register">
                                 <input type="hidden" name="csrf_token" value="<?= escape_html(csrf_token()) ?>">
                                 <div class="form-group"><label for="full_name">Full Name (as per IC)</label><input id="full_name" name="full_name" value="<?= escape_html($fullName) ?>" placeholder="Enter your full name (e.g. Joshua Lee Jia Sheng)" autocomplete="name" required></div>
-                                <div class="form-group"><label for="register_email">Email Address</label><input id="register_email" name="email" type="email" value="<?= escape_html($registrationEmail) ?>" placeholder="Enter your email address (e.g. joshua@example.com)" autocomplete="email" required></div>
+                                <div class="form-group"><label for="register_email">Email</label><input id="register_email" name="email" type="email" value="<?= escape_html($registrationEmail) ?>" placeholder="Enter your email (e.g. joshua@example.com)" autocomplete="email" required></div>
                                 <div class="form-group"><label for="ic_number">IC Number</label><input id="ic_number" name="ic_number" type="text" value="<?= escape_html($icNumber) ?>" placeholder="Enter your IC number (e.g. 980102105123 or 980102-10-5123)" pattern="(?:[0-9]{12}|[0-9]{6}-[0-9]{2}-[0-9]{4})" maxlength="14" autocomplete="off" required></div>
                                 <div class="form-group"><label for="phone">Phone Number</label><input id="phone" name="phone" type="tel" value="<?= escape_html($phone) ?>" placeholder="Enter your phone number (e.g. 0123456789)" inputmode="numeric" pattern="[0-9]{10,11}" maxlength="11" autocomplete="tel"></div>
                                 <div class="form-group"><label for="date_of_birth">Date of Birth</label><input id="date_of_birth" name="date_of_birth" type="text" value="<?= escape_html($dateOfBirth) ?>" placeholder="Auto-generated from IC number" readonly required></div>
