@@ -130,8 +130,7 @@ CREATE TABLE `patient` (
   `PatientID` int(11) NOT NULL,
   `UserID` int(11) NOT NULL,
   `DateOfBirth` date DEFAULT NULL,
-  `Gender` varchar(20) DEFAULT NULL,
-  `Address` varchar(255) DEFAULT NULL,
+  `Gender` varchar(10) DEFAULT NULL,
   `Approval` enum('Yes','No') NOT NULL DEFAULT 'No'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
