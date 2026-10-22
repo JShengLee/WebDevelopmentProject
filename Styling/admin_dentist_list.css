@@ -618,6 +618,24 @@ button {
     align-items: center;
 }
 
+.summary-container{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.legend-card{
+    flex: 1;
+    background-color: white;
+    border-radius: 12px;
+}
+
+.legend-card p, h3{
+    padding-left: 20px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
 
 .top-container{
     display: flex;
@@ -632,7 +650,10 @@ button {
 }
 
 .form-container{
-    padding-right: 50px;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 5px;
 }
 
 .delete-form-btn-container{
@@ -645,7 +666,7 @@ button {
     width: max-content;
 }
 
-#category{
+.filter{
     height: 35px; 
     padding: 5px 10px; 
     border: 1px solid #d1d5db; 
@@ -660,24 +681,13 @@ button {
     -moz-appearance: none;
 }
 
-#department{
-    height: 35px; 
-    padding: 5px 10px; 
-    border: 1px solid #d1d5db; 
-    border-radius: 8px; 
-    background-color: white; 
-    color: #333; 
-    font-size: 14px; 
-    cursor: pointer; 
-    outline: none;
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
+#searchForm{
+    width: 100%;
 }
 
 .searchBar{
     height: 35px; 
-    width: 250px; 
+    min-width: 0px;
     padding: 5px 12px; 
     border: 1px solid #d1d5db; 
     border-radius: 8px; 
@@ -685,23 +695,36 @@ button {
     color: #333; 
     font-size: 14px; 
     outline: none;
+    flex: 1;
 }
 
-#department:hover, .searchBar:hover { 
+.filter:hover, .searchBar:hover { 
     border-color: #42B1CC; 
     box-shadow: 0 0 4px rgba(66, 177, 204, 0.4); 
 }
 
-#department:focus, .searchBar:focus { 
+.filter:focus, .searchBar:focus { 
     border-color: #42B1CC; 
     box-shadow: 0 0 4px rgba(66, 177, 204, 0.4); 
+}
+
+
+.cancel-search:hover, .search:hover{
+    cursor: pointer;
 }
 
 .add-doctor{
     margin-left: auto;
+    padding-left: 10px;
+    flex-shrink: 0;
+}
+
+.cancel-btn{
+    margin-left: auto;
 }
 
 .add-doctor-btn{
+    display: inline-block;
     padding: 7px 4px;
     border-radius: 8px;
     color: white;
@@ -709,6 +732,8 @@ button {
     font-weight: 600;
     transition: 0.2s ease;
     text-align: center;
+    white-space: nowrap;
+    width: 105px;
 }
 
 .primary-delete {
@@ -739,8 +764,24 @@ button {
     cursor: not-allowed;
 }
 
+#editServiceID:read-only{
+    background-color: #e9ecef;
+    color: #6c757d;
+    cursor: not-allowed;
+}
+
 .table-container{
     max-height: 470px;
+    overflow-y: auto;
+}
+
+.inventory-container{
+    max-height: 325px;
+    overflow-y: auto;
+}
+
+.patient-table-container{
+    max-height: 250px;
     overflow-y: auto;
 }
 
@@ -765,13 +806,86 @@ button {
     overflow-wrap: break-word;
 }
 
+.btn-cell{
+    width: 135px;
+}
+
 .row-container{
     display: grid;
     grid-template-columns: 1fr;
     gap: 5px;
 }
 
-.row-edit, .row-delete{
+.dentist-table tbody .item-row{
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.dentist-table tbody .item-row:hover{
+    background-color: #eaf5f9;
+}
+
+.dentist-table tbody .item-row.selected{
+    background-color: #d9f4fd;
+}
+
+.item-row.selected td{
+    border-bottom: 0;
+}
+
+.inventory-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 20px;
+    border-radius: 8px;
+    height: 60px;
+}
+
+
+.item-details {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+    color: #6c757d;
+    font-size: 13px;
+}
+
+.quantity {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.arrow {
+    display: inline-block;
+    transition: transform 0.2s ease;
+}
+
+.item-row.selected .arrow {
+    transform: rotate(180deg);
+}
+
+.action-row{
+    background-color: #d9f4fd;
+}
+
+.action-content {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.action-content a{
+    width: 150px
+}
+
+.row-edit, .row-delete, .row-adjust{
     padding: 10px 4px;
     border-radius: 8px;
     color: white;
@@ -781,7 +895,7 @@ button {
     text-align: center;
 }
 
-.row-edit, .add-doctor-btn{
+.row-edit, .add-doctor-btn, .row-adjust{
     background-color: #42B1CC;
 }
 
@@ -789,12 +903,12 @@ button {
     background-color: #D9534F;
 }
 
-.row-edit:hover, .row-delete:hover, .add-doctor-btn{
+.row-edit:hover, .row-delete:hover, .add-doctor-btn, .row-adjust:hover{
     box-shadow: 0 5px 12px rgba(66, 177, 204, 0.18);
     cursor: pointer;
 }
 
-.row-edit:hover, .add-doctor-btn:hover{
+.row-edit:hover, .add-doctor-btn:hover, .row-adjust:hover{
     background-color: #329db7;
 }
 

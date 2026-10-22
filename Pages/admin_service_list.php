@@ -118,7 +118,7 @@
         <title>Admin Service List | BrightSmile Dental Clinic</title>
 
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="../Styling/admin_dentist_list.css?v=10">
+        <link rel="stylesheet" href="../Styling/admin_dentist_list.css?v=17">
     </head>
 
     <body>
@@ -142,7 +142,7 @@
                         <div class="top-container">
                             <div class="form-container">
                                 <span class="nav-icon"><i class="fas fa-filter"></i></span>
-                                <select name="category" id="category" onchange="this.form.submit()">
+                                <select class="filter" name="category" id="category" onchange="this.form.submit()">
                                     <option value="">All Category</option>
 
                                     <?php
@@ -162,10 +162,9 @@
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
-                            </div>
-                            <div class="form-container">           
+
                                 <a onclick="document.getElementById('searchForm').submit();">
-                                    <span class="nav-icon">
+                                    <span class="nav-icon search">
                                         <i class="fas fa-search"></i>
                                     </span>
                                 </a>
@@ -198,7 +197,7 @@
                                 <div class="modal-header">
                                     <h5 class="modal-title">Add Service</h5>
 
-                                    <a class="primary-button add-doctor" data-bs-dismiss="modal">
+                                    <a class="primary-button cancel-btn" data-bs-dismiss="modal">
                                         <span>
                                             <i class="fas fa-times"></i>
                                         </span>
@@ -251,7 +250,6 @@
                         </div>
                     </div>
 
-                    <!-- This is for the showing the list of doctors -->
                     <?php
                         $category = $_GET["category"] ?? "";
                         $search = $_GET["search"] ?? "";
@@ -307,7 +305,7 @@
                                 <div class="modal-header">
                                     <h5 class="modal-title">Edit Service</h5>
 
-                                    <a class="primary-button add-doctor" data-bs-dismiss="modal">
+                                    <a class="primary-button cancel-btn" data-bs-dismiss="modal">
                                         <span>
                                             <i class="fas fa-times"></i>
                                         </span>
@@ -319,7 +317,7 @@
                                         <input type="hidden" name="action" value="editService">
 
                                         <div class="mb-3">
-                                            <label for="editServiceID" class="form-label">ServiceID</label>
+                                            <label for="editServiceID" class="form-label">Service ID</label>
                                             <input type="text" class="form-control" id="editServiceID" name="editServiceID" readonly>
                                         </div>
 
@@ -412,7 +410,7 @@
                                         <td><?= $service["Duration"]?></td>
                                         <td><?= $service["Category"]?></td>
 
-                                        <td>
+                                        <td class="btn-cell">
                                             <div class="row-container">
                                                 <a class="row-edit" href="#" data-bs-toggle="modal" data-bs-target="#editServiceModal"
                                                 data-serviceid="<?=htmlspecialchars($service["ServiceID"])?>"
