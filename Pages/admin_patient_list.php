@@ -46,7 +46,6 @@
             );
 
             $pdo->commit();
-            release_role_user_id_lock($pdo);
 
             echo"<script>
                     alert('Patient added successfully!');
@@ -58,7 +57,6 @@
             if ($pdo->inTransaction()){
                 $pdo->rollBack();
             }
-            release_role_user_id_lock($pdo);
 
             error_log($e->getMessage());
 
