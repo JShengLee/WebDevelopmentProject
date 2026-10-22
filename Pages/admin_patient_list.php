@@ -63,38 +63,42 @@
             echo"<script>
                     alert('Unable to add patient. Please check the details and try again.');
                 </script>";
+
+            echo($e->getMessage());
         }
     }
 
     if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["action"] ?? "") === "editPatient"){
-        $serviceID = (int) trim($_POST["editServiceID"]);
-        $serviceName = trim($_POST["editServiceName"]);
-        $description = trim($_POST["editDescription"]);
-        $price = (float) trim($_POST["editPrice"]);
-        $duration = (int) trim($_POST["editDuration"]);
-        $category = trim($_POST["editCategory"]);
+        $userID = (int) trim($_POST["editUserID"]);
+        $fullName = trim($_POST["editFullName"]);
+        $icnum = trim($_POST["editICNumber"]);
+        $gender = trim($_POST["editGender"]);
+        $email = trim($_POST["editEmail"]);
+        $phone = trim($_POST["editPhone"]);
+        $address = trim($_POST["editAddress"]);
 
         try{
             $pdo->beginTransaction();
 
-            $editUser = "UPDATE user SET FullName = ?, Email = ?, Phone = ? WHERE UserID = ?";
+            $editUser = "UPDATE user SET FullName = ?, ic_number = ?, Email = ?, Phone = ? WHERE UserID = ?";
 
             $stmtEditUser = $pdo->prepare($editUser);
 
             $stmtEditUser->execute(
                 [$fullName,
+                preg_replace('/[^0-9]/', '', $icnum),
                 $email,
                 $phone,
                 $userID]
             );
 
-            $editDentist = "UPDATE dentist SET Specialty = ?, DeptID = ? WHERE UserID = ?";
+            $editPatient = "UPDATE patient SET Gender = ?, Address = ? WHERE UserID = ?";
 
-            $stmtEditDentist = $pdo->prepare($editDentist);
+            $stmtEditPatient = $pdo->prepare($editPatient);
 
-            $stmtEditDentist->execute(
-                [$specialty,
-                $deptID,
+            $stmtEditPatient->execute(
+                [$gender,
+                $address,
                 $userID]
             );
 
@@ -114,13 +118,13 @@
             error_log($e->getMessage());
 
             echo"<script>
-                    alert('Unable to update service. Please check the details and try again.');
+                    alert('Unable to update patient. Please check the details and try again.');
                 </script>";
         }
     }
 
     if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["action"] ?? "") === "deletePatient"){
-        $serviceID = (int) trim($_POST["deleteServiceID"]);
+        $userID = (int) trim($_POST["deleteUserID"]);
 
         try{
             $pdo->beginTransaction();
@@ -195,10 +199,10 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
         <link rel="icon" type="image/x-icon" href="../Logo.png">
-        <title>Admin Service List | BrightSmile Dental Clinic</title>
+        <title>Admin Patient List | BrightSmile Dental Clinic</title>
 
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="../Styling/admin_dentist_list.css?v=9">
+        <link rel="stylesheet" href="../Styling/admin_dentist_list.css?v=17">
     </head>
 
     <body>
@@ -222,7 +226,7 @@
                         <div class="top-container">
                             <div class="form-container">           
                                 <a onclick="document.getElementById('searchForm').submit();">
-                                    <span class="nav-icon">
+                                    <span class="nav-icon search">
                                         <i class="fas fa-search"></i>
                                     </span>
                                 </a>
@@ -250,7 +254,7 @@
                                 <div class="modal-header">
                                     <h5 class="modal-title">Add Patient</h5>
 
-                                    <a class="primary-button add-doctor" data-bs-dismiss="modal">
+                                    <a class="primary-button cancel-btn" data-bs-dismiss="modal">
                                         <span>
                                             <i class="fas fa-times"></i>
                                         </span>
@@ -267,6 +271,16 @@
                                         </div>
 
                                         <div class="mb-3">
+                                            <label for="icnum" class="form-label">IC Number</label>
+                                            <input type="text" class="form-control" id="icnum" name="icnum" required>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="phone" class="form-label">Phone No.</label>
+                                            <input type="text" class="form-control" id="phone" name="phone">
+                                        </div>
+                                        
+                                        <div class="mb-3">
                                             <label for="email" class="form-label">E-mail</label>
                                             <input type="text" class="form-control" id="email" name="email" required>
                                         </div>
@@ -275,16 +289,6 @@
                                             <label for="password" class="form-label">Password</label>
                                             <input type="text" class="form-control" id="password" name="password" readonly
                                                 value="TemporaryPassword123">
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="phone" class="form-label">Phone No.</label>
-                                            <input type="text" class="form-control" id="phone" name="phone">
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="icnum" class="form-label">IC Number</label>
-                                            <input type="text" class="form-control" id="icnum" name="icnum" required>
                                         </div>
 
                                         <div class="mb-3">
@@ -314,25 +318,27 @@
                         </div>
                     </div>
 
-                    <!-- This is for the showing the list of doctors -->
                     <?php
                         $search = $_GET["search"] ?? "";
 
                         if ($search !== ""){
                             $sql = "SELECT * 
-                            FROM user JOIN patient ON user.UserID = patient.PatientID
-                            WHERE user.UserID = ?
+                            FROM user JOIN patient ON user.UserID = patient.UserID
+                            WHERE 
+                            (user.UserID = ?
                             OR user.FullName LIKE ?
+                            OR user.ICNumber = ?
                             OR patient.DateOfBirth = ?
-                            OR patient.Address LIKE ?
-                            WHERE patient.Approval = 'No'";
+                            OR patient.PhoneNumber = ?
+                            OR patient.Email = ?)
+                            AND patient.Approval = 'No'";
 
                             $searchTerm = "%" . $search . "%";
 
                             $stmt = $pdo->prepare($sql);
-                            $stmt->execute([$search, $searchTerm, $search, $searchTerm]);
+                            $stmt->execute([$search, $searchTerm, $search, $search, $search, $search]);
                         } else { 
-                            $sql = "SELECT * FROM user JOIN patient ON user.UserID = patient.PatientID WHERE patient.Approval = 'No'";
+                            $sql = "SELECT * FROM user JOIN patient ON user.UserID = patient.UserID WHERE patient.Approval = 'No'";
                             $stmt = $pdo->prepare($sql);
                             $stmt->execute();
                         }
@@ -344,7 +350,7 @@
                                 <div class="modal-header">
                                     <h5 class="modal-title">Edit Patient</h5>
 
-                                    <a class="primary-button add-doctor" data-bs-dismiss="modal">
+                                    <a class="primary-button cancel-btn" data-bs-dismiss="modal">
                                         <span>
                                             <i class="fas fa-times"></i>
                                         </span>
@@ -356,7 +362,7 @@
                                         <input type="hidden" name="action" value="editPatient">
 
                                         <div class="mb-3">
-                                            <label for="editUserID" class="form-label">UserID</label>
+                                            <label for="editUserID" class="form-label">User ID</label>
                                             <input type="text" class="form-control" id="editUserID" name="editUserID" readonly>
                                         </div>
 
@@ -366,29 +372,37 @@
                                         </div>
 
                                         <div class="mb-3">
-                                            <label for="editDescription" class="form-label">Description</label>
-                                            <input type="text" class="form-control" id="editDescription" name="editDescription" required>
+                                            <label for="editICNumber" class="form-label">IC Number</label>
+                                            <input type="text" class="form-control" id="editICNumber" name="editICNumber" required>
                                         </div>
 
                                         <div class="mb-3">
-                                            <label for="editPrice" class="form-label">Price (RM)</label>
-                                            <input type="number" class="form-control" id="editPrice" name="editPrice" step="any" min="0" required value="0.00">
+                                            <label for="editGender" class="form-label">Gender</label>
+                                            <select class="form-control" id="editGender" name="editGender" required>
+                                                <option value="Male">Male</option>
+                                                <option value="Female">Female</option>
+                                            </select>
                                         </div>
 
                                         <div class="mb-3">
-                                            <label for="editDuration" class="form-label">Duration</label>
-                                            <input type="text" class="form-control" id="editDuration" name="editDuration" required>
+                                            <label for="editPhone" class="form-label">Phone Number</label>
+                                            <input type="text" class="form-control" id="editPhone" name="editPhone" required>
                                         </div>
 
                                         <div class="mb-3">
-                                            <label for="editCategory" class="form-label">Category</label>
-                                            <input type="text" class="form-control" id="editCategory" name="editCategory" required>
+                                            <label for="editEmail" class="form-label">Email</label>
+                                            <input type="email" class="form-control" id="editEmail" name="editEmail" required>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="editAddress" class="form-label">Address</label>
+                                            <input type="text" class="form-control" id="editAddress" name="editAddress" required>
                                         </div>
 
                                         <div class="modal-footer">
                                             <a class="primary-button"
                                                 onclick="document.getElementById('editPatientForm').requestSubmit(); return false;">
-                                                    Edit Service
+                                                    Edit Patient
                                             </a>
                                         </div>
                                     </form>
@@ -408,7 +422,7 @@
                                     <form method="POST" id="deletePatientForm">
                                         <input type="hidden" name="action" value="deletePatient">
                                         
-                                        <input type="hidden" id="deleteServiceID" name="deleteServiceID">
+                                        <input type="hidden" id="deleteUserID" name="deleteUserID">
 
                                         <div class="delete-form-btn-container">
                                             <a class="primary-delete"
@@ -433,9 +447,11 @@
                                 <tr>
                                     <th>User ID</th>
                                     <th>Full Name</th>
+                                    <th>IC Number</th>
                                     <th>Date Of Birth</th>
-                                    <th>Address</th>
-                                    <th>Approval</th>
+                                    <th>Phone Number</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
                                     <th style="text-align:center;">Action</th>
                                 </tr>
                             </thead>
@@ -448,11 +464,13 @@
                                     <tr>
                                         <td><?= $patient["UserID"]?></td>
                                         <td><?= $patient["FullName"]?></td>
+                                        <td><?= $patient["ICNumber"]?></td>
                                         <td><?= $patient["DateOfBirth"]?></td>
-                                        <td class="description-cell"><?= $patient["Address"]?></td>
-                                        <td><?= $patient["Approval"]?></td>
+                                        <td><?= $patient["PhoneNumber"]?></td>
+                                        <td><?= $patient["Email"]?></td>
+                                        <td>Pending</td>
 
-                                        <td>
+                                        <td class="btn-cell">
                                             <div class="row-container">
                                                 <a class="row-edit" href="?action=approvePatient&userID=<?=$patient['UserID']?>">
                                                     Approve
@@ -470,7 +488,7 @@
 
                                 <?php if (!$pending): ?>
                                     <tr>
-                                        <td colspan="6" style="text-align:center;">
+                                        <td colspan="8" style="text-align:center;">
                                             No pending approvals...
                                         </td>
                                     </tr>
@@ -489,7 +507,7 @@
                         <div class="top-container">
                             <div class="form-container">           
                                 <a onclick="document.getElementById('searchForm').submit();">
-                                    <span class="nav-icon">
+                                    <span class="nav-icon search">
                                         <i class="fas fa-search"></i>
                                     </span>
                                 </a>
@@ -522,16 +540,20 @@
                         if ($search !== ""){
                             $sql = "SELECT * 
                             FROM user JOIN patient ON user.UserID = patient.PatientID
-                            WHERE user.UserID = ?
+                            WHERE 
+                            (user.UserID = ?
                             OR user.FullName LIKE ?
                             OR patient.DateOfBirth = ?
-                            OR patient.Address LIKE ?
-                            WHERE patient.Approval = 'Yes'";
+                            OR user.ICNumber = ?
+                            OR patient.PhoneNumber = ?
+                            OR patient.Email LIKE ?
+                            )
+                            AND patient.Approval = 'Yes'";
 
                             $searchTerm = "%" . $search . "%";
 
                             $stmt = $pdo->prepare($sql);
-                            $stmt->execute([$search, $searchTerm, $search, $searchTerm]);
+                            $stmt->execute([$search, $searchTerm, $search, $search, $search, $searchTerm]);
                         } else { 
                             $sql = "SELECT * FROM user JOIN patient ON user.UserID = patient.UserID WHERE patient.Approval = 'Yes'";
                             $stmt = $pdo->prepare($sql);
@@ -545,34 +567,44 @@
                                 <tr>
                                     <th>User ID</th>
                                     <th>Full Name</th>
+                                    <th>IC Number</th>
                                     <th>Date Of Birth</th>
-                                    <th>Address</th>
+                                    <th>Phone Number</th>
+                                    <th>Email</th>
                                     <th style="text-align:center;">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php while ($patient = $stmt->fetch()):?> 
+                                <?php 
+                                    $pending = false;
+                                    while ($patient = $stmt->fetch()): 
+                                        $pending = true;
+                                ?> 
                                     <tr>
                                         <td><?= $patient["UserID"]?></td>
                                         <td><?= $patient["FullName"]?></td>
+                                        <td><?= $patient["ic_number"]?></td>
                                         <td><?= $patient["DateOfBirth"]?></td>
-                                        <td class="description-cell"><?= $patient["Address"]?></td>
+                                        <td><?= $patient["Phone"]?></td>
+                                        <td><?= $patient["Email"]?></td>
 
-                                        <td>
+                                        <td class="btn-cell">
                                             <div class="row-container">
                                                 <a class="row-edit" href="#" data-bs-toggle="modal" data-bs-target="#editPatientModal"
-                                                data-serviceid="<?=htmlspecialchars($service["ServiceID"])?>"
-                                                data-servicename="<?=htmlspecialchars($service['ServiceName'], ENT_QUOTES)?>"
-                                                data-description="<?=htmlspecialchars($service['Description'], ENT_QUOTES)?>"
-                                                data-price="<?=htmlspecialchars($service['Price'])?>"
-                                                data-duration="<?=htmlspecialchars($service['Duration'])?>"
-                                                data-category="<?=htmlspecialchars($service['Category'], ENT_QUOTES)?>"
+                                                data-patientid="<?=htmlspecialchars($patient["UserID"])?>"
+                                                data-fullname="<?=htmlspecialchars($patient['FullName'], ENT_QUOTES)?>"
+                                                data-icnumber="<?=htmlspecialchars($patient['ic_number'], ENT_QUOTES)?>"
+                                                data-dateofbirth="<?=htmlspecialchars($patient['DateOfBirth'])?>"
+                                                data-phone="<?=htmlspecialchars($patient['Phone'])?>"
+                                                data-email="<?=htmlspecialchars($patient['Email'], ENT_QUOTES)?>"
+                                                data-gender="<?=htmlspecialchars($patient['Gender'], ENT_QUOTES)?>"
+                                                data-address="<?=htmlspecialchars($patient['Address'], ENT_QUOTES)?>"
                                                 >
                                                     Edit
                                                 </a>
 
                                                 <a class="row-delete" href="#" data-bs-toggle="modal" data-bs-target="#deletePatientModal"
-                                                data-serviceid="<?=htmlspecialchars($service["ServiceID"])?>"
+                                                data-patientid="<?=htmlspecialchars($patient["UserID"])?>"
                                                 >
                                                     Delete
                                                 </a>
@@ -592,37 +624,25 @@
         <script>
             document.querySelectorAll(".row-edit").forEach(button =>{
                 button.addEventListener("click", function (){
-                    const service = this.dataset;
+                    const patient = this.dataset;
 
-                    document.getElementById("editServiceID").value = service.serviceid;
-                    document.getElementById("editServiceName").value = service.servicename;
-                    document.getElementById("editDescription").value = service.description;
-                    document.getElementById("editPrice").value = parseFloat(service.price || 0).toFixed(2);
-                    document.getElementById("editDuration").value = service.duration;
-                    document.getElementById("editCategory").value = service.category;
+                    document.getElementById("editUserID").value = patient.patientid;
+                    document.getElementById("editFullName").value = patient.fullname;
+                    document.getElementById("editICNumber").value = patient.icnumber;
+                    document.getElementById("editPhone").value = patient.phone;
+                    document.getElementById("editEmail").value = patient.email;
+                    document.getElementById("editGender").value = patient.gender;
+                    document.getElementById("editAddress").value = patient.address;
                 });
             });
 
             document.querySelectorAll(".row-delete").forEach(button =>{
                 button.addEventListener("click", function (){
-                    const service = this.dataset;
+                    const patient = this.dataset;
 
-                    document.getElementById("deleteServiceID").value = service.serviceid;
+                    document.getElementById("deleteUserID").value = patient.patientid;
                 });
             });   
-            
-            const priceInput = document.getElementById("price");
-            priceInput.addEventListener("keydown", function(event){
-                if (event.key === "ArrowUp" || event.key === "ArrowDown"){
-                    event.preventDefault();
-
-                    const current = parseFloat(this.value) || 0;
-                    const change = event.key === "ArrowUp" ? 1 : -1;
-
-                    this.value = Math.max(0, current + change).toFixed(2);
-                    this.dispatchEvent(new Event("input", {bubbles: true}));
-                }
-            });
         </script>
     </body>
 </html>

@@ -173,7 +173,7 @@
         <title>Admin Dentist List | BrightSmile Dental Clinic</title>
 
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="../Styling/admin_dentist_list.css?v=6">
+        <link rel="stylesheet" href="../Styling/admin_dentist_list.css?v=17">
     </head>
 
     <body>
@@ -197,7 +197,7 @@
                         <div class="top-container">
                             <div class="form-container">
                                 <span class="nav-icon"><i class="fas fa-filter"></i></span>
-                                <select name="department" id="department" onchange="this.form.submit()">
+                                <select class="filter" name="department" id="department" onchange="this.form.submit()">
                                     <option value="">All Departments</option>
 
                                     <?php
@@ -217,10 +217,9 @@
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
-                            </div>
-                            <div class="form-container">           
+                                      
                                 <a onclick="document.getElementById('searchForm').submit();">
-                                    <span class="nav-icon">
+                                    <span class="nav-icon search">
                                         <i class="fas fa-search"></i>
                                     </span>
                                 </a>
@@ -253,7 +252,7 @@
                                 <div class="modal-header">
                                     <h5 class="modal-title">Add Doctor</h5>
 
-                                    <a class="primary-button add-doctor" data-bs-dismiss="modal">
+                                    <a class="primary-button cancel-btn" data-bs-dismiss="modal">
                                         <span>
                                             <i class="fas fa-times"></i>
                                         </span>
@@ -388,7 +387,7 @@
                                 <div class="modal-header">
                                     <h5 class="modal-title">Edit Doctor</h5>
 
-                                    <a class="primary-button add-doctor" data-bs-dismiss="modal">
+                                    <a class="primary-button cancel-btn" data-bs-dismiss="modal">
                                         <span>
                                             <i class="fas fa-times"></i>
                                         </span>
@@ -400,7 +399,7 @@
                                         <input type="hidden" name="action" value="editDoctor">
 
                                         <div class="mb-3">
-                                            <label for="editUserID" class="form-label">UserID</label>
+                                            <label for="editUserID" class="form-label">User ID</label>
                                             <input type="text" class="form-control" id="editUserID" name="editUserID" readonly>
                                         </div>
 
@@ -502,7 +501,7 @@
                                         <td><?= $dentist["DeptID"]?></td>
                                         <td><?= $dentist["DepartmentName"]?></td>
 
-                                        <td>
+                                        <td class="btn-cell">
                                             <div class="row-container">
                                                 <a class="row-edit" href="#" data-bs-toggle="modal" data-bs-target="#editDoctorModal"
                                                 data-userid="<?=htmlspecialchars($dentist['UserID'])?>"
