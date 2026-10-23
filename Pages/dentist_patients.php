@@ -49,6 +49,7 @@ $sql = "SELECT
 
         FROM patient p
         JOIN user u ON p.UserID = u.UserID
+        WHERE p.Approval = 'Yes'
         ORDER BY p.PatientID ASC";
 
 $stmt = $pdo->prepare($sql);

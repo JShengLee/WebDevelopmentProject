@@ -16,32 +16,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // --- Action 1: Update Editable Profile Info ---
     if ($action === 'update_profile') {
-        $fullName  = trim($_POST['FullName'] ?? '');
         $email     = trim($_POST['Email'] ?? '');
         $phone     = trim($_POST['Phone'] ?? '');
         $specialty = trim($_POST['Specialty'] ?? '');
 
-        if (!empty($fullName) && !empty($email)) {$pdo->beginTransaction();
+        if (!empty($email)) {
+            $pdo->beginTransaction();
             try {
                 // Get UserID associated with this dentist
-                $getUserStmt =$pdo->prepare("SELECT UserID FROM dentist WHERE DentistID = :dentist_id");
-                $getUserStmt->execute(['dentist_id' =>$dentistID]);
-                $userResult =$getUserStmt->fetch();
+                $getUserStmt = $pdo->prepare("SELECT UserID FROM dentist WHERE DentistID = :dentist_id");
+                $getUserStmt->execute(['dentist_id' => $dentistID]);
+                $userResult = $getUserStmt->fetch();
 
                 if ($userResult) {
-                    $userID =$userResult['UserID'];
+                    $userID = $userResult['UserID'];
 
-                    // Update `user` table (FullName, Email, Phone)
-                    $stmtUser =$pdo->prepare("UPDATE `user` SET FullName = :full_name, Email = :email, Phone = :phone WHERE UserID = :user_id");
+                    // Update `user` table (Email, Phone)
+                    $stmtUser = $pdo->prepare("UPDATE `user` SET Email = :email, Phone = :phone WHERE UserID = :user_id");
                     $stmtUser->execute([
-                        'full_name' => $fullName,
-                        'email'     => $email,
-                        'phone'     => $phone,
-                        'user_id'   => $userID
+                        'email'   => $email,
+                        'phone'   => $phone,
+                        'user_id' => $userID
                     ]);
 
                     // Update `dentist` table (Specialty)
-                    $stmtDentist =$pdo->prepare("UPDATE dentist SET Specialty = :specialty WHERE DentistID = :dentist_id");
+                    $stmtDentist = $pdo->prepare("UPDATE dentist SET Specialty = :specialty WHERE DentistID = :dentist_id");
                     $stmtDentist->execute([
                         'specialty'  => $specialty,
                         'dentist_id' => $dentistID
@@ -51,12 +50,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     set_flash('success', 'Profile updated successfully!');
                 }
             } catch (Exception $e) {
-                if ($pdo->inTransaction()) {$pdo->rollBack();
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
                 }
                 set_flash('danger', 'Failed to update profile: ' . $e->getMessage());
             }
         } else {
-            set_flash('danger', 'Full Name and Email are required.');
+            set_flash('danger', 'Email is required.');
         }
 
         header("Location: dentist_profile.php");
@@ -224,11 +224,8 @@ $departments =$deptStmt->fetchAll();
                                     <input
                                         type="text"
                                         id="fullName"
-                                        name="FullName"
                                         value="<?= escape_html($dentist["FullName"]) ?>"
                                         disabled
-                                        required
-                                        maxlength="100"
                                     >
                                 </div>
 

@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const cancelButton = document.getElementById("cancelButton");
     const formActions = document.getElementById("formActions");
 
-    const editableFields = ["fullName", "email", "phone", "specialty"];
+    const editableFields = ["email", "phone", "specialty"];
     let originalValues = {};
 
     // Enable editing fields
@@ -20,7 +20,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
             editButton.hidden = true;
             formActions.hidden = false;
-            document.getElementById("fullName").focus();
+            
+            // Focus on email field after enabling editing
+            const emailField = document.getElementById("email");
+            if (emailField) {
+                emailField.focus();
+            }
         });
     }
 
