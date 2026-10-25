@@ -44,9 +44,69 @@ require_once __DIR__ . '/../includes/patient_bootstrap.php';
                             </p>
                         </div>
                     </section>
+                    <?php
+                        $sql = "SELECT * FROM service ORDER BY Category ASC, ServiceName ASC";
 
-                    <!-- General dentistry -->
+                        $stmt = $pdo->prepare($sql);
+                        $stmt->execute();
+
+                        $services = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                        $groupedServices = [];
+
+                        foreach ($services as $service){
+                            $category = $service["Category"];
+                            $groupedServices[$category][] = $service;
+                        }
+
+                        $sectionNumber = 1;
+                        foreach ($groupedServices as $category => $categoryService):
+                    ?>
                     <section class="service-section">
+                        <div class="section-title">
+                            <span class="section-number">
+                                <?= str_pad($sectionNumber, 2, "0", STR_PAD_LEFT) ?>
+                            </span>
+
+                            <div>
+                                <h2>
+                                    <?= htmlspecialchars($category) ?>
+                                </h2>
+                            </div>
+                        </div>
+                        <div class="service-grid">
+                            <?php
+                                foreach ($categoryService as $service):
+                            ?>
+                                <div class="service-card">
+                                    <div class="service-icon">
+                                        +
+                                    </div>
+
+                                    <div class="service-info">
+                                        <h3>
+                                            <?= htmlspecialchars($service["ServiceName"]) ?>
+                                        </h3>
+
+                                        <p>
+                                            <?= htmlspecialchars($service["Description"] ?? "")?>
+                                        </p>
+                                        <div class="service-bottom">
+                                            <span> From </span>
+                                            <strong>RM <?=htmlspecialchars($service["Price"])?></strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </section>
+
+                    <?php 
+                        $sectionNumber++;
+                        endforeach; 
+                    ?>
+                    <!-- General dentistry -->
+                    <!-- <section class="service-section">
                         <div class="section-title">
                             <span class="section-number">
                                 01
@@ -172,11 +232,11 @@ require_once __DIR__ . '/../includes/patient_bootstrap.php';
                                 </div>
                             </div>
                         </div>
-                    </section>
+                    </section> -->
 
                     <!-- Orthodontics -->
 
-                    <section class="service-section">
+                    <!-- <section class="service-section">
                         <div class="section-title">
                             <span class="section-number">
                                 02
@@ -248,7 +308,7 @@ require_once __DIR__ . '/../includes/patient_bootstrap.php';
                                 </div>
                             </div>
                         </div>
-                    </section>
+                    </section> -->
 
                     <!-- Note -->
                     <div class="price-note">
