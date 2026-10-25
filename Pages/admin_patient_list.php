@@ -464,9 +464,9 @@
                                     <tr>
                                         <td><?= $patient["UserID"]?></td>
                                         <td><?= $patient["FullName"]?></td>
-                                        <td><?= $patient["ICNumber"]?></td>
+                                        <td><?= $patient["ic_number"]?></td>
                                         <td><?= $patient["DateOfBirth"]?></td>
-                                        <td><?= $patient["PhoneNumber"]?></td>
+                                        <td><?= $patient["Phone"]?></td>
                                         <td><?= $patient["Email"]?></td>
                                         <td>Pending</td>
 
