@@ -59,6 +59,11 @@
     <span>Doctors</span>
 </a>
 
+<a href="admin_department_list.php" class="nav-item">
+    <span class="nav-icon"><i class="fas fa-sitemap"></i></span>
+    <span>Department</span>
+</a>
+
 <a href="admin_service_list.php" class="nav-item">
     <span class="nav-icon"><i class="fas fa-concierge-bell"></i></span>
     <span>Services</span>
@@ -67,6 +72,16 @@
 <a href="admin_patient_list.php" class="nav-item">
     <span class="nav-icon"><i class="fas fas fa-user"></i></span>
     <span>Patients</span>
+</a>
+
+<a href="admin_appointment_list.php" class="nav-item">
+    <span class="nav-icon"><i class="fas fa-calendar-alt"></i></span>
+    <span>Appointments</span>
+</a>
+
+<a href="admin_stock_list.php" class="nav-item">
+    <span class="nav-icon"><i class="fas fa-boxes"></i></span>
+    <span>Inventory</span>
 </a>
 
 <?php endif; ?>

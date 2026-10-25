@@ -14,7 +14,9 @@ $headerBreadcrumbs = [
     "admin_dashboard.php" => "Dashboard",
     "admin_dentist_list.php" => "Dentist List",
     "admin_service_list.php" => "Service List",
-    "admin_patient_list.php" => "Patient List"
+    "admin_patient_list.php" => "Patient List",
+    "admin_appointment_list.php" => "Appointment List",
+    "admin_stock_list.php" => "Stock List",
 ];
 $headerBreadcrumb = $headerBreadcrumbs[basename($_SERVER['SCRIPT_NAME'] ?? '')] ?? '';
 $headerNameParts = preg_split('/\s+/', trim($headerName), -1, PREG_SPLIT_NO_EMPTY);
