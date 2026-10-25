@@ -130,8 +130,7 @@ CREATE TABLE `patient` (
   `PatientID` int(11) NOT NULL,
   `UserID` int(11) NOT NULL,
   `DateOfBirth` date DEFAULT NULL,
-  `Gender` varchar(20) DEFAULT NULL,
-  `Address` varchar(255) DEFAULT NULL,
+  `Gender` varchar(10) DEFAULT NULL,
   `Approval` enum('Yes','No') NOT NULL DEFAULT 'No'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -233,23 +232,6 @@ CREATE TABLE `user` (
   `Phone` varchar(20) DEFAULT NULL,
   `Role` enum('Patient','Dentist','Admin') NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `role_id_sequence`
---
-
-CREATE TABLE `role_id_sequence` (
-  `Role` enum('Patient','Admin','Dentist') NOT NULL,
-  `LastID` int(11) NOT NULL,
-  PRIMARY KEY (`Role`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-INSERT INTO `role_id_sequence` (`Role`, `LastID`) VALUES
-('Patient', 1000),
-('Admin', 2000),
-('Dentist', 3000);
 
 --
 -- Indexes for dumped tables

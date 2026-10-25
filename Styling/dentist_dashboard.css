@@ -1,5 +1,4 @@
 /* GENERAL */
-
 * {
     margin: 0;
     padding: 0;
@@ -22,29 +21,21 @@ button {
 
 
 /* APPLICATION CONTAINER */
-
 .app-container {
     min-height: 100vh;
     display: flex;
 }
 
 
-/* =========================================================
-   SIDEBAR
-========================================================= */
-
+/* SIDEBAR */
 .sidebar {
     width: 245px;
     min-height: 100vh;
-
     background-color: white;
     border-right: 1px solid #e8eef1;
-
     display: flex;
     flex-direction: column;
-
     padding: 28px 16px;
-
     position: fixed;
     left: 0;
     top: 0;
@@ -53,7 +44,6 @@ button {
 
 
 /* Logo */
-
 .sidebar-logo {
     padding: 0 12px 30px;
 }
@@ -66,7 +56,6 @@ button {
 
 
 /* Navigation */
-
 .sidebar-nav {
     flex: 1;
 }
@@ -74,9 +63,7 @@ button {
 .nav-title {
     padding: 0 12px;
     margin-bottom: 10px;
-
     color: #a0acb3;
-
     font-size: 9px;
     font-weight: 700;
     letter-spacing: 1.2px;
@@ -86,23 +73,16 @@ button {
     margin-top: 30px;
 }
 
-
 .nav-item {
     display: flex;
     align-items: center;
-
     gap: 13px;
-
     padding: 12px;
     margin-bottom: 4px;
-
     border-radius: 9px;
-
     color: #697881;
-
     font-size: 12px;
     font-weight: 500;
-
     transition: 0.2s ease;
 }
 
@@ -124,10 +104,7 @@ button {
 }
 
 
-/* =========================================================
-   SIDEBAR BOTTOM
-========================================================= */
-
+/* SIDEBAR BOTTOM */
 .sidebar-bottom {
     margin-top: auto;
 }
@@ -135,46 +112,35 @@ button {
 .help-box {
     display: flex;
     align-items: center;
-
     gap: 10px;
-
     padding: 13px;
     margin-bottom: 15px;
-
     border-radius: 10px;
-
     background-color: #f5fafb;
 }
 
 .help-icon {
     width: 28px;
     height: 28px;
-
     border-radius: 50%;
-
     background-color: #dff3f7;
     color: #42B1CC;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     font-size: 12px;
     font-weight: 700;
 }
 
 .help-box strong {
     display: block;
-
     color: #43515a;
     font-size: 11px;
 }
 
 .help-box span {
     display: block;
-
     margin-top: 3px;
-
     color: #97a2a8;
     font-size: 9px;
 }
@@ -183,15 +149,10 @@ button {
 .logout-button {
     display: flex;
     align-items: center;
-
     gap: 12px;
-
     padding: 11px 12px;
-
     color: #7d898f;
-
     font-size: 12px;
-
     border-radius: 9px;
 }
 
@@ -201,139 +162,95 @@ button {
 }
 
 
-/* =========================================================
-   MAIN CONTENT
-========================================================= */
-
+/* MAIN CONTENT */
 .main-content {
     flex: 1;
     min-width: 0;
-
     margin-left: 245px;
 }
 
 
-/* =========================================================
-   TOP HEADER
-========================================================= */
-
+/* TOP HEADER */
 .top-header {
     height: 76px;
-
     background-color: white;
-
     border-bottom: 1px solid #e8eef1;
-
     padding: 0 38px;
-
     display: flex;
     align-items: center;
-
     justify-content: flex-end;
-
     position: relative;
 }
 
 
 /* Right side */
-
 .header-right {
     display: flex;
     align-items: center;
-
     gap: 25px;
 }
 
 
-/* =========================================================
-   NOTIFICATION
-========================================================= */
-
+/* NOTIFICATION */
 .notification-button {
     position: relative;
-
     width: 38px;
     height: 38px;
-
     border: none;
-
     background-color: #f6fafb;
-
     border-radius: 9px;
-
     color: #71818a;
-
     cursor: pointer;
-
     font-size: 18px;
 }
 
 .notification-dot {
     position: absolute;
-
     top: 8px;
     right: 8px;
-
     width: 6px;
     height: 6px;
-
     border-radius: 50%;
-
     background-color: #42B1CC;
 }
 
 
-/* =========================================================
-   USER PROFILE
-========================================================= */
+/* USER PROFILE */
 
 .user-profile {
     display: flex;
     align-items: center;
-
     gap: 10px;
 }
 
 .user-avatar {
     width: 37px;
     height: 37px;
-
     border-radius: 50%;
-
     background-color: #e1f4f7;
-
     color: #329ab2;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     font-size: 11px;
     font-weight: 700;
 }
 
 .user-info strong {
     display: block;
-
     color: #34434d;
-
     font-size: 11px;
 }
 
 .user-info span {
     display: block;
-
     margin-top: 2px;
-
     color: #98a3a9;
-
     font-size: 9px;
 }
 
 
-/* =========================================================
-   DESKTOP / MOBILE LOGO
-========================================================= */
+/* DESKTOP / MOBILE LOGO */
 
 .mobile-logo {
     display: none;
@@ -341,50 +258,33 @@ button {
 
 .middle-logo {
     display: grid;
-
     grid-template-columns: 60px 1fr;
-
     align-items: center;
-
     column-gap: 7px;
-
     left: 50%;
-
     position: absolute;
-
     transform: translateX(-50%);
 }
 
 .middle-logo p {
     display: none;
-
     margin: 0;
     padding: 0;
-
     color: #34434d;
-
     font-size: 12px;
     font-weight: 600;
 }
 
 
-/* =========================================================
-   BURGER BUTTON
-========================================================= */
+/* BURGER BUTTON */
 
 .navbar-toggler {
     display: none;
-
     border: none;
-
     background: transparent;
-
     color: #71818a;
-
     font-size: 22px;
-
     padding: 4px 8px;
-
     cursor: pointer;
 }
 
@@ -393,20 +293,15 @@ button {
 }
 
 
-/* =========================================================
-   BURGER NAVIGATION
-========================================================= */
+/* BURGER NAVIGATION */
 
 .burger-navbar {
     background-color: white;
-
-    border-bottom: 1px solid #e8eef1;
-
-    padding: 15px 0 20px;
 }
 
 .burger-navbar .nav-title {
-    padding: 0 20px;
+    background-color: white;
+    padding: 15px 20px 0;
 }
 
 .burger-navbar .nav-item {
@@ -423,307 +318,235 @@ button {
 }
 
 
-/* =========================================================
-   PAGE CONTENT
-========================================================= */
+/* PAGE CONTENT */
 
 .page-content {
     max-width: 1400px;
-
     margin: 0 auto;
-
     padding: 38px;
 }
 
 
-/* =========================================================
-   WELCOME
-========================================================= */
+/* WELCOME */
 
 .welcome-section {
     display: flex;
     align-items: flex-end;
-
     justify-content: space-between;
-
     margin-bottom: 30px;
 }
 
 .page-label {
     color: #42B1CC;
-
-    font-size: 9px;
-
+    font-size: 11px;
     font-weight: 700;
-
     letter-spacing: 1.4px;
 }
 
 .welcome-section h1 {
     margin-top: 8px;
-
     color: #26343c;
-
-    font-size: 25px;
-
+    font-size: 28px;
     font-weight: 700;
-
     letter-spacing: -0.5px;
 }
 
 .welcome-section p {
     margin-top: 7px;
-
     color: #89969d;
-
-    font-size: 12px;
+    font-size: 14px;
 }
 
 
-/* =========================================================
-   SUMMARY CARDS
-========================================================= */
+/* SUMMARY CARDS */
 
 .summary-grid {
     display: grid;
-
     grid-template-columns: repeat(3, 1fr);
-
     gap: 18px;
-
     margin-bottom: 20px;
 }
 
 .summary-card {
     background-color: white;
-
     border: 1px solid #e9eef0;
-
     border-radius: 12px;
-
     padding: 20px;
-
     min-height: 165px;
 }
 
 .card-top {
     display: flex;
-
     align-items: center;
-
     justify-content: space-between;
 }
 
 .card-icon {
     width: 36px;
     height: 36px;
-
     border-radius: 9px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     font-size: 15px;
-
     font-weight: 600;
 }
 
-.appointment-icon {
-    background-color: #eaf8fb;
-    color: #42B1CC;
+.card-icon.appointment-icon {
+    background-color: #eaf8fb !important;
+    color: #42B1CC !important;
 }
 
-.treatment-icon {
-    background-color: #eef8f1;
-    color: #5aa873;
+.card-icon.treatment-icon {
+    background-color: #eef8f1 !important;
+    color: #5aa873 !important;
 }
 
-.records-icon {
-    background-color: #f4f0fa;
-    color: #8c70ad;
+.card-icon.records-icon {
+    background-color: #f4f0fa !important;
+    color: #8c70ad !important;
 }
 
 .card-status {
     color: #8c999f;
-
-    font-size: 9px;
-
+    font-size: 11px;
     font-weight: 500;
 }
 
 .card-label {
     margin-top: 19px;
-
     color: #9ba5aa;
-
-    font-size: 9px;
-
+    font-size: 11px;
     font-weight: 700;
-
     letter-spacing: 0.7px;
 }
 
 .summary-card h2 {
     margin-top: 5px;
-
     color: #34434c;
-
-    font-size: 24px;
-
+    font-size: 26px;
     font-weight: 700;
 }
 
 .card-description {
     margin-top: 5px;
-
     color: #89969d;
-
-    font-size: 10px;
+    font-size: 12px;
 }
 
 
-/* =========================================================
-   DASHBOARD GRID
-========================================================= */
+/* DASHBOARD GRID */
 
 .dashboard-grid {
     display: grid;
-
     grid-template-columns: 1.5fr 1fr;
-
     gap: 20px;
-
     margin-bottom: 20px;
 }
 
 .dashboard-card {
     background-color: white;
-
     border: 1px solid #e9eef0;
-
     border-radius: 12px;
-
     padding: 22px;
 }
 
 
-/* =========================================================
-   SECTION HEADING
-========================================================= */
+/* SECTION HEADING */
 
 .section-heading {
     display: flex;
-
     align-items: flex-start;
-
     justify-content: space-between;
-
     margin-bottom: 20px;
 }
 
 .section-heading h2 {
     color: #394851;
-
-    font-size: 14px;
-
+    font-size: 17px;
     font-weight: 650;
 }
 
 .section-heading p {
     margin-top: 5px;
-
     color: #9aa5aa;
-
-    font-size: 10px;
+    font-size: 12px;
 }
 
 .section-heading a {
     color: #42B1CC;
-
-    font-size: 10px;
-
+    font-size: 12px;
     font-weight: 600;
 }
 
 
-/* =========================================================
-   APPOINTMENT LIST
-========================================================= */
+/* APPOINTMENT LIST */
 
 .appointment-list {
-    display: flex;
+    max-height: 380px; /* Adjust height to fit ~4 to 5 rows comfortably */
+    overflow-y: auto;  /* Adds a vertical scrollbar when content exceeds max-height */
+    padding-right: 8px; /* Prevents scrollbar from overlapping text */
+}
 
-    flex-direction: column;
+/* Optional: Custom clean scrollbar styling */
+.appointment-list::-webkit-scrollbar {
+    width: 6px;
+}
 
-    gap: 8px;
+.appointment-list::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 4px;
+}
+
+.appointment-list::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
 }
 
 .appointment-row {
     display: flex;
-
     align-items: center;
-
     gap: 12px;
-
     padding: 12px;
-
     background-color: #f7fbfc;
-
     border-radius: 9px;
 }
 
 .appointment-time {
     width: 65px;
-
     color: #42B1CC;
-
-    font-size: 9px;
-
+    font-size: 11px;
     font-weight: 700;
 }
 
-.doctor-avatar {
+.patient-avatar {
     width: 38px;
     height: 38px;
-
     flex-shrink: 0;
-
     border-radius: 50%;
-
     background-color: #dff3f7;
-
     color: #329ab2;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
-    font-size: 9px;
-
+    font-size: 11px;
     font-weight: 700;
 }
 
-.doctor-info {
+.patient-info {
     flex: 1;
 }
 
-.doctor-info strong {
+.patient-info strong {
     display: block;
-
     color: #43515a;
-
-    font-size: 10px;
+    font-size: 13px;
 }
 
-.doctor-info span {
+.patient-info span {
     display: block;
-
     margin-top: 4px;
-
     color: #96a1a7;
-
-    font-size: 8px;
+    font-size: 12px;
 }
 
 
@@ -731,104 +554,77 @@ button {
 
 .status-badge {
     padding: 5px 8px;
-
     border-radius: 6px;
-
-    font-size: 8px;
-
+    font-size: 12px;
     font-weight: 600;
+    text-align: center;
+    width:73.57px;
+    height:28px;
 }
 
 .status-badge.confirmed {
     background-color: #eef8f1;
-
     color: #5a9a6b;
 }
 
 .status-badge.pending {
     background-color: #fff7e8;
-
     color: #c48a36;
 }
 
 
-/* =========================================================
-   QUICK ACTIONS
-========================================================= */
+/* QUICK ACTIONS */
 
 .quick-actions {
     display: flex;
-
     flex-direction: column;
-
     gap: 9px;
 }
 
 .action-button {
     display: flex;
-
     align-items: center;
-
     gap: 12px;
-
     padding: 10px;
-
     border: 1px solid #edf1f2;
-
     border-radius: 8px;
-
     transition: 0.2s ease;
 }
 
 .action-button:hover {
     border-color: #cdeaf0;
-
     background-color: #f8fcfd;
 }
 
 .action-icon {
     width: 30px;
     height: 30px;
-
     flex-shrink: 0;
-
     border-radius: 7px;
-
     background-color: #eaf8fb;
-
     color: #42B1CC;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     font-size: 14px;
-
     font-weight: 600;
 }
 
 .action-button strong {
     display: block;
-
     color: #4a5860;
-
-    font-size: 10px;
+    font-size: 12px;
 }
 
 .action-button span:not(.action-icon) {
     display: block;
-
     margin-top: 3px;
-
     color: #9aa5aa;
-
-    font-size: 8px;
+    font-size: 10px;
 }
 
 
-/* =========================================================
-   RECENT ACTIVITY
-========================================================= */
+/* RECENT ACTIVITY*/
 
 .activity-card {
     margin-bottom: 30px;
@@ -836,40 +632,28 @@ button {
 
 .activity-list {
     display: flex;
-
     flex-direction: column;
 }
 
 .activity-item {
     display: flex;
-
     align-items: center;
-
     gap: 12px;
-
     padding: 14px 0;
-
     border-top: 1px solid #f0f3f4;
 }
 
 .activity-marker {
     width: 29px;
     height: 29px;
-
     flex-shrink: 0;
-
     border-radius: 50%;
-
     background-color: #eaf8fb;
-
     color: #42B1CC;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     font-size: 11px;
-
     font-weight: 600;
 }
 
@@ -879,32 +663,33 @@ button {
 
 .activity-content strong {
     display: block;
-
     color: #4a5860;
-
-    font-size: 10px;
+    font-size: 12px;
 }
 
 .activity-content span {
     display: block;
-
     margin-top: 3px;
-
     color: #9ba5aa;
-
-    font-size: 9px;
+    font-size: 11px;
 }
 
 .activity-item time {
     color: #a1abb0;
+    font-size: 11px;
+}
 
-    font-size: 9px;
+/* EMPTY STATE STYLES */
+.empty-message {
+    text-align: center;
+    color: #89969d;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 20px 0;
 }
 
 
-/* =========================================================
-   TABLET
-========================================================= */
+/* TABLET */
 
 @media (max-width: 1000px) {
 
@@ -926,9 +711,7 @@ button {
 }
 
 
-/* =========================================================
-   MOBILE
-========================================================= */
+/* MOBILE */
 
 @media (max-width: 750px) {
 
@@ -943,15 +726,11 @@ button {
     }
 
 
-    /* =====================================================
-       MOBILE HEADER
-    ===================================================== */
+    /* MOBILE HEADER */
 
     .top-header {
         height: 65px;
-
         padding: 0 20px;
-
         justify-content: space-between;
     }
 
@@ -967,21 +746,14 @@ button {
     }
 
 
-    /* =====================================================
-       CENTER LOGO / NAME
-    ===================================================== */
+    /* CENTER LOGO / NAME */
 
     .middle-logo {
         display: grid;
-
         grid-template-columns: 45px 1fr;
-
         align-items: center;
-
         column-gap: 5px;
-
         left: 50%;
-
         transform: translateX(-50%);
     }
 
@@ -997,20 +769,14 @@ button {
 
     .middle-logo p {
         display: block;
-
         white-space: nowrap;
-
         color: #34434d;
-
         font-size: 10px;
-
         font-weight: 600;
     }
 
 
-    /* =====================================================
-       RIGHT HEADER
-    ===================================================== */
+    /* RIGHT HEADER */
 
     .header-right {
         gap: 12px;
@@ -1021,9 +787,7 @@ button {
     }
 
 
-    /* =====================================================
-       MOBILE PAGE
-    ===================================================== */
+    /* MOBILE PAGE */
 
     .page-content {
         padding: 25px 20px;
@@ -1031,9 +795,7 @@ button {
 
     .welcome-section {
         align-items: flex-start;
-
         flex-direction: column;
-
         gap: 18px;
     }
 
@@ -1042,9 +804,7 @@ button {
     }
 
 
-    /* =====================================================
-       CARDS
-    ===================================================== */
+    /* CARDS */
 
     .summary-grid {
         grid-template-columns: 1fr;
@@ -1055,9 +815,7 @@ button {
     }
 
 
-    /* =====================================================
-       APPOINTMENTS
-    ===================================================== */
+    /* APPOINTMENTS */
 
     .appointment-row {
         flex-wrap: wrap;
@@ -1069,9 +827,7 @@ button {
 }
 
 
-/* =========================================================
-   SMALL MOBILE
-========================================================= */
+/* SMALL MOBILE */
 
 @media (max-width: 450px) {
 
@@ -1088,7 +844,6 @@ button {
 
     .middle-logo {
         grid-template-columns: 38px 1fr;
-
         column-gap: 4px;
     }
 
@@ -1110,7 +865,6 @@ button {
     .notification-button {
         width: 34px;
         height: 34px;
-
         font-size: 16px;
     }
 
@@ -1137,4 +891,41 @@ button {
     .appointment-time {
         width: 55px;
     }
+}
+
+/* HOURLY SCHEDULE STYLES */
+.hourly-schedule-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.hourly-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.hourly-time {
+    width: 90px;
+    color: #42B1CC;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.hourly-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.available-slot {
+    color: #b0bec5;
+    font-size: 12px;
+    font-style: italic;
+    font-weight: 500;
 }
