@@ -41,7 +41,7 @@ function take_flash(): ?array
 //     }
 
 //     $statement = $pdo->prepare(
-//         'SELECT u.UserID, u.FullName, u.Email, u.Phone, p.PatientID, p.DateOfBirth, p.Gender, p.Address
+//         'SELECT u.UserID, u.FullName, u.Email, u.Phone, p.PatientID, p.DateOfBirth, p.Gender
 //          FROM user u
 //          INNER JOIN patient p ON p.UserID = u.UserID
 //          WHERE u.UserID = :user_id AND u.Role = \'Patient\''
@@ -64,7 +64,7 @@ function require_patient(PDO $pdo): array
     if (!empty($_SESSION["user_id"])){
         if (($_SESSION["role"] ?? "") === "Patient"){
             $statement = $pdo->prepare(
-                'SELECT u.UserID, u.FullName, u.Email, u.Phone, p.PatientID, p.DateOfBirth, p.Gender, p.Address
+                'SELECT u.UserID, u.FullName, u.Email, u.Phone, u.ic_number, p.PatientID, p.DateOfBirth, p.Gender
                 FROM user u
                 INNER JOIN patient p ON p.UserID = u.UserID
                 WHERE u.UserID = :user_id AND u.Role = \'Patient\''
