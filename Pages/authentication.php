@@ -11,6 +11,42 @@ $icNumber = '';
 $phone = '';
 $dateOfBirth = '';
 
+function generate_login_captcha(): string
+{
+    $characters = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+    $captcha = '';
+
+    for ($index = 0; $index < 6; $index++) {
+        $captcha .= $characters[random_int(0, strlen($characters) - 1)];
+    }
+
+    return $captcha;
+}
+
+function set_login_session_cookie(bool $remember): void
+{
+    $cookie = session_get_cookie_params();
+    setcookie(session_name(), session_id(), [
+        'expires' => $remember ? time() + (60 * 60 * 24 * 30) : 0,
+        'path' => $cookie['path'],
+        'domain' => $cookie['domain'],
+        'secure' => $cookie['secure'],
+        'httponly' => $cookie['httponly'],
+        'samesite' => $cookie['samesite'] ?? 'Lax',
+    ]);
+}
+
+if (isset($_GET['refresh_captcha']) || empty($_SESSION['login_captcha'])) {
+    $_SESSION['login_captcha'] = generate_login_captcha();
+}
+
+if (isset($_GET['refresh_captcha'])) {
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    echo json_encode(['captcha' => $_SESSION['login_captcha']]);
+    exit;
+}
+
 function derive_malaysian_ic_date_of_birth(string $icDigits): ?string
 {
     if (!preg_match('/^[0-9]{12}$/D', $icDigits)) {
@@ -39,41 +75,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $registrationError = 'Please submit the registration form again.';
         } else {
             $loginError = 'Please submit the sign-in form again.';
+            $_SESSION['login_captcha'] = generate_login_captcha();
         }
     } elseif ($activeForm === 'login') {
-        $email = trim($_POST['email'] ?? '');
-        $password = $_POST['password'] ?? '';
-        $statement = $pdo->prepare('SELECT UserID, FullName, PasswordHash, Role FROM user WHERE Email = :email');
-        $statement->execute(['email' => $email]);
-        $user = $statement->fetch();
+        if (!isset($_POST['captcha'], $_SESSION['login_captcha'])
+            || !is_string($_POST['captcha'])
+            || !hash_equals($_SESSION['login_captcha'], $_POST['captcha'])) {
+            $loginError = 'The CAPTCHA code is incorrect. Please try again.';
+            $_SESSION['login_captcha'] = generate_login_captcha();
+        } else {
+            $email = trim($_POST['email'] ?? '');
+            $password = $_POST['password'] ?? '';
+            $statement = $pdo->prepare('SELECT UserID, FullName, PasswordHash, Role FROM user WHERE Email = :email');
+            $statement->execute(['email' => $email]);
+            $user = $statement->fetch();
 
-        if (!$user || !password_verify($password, $user['PasswordHash'])) {
-            $loginError = 'Email or password is incorrect.';
-        } elseif ($user['Role'] === 'Patient') {
-            $patientStatement = $pdo->prepare('SELECT PatientID, Approval FROM patient WHERE UserID = :user_id');
-            $patientStatement->execute(['user_id' => $user['UserID']]);
-            $patient = $patientStatement->fetch();
+            if (!$user || !password_verify($password, $user['PasswordHash'])) {
+                $loginError = 'Email or password is incorrect.';
+            } elseif ($user['Role'] === 'Patient') {
+                $patientStatement = $pdo->prepare('SELECT PatientID, Approval FROM patient WHERE UserID = :user_id');
+                $patientStatement->execute(['user_id' => $user['UserID']]);
+                $patient = $patientStatement->fetch();
 
-            if (!$patient) {
-                $loginError = 'This patient account is missing its patient profile. Please contact the clinic.';
-            } elseif ($patient['Approval'] !== 'Yes') {
-                $loginError = 'Your registration is still pending approval by an administrator.';
+                if (!$patient) {
+                    $loginError = 'This patient account is missing its patient profile. Please contact the clinic.';
+                } elseif ($patient['Approval'] !== 'Yes') {
+                    $loginError = 'Your registration is still pending approval by an administrator.';
+                } else {
+                    session_regenerate_id(true);
+                    $_SESSION['user_id'] = (int) $user['UserID'];
+                    $_SESSION['patient_id'] = (int) $patient['PatientID'];
+                    $_SESSION['role'] = $user['Role'];
+                    $_SESSION['full_name'] = $user['FullName'];
+                    set_login_session_cookie(isset($_POST['remember']) && $_POST['remember'] === '1');
+                    header('Location: index.php');
+                    exit;
+                }
             } else {
                 session_regenerate_id(true);
                 $_SESSION['user_id'] = (int) $user['UserID'];
-                $_SESSION['patient_id'] = (int) $patient['PatientID'];
                 $_SESSION['role'] = $user['Role'];
                 $_SESSION['full_name'] = $user['FullName'];
-                header('Location: index.php');
+                set_login_session_cookie(isset($_POST['remember']) && $_POST['remember'] === '1');
+                header('Location: ' . ($user['Role'] === 'Dentist' ? 'dentist_dashboard.php' : 'admin_dashboard.php'));
                 exit;
             }
-        } else {
-            session_regenerate_id(true);
-            $_SESSION['user_id'] = (int) $user['UserID'];
-            $_SESSION['role'] = $user['Role'];
-            $_SESSION['full_name'] = $user['FullName'];
-            header('Location: ' . ($user['Role'] === 'Dentist' ? 'dentist_dashboard.php' : 'admin_dashboard.php'));
-            exit;
+            if ($loginError !== '') {
+                $_SESSION['login_captcha'] = generate_login_captcha();
+            }
         }
     } else {
         $fullName = trim($_POST['full_name'] ?? '');
@@ -153,7 +202,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <title>Login | BrightSmile Dental Clinic</title>
 
         <!-- Login Page CSS -->
-        <link rel="stylesheet" href="../Styling/authentication.css">
+        <link rel="stylesheet" href="../Styling/authentication.css?v=2">
         <link rel="stylesheet" href="../global.css">
     </head>
 
@@ -179,7 +228,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
 
                         <!-- Login Form -->
-                        <?php if ($flash || $loginError): ?><div class="security-notice" role="alert"><p><?= escape_html($loginError ?: $flash['message']) ?></p></div><?php endif; ?>
+                        <?php if ($flash || $loginError): ?><div class="security-notice destructive" role="alert"><p><?= escape_html($loginError ?: $flash['message']) ?></p></div><?php endif; ?>
                         <form class="login-form" action="authentication.php" method="post">
                             <input type="hidden" name="form_action" value="login">
                             <input type="hidden" name="csrf_token" value="<?= escape_html(csrf_token()) ?>">
@@ -206,9 +255,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         Password
                                     </label>
 
-                                    <a href="#">
+                                    <button type="button" class="forgot-password-button" id="forgot-password-button" aria-expanded="false" aria-controls="forgot-password-notice">
                                         Forgot password?
-                                    </a>
+                                    </button>
+                                </div>
+                                <div class="forgot-password-notice" id="forgot-password-notice" role="status" hidden>
+                                    <p>To reset your password, please contact the administrator at:</p>
+                                    <p><strong>Email:</strong> <a href="mailto:hello@brightsmile.com">hello@brightsmile.com</a></p>
+                                    <p><strong>Phone:</strong> <a href="tel:+6041234567">+60 4-123 4567</a></p>
                                 </div>
 
                                 <div class="password-wrapper">
@@ -231,17 +285,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </div>
                             </div>
 
-                            <!-- Remember Me -->
-                            <div class="form-options">
-                                <label class="remember-me">
-                                    <input
-                                        type="checkbox"
-                                        name="remember"
-                                    >
-                                    <span>
-                                        Remember me
-                                    </span>
-                                </label>
+                            <!-- CAPTCHA -->
+                            <div class="login-captcha">
+                                <div class="captcha-toolbar">
+                                    <button type="button" class="captcha-refresh" id="captcha-refresh" aria-label="Refresh CAPTCHA" title="Refresh CAPTCHA">
+                                        <i class="fa-solid fa-rotate" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                                <div class="captcha-challenge">
+                                    <canvas
+                                        class="captcha-canvas"
+                                        id="captcha-canvas"
+                                        role="img"
+                                        aria-label="CAPTCHA challenge. Enter the characters displayed."
+                                        data-code="<?= escape_html($_SESSION['login_captcha']) ?>"
+                                    ></canvas>
+                                </div>
+                                <label for="captcha">Enter the characters shown above</label>
+                                <input
+                                    type="text"
+                                    id="captcha"
+                                    name="captcha"
+                                    minlength="6"
+                                    maxlength="6"
+                                    autocomplete="off"
+                                    autocapitalize="off"
+                                    spellcheck="false"
+                                    required
+                                >
                             </div>
 
                             <!-- Login Button -->
@@ -259,7 +330,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <h2>Create your patient account</h2>
                                 <p>Enter your details to get started.</p>
                             </div>
-                            <?php if ($registrationError): ?><div class="security-notice" role="alert"><p><?= escape_html($registrationError) ?></p></div><?php endif; ?>
+                            <?php if ($registrationError): ?><div class="security-notice destructive" role="alert"><p><?= escape_html($registrationError) ?></p></div><?php endif; ?>
                             <form class="login-form" action="authentication.php" method="post">
                                 <input type="hidden" name="form_action" value="register">
                                 <input type="hidden" name="csrf_token" value="<?= escape_html(csrf_token()) ?>">
@@ -345,8 +416,126 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 document.getElementById('register-panel').hidden = !showRegistration;
                 document.getElementById('login-switch').hidden = showRegistration;
                 document.getElementById('register-switch').hidden = !showRegistration;
+                if (!showRegistration) {
+                    drawCaptcha();
+                }
             });
         });
+
+        const forgotPasswordButton = document.getElementById('forgot-password-button');
+        const forgotPasswordNotice = document.getElementById('forgot-password-notice');
+        forgotPasswordButton.addEventListener('click', () => {
+            const isExpanded = forgotPasswordButton.getAttribute('aria-expanded') === 'true';
+            forgotPasswordButton.setAttribute('aria-expanded', String(!isExpanded));
+            forgotPasswordNotice.hidden = isExpanded;
+        });
+
+        const captchaCanvas = document.getElementById('captcha-canvas');
+        const captchaInput = document.getElementById('captcha');
+        const captchaRefreshButton = document.getElementById('captcha-refresh');
+        const loginForm = captchaInput.form;
+        let captchaCode = captchaCanvas.dataset.code;
+
+        function drawCaptcha() {
+            const context = captchaCanvas.getContext('2d');
+            const pixelRatio = window.devicePixelRatio || 1;
+            const canvasWidth = Math.max(captchaCanvas.clientWidth, 1);
+            const canvasHeight = Math.max(captchaCanvas.clientHeight, 1);
+            captchaCanvas.width = canvasWidth * pixelRatio;
+            captchaCanvas.height = canvasHeight * pixelRatio;
+            context.scale(pixelRatio, pixelRatio);
+            context.fillStyle = '#f5fbfd';
+            context.fillRect(0, 0, canvasWidth, canvasHeight);
+
+            context.strokeStyle = 'rgba(66, 177, 204, 0.12)';
+            context.lineWidth = 1;
+            for (let x = 0; x < canvasWidth; x += 16) {
+                context.beginPath();
+                context.moveTo(x, 0);
+                context.lineTo(x, canvasHeight);
+                context.stroke();
+            }
+            for (let y = 0; y < canvasHeight; y += 16) {
+                context.beginPath();
+                context.moveTo(0, y);
+                context.lineTo(canvasWidth, y);
+                context.stroke();
+            }
+
+            for (let index = 0; index < 12; index += 1) {
+                context.beginPath();
+                context.moveTo(Math.random() * canvasWidth, Math.random() * canvasHeight);
+                context.lineTo(Math.random() * canvasWidth, Math.random() * canvasHeight);
+                context.strokeStyle = `rgba(35, 139, 165, ${0.15 + Math.random() * 0.25})`;
+                context.lineWidth = 1 + Math.random();
+                context.stroke();
+            }
+
+            for (let index = 0; index < 90; index += 1) {
+                context.beginPath();
+                context.arc(Math.random() * canvasWidth, Math.random() * canvasHeight, Math.random() * 1.6, 0, Math.PI * 2);
+                context.fillStyle = `rgba(38, 50, 56, ${0.08 + Math.random() * 0.2})`;
+                context.fill();
+            }
+
+            const characterWidth = canvasWidth / captchaCode.length;
+            captchaCode.split('').forEach((character, index) => {
+                context.save();
+                const centerX = characterWidth * index + characterWidth / 2;
+                const centerY = canvasHeight / 2 + (Math.random() * 20 - 10);
+                context.translate(centerX, centerY);
+                context.rotate((Math.random() * 0.5 - 0.25));
+                context.font = `700 ${30 + Math.random() * 10}px Georgia, serif`;
+                context.textAlign = 'center';
+                context.textBaseline = 'middle';
+                context.fillStyle = ['#176b82', '#263238', '#238ba5', '#34434d'][Math.floor(Math.random() * 4)];
+                context.fillText(character, 0, 0);
+                context.restore();
+            });
+        }
+
+        async function refreshCaptcha() {
+            captchaRefreshButton.disabled = true;
+            try {
+                const response = await fetch('authentication.php?refresh_captcha=1', {
+                    credentials: 'same-origin',
+                    cache: 'no-store',
+                    headers: { Accept: 'application/json' },
+                });
+                if (!response.ok) {
+                    throw new Error('CAPTCHA refresh request failed.');
+                }
+
+                const result = await response.json();
+                if (typeof result.captcha !== 'string' || result.captcha.length !== 6) {
+                    throw new Error('CAPTCHA refresh returned an invalid challenge.');
+                }
+
+                captchaCode = result.captcha;
+                captchaInput.value = '';
+                captchaInput.setCustomValidity('');
+                drawCaptcha();
+            } catch (error) {
+                console.error(error);
+                captchaInput.setCustomValidity('Unable to refresh the CAPTCHA. Please reload the page.');
+                captchaInput.reportValidity();
+            } finally {
+                captchaRefreshButton.disabled = false;
+            }
+        }
+
+        captchaRefreshButton.addEventListener('click', refreshCaptcha);
+        captchaInput.addEventListener('input', () => captchaInput.setCustomValidity(''));
+        loginForm.addEventListener('submit', (event) => {
+            if (captchaInput.value !== captchaCode) {
+                event.preventDefault();
+                captchaInput.setCustomValidity('Enter the CAPTCHA exactly as displayed, including letter case.');
+                captchaInput.reportValidity();
+                captchaInput.focus();
+            }
+        });
+        drawCaptcha();
+        window.addEventListener('resize', drawCaptcha);
 
         // Toggle password visibility
         function togglePassword() {
