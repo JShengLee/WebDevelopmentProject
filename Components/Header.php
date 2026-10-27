@@ -27,6 +27,8 @@ $headerBreadcrumbsMap = [
     'admin_dentist_list.php'     => [['label' => 'Dentist List']],
     'admin_service_list.php'     => [['label' => 'Service List']],
     'admin_patient_list.php'     => [['label' => 'Patient List']],
+    'admin_appointment_list.php'     => [['label' => 'Appointment List']],
+    'admin_message_list.php'     => [['label' => 'Message List']],
 ];
 
 $currentPage = basename($_SERVER['SCRIPT_NAME'] ?? '');

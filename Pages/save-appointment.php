@@ -7,8 +7,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !verify_csrf_token()) {
     exit;
 }
 
-$serviceId = filter_input(INPUT_POST, 'service_id', FILTER_VALIDATE_INT);
-$dentistId = filter_input(INPUT_POST, 'dentist_id', FILTER_VALIDATE_INT);
+$serviceId = filter_input(INPUT_POST, 'service', FILTER_VALIDATE_INT);
+$dentistId = filter_input(INPUT_POST, 'dentist', FILTER_VALIDATE_INT);
 $appointmentDate = trim($_POST['appointment_date'] ?? '');
 $appointmentTime = trim($_POST['appointment_time'] ?? '');
 $notes = trim($_POST['notes'] ?? '');

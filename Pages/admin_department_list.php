@@ -99,10 +99,10 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
         <link rel="icon" type="image/x-icon" href="../Logo.png">
-        <title>Admin Service List | BrightSmile Dental Clinic</title>
+        <title>Admin Department List | BrightSmile Dental Clinic</title>
 
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="../Styling/admin_dentist_list.css?v=17">
+        <link rel="stylesheet" href="../Styling/admin_dentist_list.css?v=19">
     </head>
 
     <body>

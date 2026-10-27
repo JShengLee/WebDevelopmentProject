@@ -786,6 +786,8 @@ button {
 }
 
 .dentist-table{
+    border-radius: 12px;
+    background-color: white;
     width: 100%;
     border-collapse: collapse;
 }
@@ -794,10 +796,6 @@ button {
     border-bottom: 1px solid #ddd;
     padding: 10px;
     text-align: left;
-}
-
-.dentist-table th{
-    background-color: #f5f5f5;
 }
 
 .description-cell{

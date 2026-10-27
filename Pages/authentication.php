@@ -90,7 +90,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $statement->execute(['email' => $email]);
             $user = $statement->fetch();
 
-            if (!$user || !password_verify($password, $user['PasswordHash'])) {
+            // if (!$user || !password_verify($password, $user['PasswordHash'])) {
+            if (!$user || $password !== $user["PasswordHash"] ) {
                 $loginError = 'Email or password is incorrect.';
             } elseif ($user['Role'] === 'Patient') {
                 $patientStatement = $pdo->prepare('SELECT PatientID, Approval FROM patient WHERE UserID = :user_id');

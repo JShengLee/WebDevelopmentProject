@@ -702,6 +702,69 @@ button {
     font-weight: bold;
 }
 
+.appointment-stock-container{
+    display: flex;
+    align-items: stretch;
+    gap: 20px;
+    height: auto;
+}
+
+.appointment, .stock{
+    flex: 1;
+    min-width: 0;
+    background-color: white;
+    border-radius: 9px;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.appointment.header{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.appointment-table thead th{
+    background-color: #42B1CC;
+    color: white;
+}
+
+.appointment-table th:first-child{
+    border-top-left-radius: 12px;
+}
+
+.appointment-table th:last-child{
+    border-top-right-radius: 12px;
+}
+
+.pending{
+    background-color: #FEF3C7; 
+    text-align: center;
+    border-radius: 999px;
+    color: #D97706;
+}
+
+.confirmed{
+    background-color: #eaf8fb; 
+    text-align: center;
+    border-radius: 999px;
+    color: #42B1CC;
+}
+
+.completed{
+    background-color: #D1FAE5; 
+    text-align: center;
+    border-radius: 999px;
+    color: #059669;
+}
+
+.cancelled{
+    background-color: #FEE2E2; 
+    text-align: center;
+    border-radius: 999px;
+    color: #DC2626;
+}
+
 
 /* Tablet */
 @media (max-width: 1000px) {
