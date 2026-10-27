@@ -16,6 +16,7 @@
         <?php
         require_once __DIR__ . '/../includes/patient_bootstrap.php';
         $flash = take_flash();
+        $minimumAppointmentDate = (new DateTimeImmutable('today'))->modify('+2 days')->format('Y-m-d');
         $services = $pdo->query('SELECT ServiceID, ServiceName FROM service ORDER BY ServiceName')->fetchAll();
         $dentists = $pdo->query(
             "SELECT d.DentistID, u.FullName FROM dentist d INNER JOIN user u ON u.UserID = d.UserID WHERE u.Role = 'Dentist' ORDER BY u.FullName"
@@ -45,7 +46,7 @@
                             <input type="hidden" name="csrf_token" value="<?= escape_html(csrf_token()) ?>">
                             <div class="form-group">
                                 <label for="service">Select service</label>
-                                <select id="service" name="service" required>
+                                <select id="service" name="service_id" required>
                                     <option value="">Choose a dental service</option>
                                     <?php foreach ($services as $serviceOption): ?>
                                         <option value="<?= (int) $serviceOption['ServiceID'] ?>"><?= escape_html($serviceOption['ServiceName']) ?></option>
@@ -54,7 +55,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="dentist">Preferred dentist</label>
-                                <select id="dentist" name="dentist" required>
+                                <select id="dentist" name="dentist_id" required>
                                     <option value="">Choose a dentist</option>
                                     <?php foreach ($dentists as $dentistOption): ?>
                                         <option value="<?= (int) $dentistOption['DentistID'] ?>"><?= escape_html($dentistOption['FullName']) ?></option>
@@ -63,8 +64,8 @@
                             </div>
                             <div class="form-group">
                                 <label for="appointment-date">Select date</label>
-                                <input type="date" id="appointment-date" name="appointment_date" required>
-                                <small>Choose a date from today onwards.</small>
+                                <input type="date" id="appointment-date" name="appointment_date" min="<?= escape_html($minimumAppointmentDate) ?>" required>
+                                <small>Choose a date at least two days from today.</small>
                             </div>
                             <div class="form-group">
                                 <label>Available time</label>
@@ -120,7 +121,17 @@
                 ? new Date(`${date.value}T00:00:00`).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
                 : 'Not selected';
         });
-        date.min = new Date().toISOString().split('T')[0];
+        function localDateString(value) {
+            const year = value.getFullYear();
+            const month = String(value.getMonth() + 1).padStart(2, '0');
+            const day = String(value.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        const minimumDate = new Date();
+        minimumDate.setHours(0, 0, 0, 0);
+        minimumDate.setDate(minimumDate.getDate() + 2);
+        date.min = localDateString(minimumDate);
 
         timeSlots.forEach((slot) => slot.addEventListener('click', () => {
             timeSlots.forEach((item) => item.classList.remove('selected'));

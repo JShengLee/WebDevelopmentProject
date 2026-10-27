@@ -14,9 +14,32 @@ $appointmentTime = trim($_POST['appointment_time'] ?? '');
 $notes = trim($_POST['notes'] ?? '');
 $date = DateTime::createFromFormat('!Y-m-d', $appointmentDate);
 $time = DateTime::createFromFormat('!H:i', $appointmentTime);
+$minimumAppointmentDate = (new DateTimeImmutable('today'))->modify('+2 days')->format('Y-m-d');
+$availableTimes = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'];
 
 if (!$serviceId || !$dentistId || !$date || $date->format('Y-m-d') !== $appointmentDate
-    || $date->format('Y-m-d') < date('Y-m-d') || !$time || $time->format('H:i') !== $appointmentTime) {
+    || !$time || $time->format('H:i') !== $appointmentTime
+    || !in_array($appointmentTime, $availableTimes, true)) {
+    set_flash('error', 'Choose a valid service, dentist, date, and time.');
+    header('Location: book-appointment.php');
+    exit;
+}
+
+if ($appointmentDate < $minimumAppointmentDate) {
+    set_flash('error', 'Appointments must be booked at least two days in advance.');
+    header('Location: book-appointment.php');
+    exit;
+}
+
+$serviceStatement = $pdo->prepare('SELECT 1 FROM service WHERE ServiceID = :service_id');
+$serviceStatement->execute(['service_id' => $serviceId]);
+$dentistStatement = $pdo->prepare(
+    "SELECT 1 FROM dentist d INNER JOIN user u ON u.UserID = d.UserID
+     WHERE d.DentistID = :dentist_id AND u.Role = 'Dentist'"
+);
+$dentistStatement->execute(['dentist_id' => $dentistId]);
+
+if (!$serviceStatement->fetchColumn() || !$dentistStatement->fetchColumn()) {
     set_flash('error', 'Choose a valid service, dentist, date, and time.');
     header('Location: book-appointment.php');
     exit;
