@@ -291,12 +291,14 @@
 
                 $dentistCount = [];
 
-                $sqlCount = "SELECT Specialty, COUNT(*) AS Amount FROM dentist GROUP BY Specialty";
+                $sqlCount = "SELECT dept.DepartmentName, COUNT(*) AS Amount 
+                            FROM dentist d INNER JOIN department dept ON d.DeptID = dept.DeptID
+                            GROUP BY d.DeptID";
 
                 $count = $pdo->query($sqlCount);
 
                 while ($row = $count->fetch()){
-                    $dentistCount[$row["Specialty"]] = $row["Amount"];
+                    $dentistCount[$row["DepartmentName"]] = $row["Amount"];
                 }
 
                 //This is for the service

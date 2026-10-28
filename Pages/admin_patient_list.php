@@ -4,6 +4,27 @@
 ?>
 
 <?php
+
+    function derive_malaysian_ic_date_of_birth(string $icDigits): ?string
+    {
+        if (!preg_match('/^[0-9]{12}$/D', $icDigits)) {
+            return null;
+        }
+
+        $yearDigits = (int) substr($icDigits, 0, 2);
+        $year = $yearDigits <= (int) date('y') ? 2000 + $yearDigits : 1900 + $yearDigits;
+        $dateValue = sprintf('%04d-%02d-%02d', $year, (int) substr($icDigits, 2, 2), (int) substr($icDigits, 4, 2));
+        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $dateValue);
+        $dateErrors = DateTimeImmutable::getLastErrors();
+
+        if (!$date || ($dateErrors && ($dateErrors['warning_count'] > 0 || $dateErrors['error_count'] > 0))
+            || $date->format('Y-m-d') !== $dateValue || $date > new DateTimeImmutable('today')) {
+            return null;
+        }
+
+        return $dateValue;
+    }
+
     if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["action"] ?? "") === "addPatient"){
         $fullName = trim($_POST["fullName"]);
         $email = trim($_POST["email"]);
@@ -11,6 +32,10 @@
         $phone = trim($_POST["phone"]);
         $icnum = trim($_POST["icnum"]);
         $gender = trim($_POST["gender"]);
+
+        $normalizedIcNumber = str_replace('-', '', $icnum);
+        $validIcFormat = preg_match('/^(?:[0-9]{12}|[0-9]{6}-[0-9]{2}-[0-9]{4})$/D', $icnum) === 1;
+        $dateOfBirth = $validIcFormat ? (derive_malaysian_ic_date_of_birth($normalizedIcNumber) ?? '') : '';
 
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
@@ -32,7 +57,7 @@
                 $phone]
             );
 
-            $addPatient = "INSERT INTO patient (PatientID, UserID, Gender,Approval)
+            $addPatient = "INSERT INTO patient (PatientID, UserID, Gender , DateOfBirth ,Approval)
                         VALUES (?, ?, ?, ?, 'Yes')";
     
             $stmtAddPatient = $pdo->prepare($addPatient);
@@ -40,7 +65,8 @@
             $stmtAddPatient->execute(
                 [$userID,
                 $userID,
-                $gender]
+                $gender,
+                $dateOfBirth]
             );
 
             $pdo->commit();

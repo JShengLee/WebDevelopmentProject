@@ -311,46 +311,70 @@ button {
 .search-container {
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    gap: 12px;
     background-color: white;
     border-radius: 12px;
-    padding: 5px;
+    padding: 8px;
     margin-top: 10px;
     border: 1px solid #e9eef0;
-    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .searchbar {
-    flex: 1;
+    flex: 1 1 200px;
+    min-width: 0;
     display: flex;
     align-items: center;
     gap: 8px;
     border-radius: 12px;
     padding: 5px;
-    margin-right: 40px;
+    margin-right: 0;
 }
 
-.search{
+.search {
     flex: 1;
+    min-width: 0;
+    width: 100%;
     padding: 5px;
+    border: none;
+    outline: none;
 }
 
 .fa-times-circle{
     cursor: pointer;
 }
 
-.filterbar{
-    padding-right: 20px;
+.filterbar {
+    flex-shrink: 0;
 }
 
 .filter{
     padding: 5px;
-    width: 180px
+    width: 100%;
+}
+
+.addAppointment{
+    display: inline-block;
+    flex-shrink: 0;
+    padding: 7px 12px;
+    border-radius: 8px;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    transition: 0.2s ease;
+    text-align: center;
+    background-color: #42B1CC;
+    cursor: pointer;
+    text-decoration: none;
 }
 
 .table-container{
     width: 100%;
     margin-top: 10px;
     max-height: 360px;
+    width: 100%;
     overflow-y: auto;
 }
 
@@ -418,22 +442,27 @@ button {
     color: #DC2626;
 }
 
-.action-row{
+.action-row {
     display: flex;
     align-items: center;
-    width: 110px;
-    gap: 20px;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+    flex-wrap: wrap;
 }
 
-.action-row select{
-    width: auto;
-    max-width: 150px;
+.action-row select {
+    flex: 1 1 100px;
+    min-width: 0;
+    max-width: 100%;
     padding: 6px 8px;
     border-radius: 8px;
 }
 
-.update-btn{
-    padding: 7px 15px;
+.update-btn {
+    display: inline-block;
+    flex-shrink: 0;
+    padding: 7px 12px;
     border-radius: 8px;
     color: white;
     font-size: 13px;
@@ -442,6 +471,7 @@ button {
     text-align: center;
     background-color: #42B1CC;
     cursor: pointer;
+    text-decoration: none;
 }
 
 .table-footer{
@@ -454,4 +484,72 @@ button {
 
 .table-footer:last-child{
     border-bottom-right-radius: 12px;
+}
+
+
+.primary-button {
+    padding: 13px 19px;
+    border-radius: 8px;
+    background-color: #42B1CC;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    transition: 0.2s ease;
+}
+
+.primary-button:hover {
+    background-color: #329db7;
+    box-shadow: 0 5px 12px rgba(66, 177, 204, 0.18);
+    cursor: pointer;
+}
+
+.cancel-btn{
+    margin-left: auto;
+}
+
+
+.patient-search-container {
+    position: relative;
+}
+
+.patient-result {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    background: white;
+    text-align: left;
+    cursor: pointer;
+}
+
+.patient-result {
+    display: block;
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    background: white;
+    text-align: left;
+    cursor: pointer;
+}
+
+.patient-result strong {
+    display: block;
+}
+
+.patient-result small {
+    display: block;
+    color: #6c757d;
+}
+
+
+.patient-result:hover {
+    background: #eaf8fb;
+}
+
+.patient-no-results {
+    padding: 12px;
+    color: #6c757d;
 }
