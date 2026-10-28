@@ -148,6 +148,7 @@
                     window.location.href = window.location.pathname;
                 </script>";
 
+
             exit;
         } catch (PDOException $e){
             if ($pdo->inTransaction()){
@@ -624,7 +625,7 @@
                 button.addEventListener("click", function (){
                     const patient = this.dataset;
 
-                    document.getElementById("deleteUserID").value = patient.patientid;
+                    document.getElementById("deleteUserID").value = patient.userid;
                 });
             });   
         </script>
