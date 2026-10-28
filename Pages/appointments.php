@@ -3,29 +3,49 @@ require_once __DIR__ . '/../includes/patient_bootstrap.php';
 $flash = take_flash();
 
 $upcomingStatement = $pdo->prepare(
-        "SELECT COUNT(*) FROM appointment
-         WHERE PatientID = :patient_id AND AppointmentStatus IN ('Pending', 'Confirmed')
-             AND TIMESTAMP(AppointmentDate, AppointmentTime) >= NOW()"
+        "SELECT COUNT(*)
+         FROM appointment a
+         INNER JOIN patient p ON p.PatientID = a.PatientID
+         INNER JOIN user patient_user ON patient_user.UserID = p.UserID AND patient_user.Role = 'Patient'
+         WHERE p.PatientID = :patient_id AND patient_user.UserID = :user_id
+             AND LOWER(a.AppointmentStatus) IN ('pending', 'confirmed')
+             AND TIMESTAMP(a.AppointmentDate, a.AppointmentTime) >= NOW()"
 );
-$upcomingStatement->execute(['patient_id' => $currentPatient['PatientID']]);
+$upcomingStatement->execute(['patient_id' => $currentPatient['PatientID'], 'user_id' => $currentPatient['UserID']]);
 $upcomingCount = (int) $upcomingStatement->fetchColumn();
-$completedStatement = $pdo->prepare("SELECT COUNT(*) FROM appointment WHERE PatientID = :patient_id AND AppointmentStatus = 'Completed'");
-$completedStatement->execute(['patient_id' => $currentPatient['PatientID']]);
+$completedStatement = $pdo->prepare(
+    "SELECT COUNT(*)
+     FROM appointment a
+     INNER JOIN patient p ON p.PatientID = a.PatientID
+     INNER JOIN user patient_user ON patient_user.UserID = p.UserID AND patient_user.Role = 'Patient'
+     WHERE p.PatientID = :patient_id AND patient_user.UserID = :user_id
+         AND LOWER(a.AppointmentStatus) = 'completed'"
+);
+$completedStatement->execute(['patient_id' => $currentPatient['PatientID'], 'user_id' => $currentPatient['UserID']]);
 $completedCount = (int) $completedStatement->fetchColumn();
-$pendingStatement = $pdo->prepare("SELECT COUNT(*) FROM appointment WHERE PatientID = :patient_id AND AppointmentStatus = 'Pending'");
-$pendingStatement->execute(['patient_id' => $currentPatient['PatientID']]);
+$pendingStatement = $pdo->prepare(
+    "SELECT COUNT(*)
+     FROM appointment a
+     INNER JOIN patient p ON p.PatientID = a.PatientID
+     INNER JOIN user patient_user ON patient_user.UserID = p.UserID AND patient_user.Role = 'Patient'
+     WHERE p.PatientID = :patient_id AND patient_user.UserID = :user_id
+         AND LOWER(a.AppointmentStatus) = 'pending'"
+);
+$pendingStatement->execute(['patient_id' => $currentPatient['PatientID'], 'user_id' => $currentPatient['UserID']]);
 $pendingCount = (int) $pendingStatement->fetchColumn();
 $appointmentStatement = $pdo->prepare(
         'SELECT a.AppointmentID, a.AppointmentDate, a.AppointmentTime, a.AppointmentStatus,
                         s.ServiceName, u.FullName AS DentistName
          FROM appointment a
+         INNER JOIN patient p ON p.PatientID = a.PatientID
+         INNER JOIN user patient_user ON patient_user.UserID = p.UserID AND patient_user.Role = \'Patient\'
          INNER JOIN service s ON s.ServiceID = a.ServiceID
          INNER JOIN dentist d ON d.DentistID = a.DentistID
-         INNER JOIN user u ON u.UserID = d.UserID
-         WHERE a.PatientID = :patient_id
+         INNER JOIN user u ON u.UserID = d.UserID AND u.Role = \'Dentist\'
+         WHERE p.PatientID = :patient_id AND patient_user.UserID = :user_id
          ORDER BY a.AppointmentDate DESC, a.AppointmentTime DESC'
 );
-$appointmentStatement->execute(['patient_id' => $currentPatient['PatientID']]);
+$appointmentStatement->execute(['patient_id' => $currentPatient['PatientID'], 'user_id' => $currentPatient['UserID']]);
 $appointments = $appointmentStatement->fetchAll();
 ?>
 <!DOCTYPE html>
@@ -71,7 +91,7 @@ $appointments = $appointmentStatement->fetchAll();
                     <div><span>REQUESTS</span><strong><?= $pendingCount ?></strong><small>Awaiting confirmation</small></div>
                 </section>
 
-                <?php if ($flash): ?><p class="empty-state" role="status"><?= escape_html($flash['message']) ?></p><?php endif; ?>
+                <?php if ($flash && $flash['type'] !== 'appointment_success'): ?><p class="empty-state" role="status"><?= escape_html($flash['message']) ?></p><?php endif; ?>
                 <section class="table-panel">
                     <div class="table-toolbar">
                         <div>
@@ -109,14 +129,17 @@ $appointments = $appointmentStatement->fetchAll();
                                         <td><?= escape_html($appointment['DentistName']) ?></td>
                                         <td><?= escape_html(date('d M Y', strtotime($appointment['AppointmentDate']))) ?><small><?= escape_html(date('g:i A', strtotime($appointment['AppointmentTime']))) ?></small></td>
                                         <td>BrightSmile Clinic</td>
-                                        <td><span class="status-pill <?= escape_html($statusClass) ?>"><?= escape_html($appointment['AppointmentStatus']) ?></span>
-                                            <?php if ($appointment['AppointmentStatus'] === 'Pending'): ?>
-                                                <form action="cancel-appointment.php" method="post">
+                                        <td>
+                                            <div class="appointment-status-actions">
+                                                <span class="status-pill <?= escape_html($statusClass) ?>"><?= escape_html($appointment['AppointmentStatus']) ?></span>
+                                                <?php if ($statusClass === 'pending'): ?>
+                                                <form class="cancel-appointment-form" action="cancel-appointment.php" method="post">
                                                     <input type="hidden" name="csrf_token" value="<?= escape_html(csrf_token()) ?>">
                                                     <input type="hidden" name="appointment_id" value="<?= (int) $appointment['AppointmentID'] ?>">
                                                     <button class="text-link" type="submit">Cancel</button>
                                                 </form>
-                                            <?php endif; ?>
+                                                <?php endif; ?>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -152,8 +175,34 @@ $appointments = $appointmentStatement->fetchAll();
 
         searchInput.addEventListener('input', filterAppointments);
         statusFilter.addEventListener('change', filterAppointments);
+        document.querySelectorAll('.cancel-appointment-form').forEach((form) => {
+            form.addEventListener('submit', (event) => {
+                if (!window.confirm('Are you sure you want to cancel this appointment?')) {
+                    event.preventDefault();
+                }
+            });
+        });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <?php if ($flash && $flash['type'] === 'appointment_success'): ?>
+        <div class="modal fade" id="appointmentSuccessModal" tabindex="-1" aria-labelledby="appointmentSuccessTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title fs-5" id="appointmentSuccessTitle">Appointment request submitted</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body"><?= escape_html($flash['message']) ?></div>
+                    <div class="modal-footer">
+                        <button type="button" class="primary-button" data-bs-dismiss="modal">Got it</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            new bootstrap.Modal(document.getElementById('appointmentSuccessModal')).show();
+        </script>
+    <?php endif; ?>
     <script src="https://kit.fontawesome.com/f3ce044c74.js" crossorigin="anonymous"></script>
 </body>
 </html>
