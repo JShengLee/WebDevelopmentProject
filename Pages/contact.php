@@ -1,5 +1,39 @@
 <?php
 require_once __DIR__ . '/../includes/patient_bootstrap.php';
+
+date_default_timezone_set("Asia/Kuala_Lumpur");
+
+if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["action"] ?? "") === "sendMessage"){
+    $name = trim($_POST["name"]);
+    $email = trim($_POST["email"]);
+    $subject = $_POST["subject"];
+    $message = $_POST["message"];
+    $timestamp = date("Y-m-d H:i:s");
+    try{
+        $sql = "INSERT INTO message (FullName, Email, Subject, MessageContent, ReadStatus, MessageTimeStamp)
+                VALUES (?, ?, ?, ?, 'Unread', ?)";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            $name,
+            $email,
+            $subject,
+            $message,
+            $timestamp
+        ]);
+
+        echo"<script>
+                    alert('Your message has been successfully submitted!');
+                    window.location.href = window.location.pathname;    
+                </script>";
+    } catch (PDOException $e){
+        error_log($e->getMessage());
+
+        echo"<script>
+                alert('Unable to submit message.');
+            </script>";
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -157,6 +191,7 @@ require_once __DIR__ . '/../includes/patient_bootstrap.php';
                                 action="#"
                                 method="post"
                             >
+                                <input type="hidden" name="action" value="sendMessage" />
 
                                 <div class="form-row">
                                     <div class="form-group">
