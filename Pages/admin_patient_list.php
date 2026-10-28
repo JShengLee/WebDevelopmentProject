@@ -202,7 +202,7 @@
         <title>Admin Patient List | BrightSmile Dental Clinic</title>
 
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="../Styling/admin_dentist_list.css?v=17">
+        <link rel="stylesheet" href="../Styling/admin_dentist_list.css?v=19">
     </head>
 
     <body>
