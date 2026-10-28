@@ -11,7 +11,6 @@
         $phone = trim($_POST["phone"]);
         $icnum = trim($_POST["icnum"]);
         $gender = trim($_POST["gender"]);
-        $address = trim($_POST["address"]);
 
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
@@ -33,7 +32,7 @@
                 $phone]
             );
 
-            $addPatient = "INSERT INTO patient (PatientID, UserID, Gender, Address, Approval)
+            $addPatient = "INSERT INTO patient (PatientID, UserID, Gender,Approval)
                         VALUES (?, ?, ?, ?, 'Yes')";
     
             $stmtAddPatient = $pdo->prepare($addPatient);
@@ -41,8 +40,7 @@
             $stmtAddPatient->execute(
                 [$userID,
                 $userID,
-                $gender,
-                $address]
+                $gender]
             );
 
             $pdo->commit();
@@ -75,7 +73,6 @@
         $gender = trim($_POST["editGender"]);
         $email = trim($_POST["editEmail"]);
         $phone = trim($_POST["editPhone"]);
-        $address = trim($_POST["editAddress"]);
 
         try{
             $pdo->beginTransaction();
@@ -92,13 +89,12 @@
                 $userID]
             );
 
-            $editPatient = "UPDATE patient SET Gender = ?, Address = ? WHERE UserID = ?";
+            $editPatient = "UPDATE patient SET Gender = ? WHERE UserID = ?";
 
             $stmtEditPatient = $pdo->prepare($editPatient);
 
             $stmtEditPatient->execute(
                 [$gender,
-                $address,
                 $userID]
             );
 
@@ -129,11 +125,11 @@
         try{
             $pdo->beginTransaction();
 
-            $deleteDentist = "DELETE FROM dentist WHERE UserID = ?";
+            $deletePatient = "DELETE FROM patient WHERE UserID = ?";
 
-            $stmtDeleteDentist = $pdo->prepare($deleteDentist);
+            $stmtDeletePatient = $pdo->prepare($deletePatient);
 
-            $stmtDeleteDentist->execute(
+            $stmtDeletePatient->execute(
                 [$userID]
             );
 
@@ -301,11 +297,6 @@
                                             </select>
                                         </div>
 
-                                        <div class="mb-3">
-                                            <label for="address" class="form-label">Address</label>
-                                            <input type="text" class="form-control" id="address" name="address">
-                                        </div>
-
                                         <div class="modal-footer">
                                             <a class="primary-button"
                                                 onclick="document.getElementById('addPatientForm').requestSubmit(); return false;">
@@ -392,11 +383,6 @@
                                         <div class="mb-3">
                                             <label for="editEmail" class="form-label">Email</label>
                                             <input type="email" class="form-control" id="editEmail" name="editEmail" required>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="editAddress" class="form-label">Address</label>
-                                            <input type="text" class="form-control" id="editAddress" name="editAddress" required>
                                         </div>
 
                                         <div class="modal-footer">
@@ -598,7 +584,6 @@
                                                 data-phone="<?=htmlspecialchars($patient['Phone'])?>"
                                                 data-email="<?=htmlspecialchars($patient['Email'], ENT_QUOTES)?>"
                                                 data-gender="<?=htmlspecialchars($patient['Gender'], ENT_QUOTES)?>"
-                                                data-address="<?=htmlspecialchars($patient['Address'], ENT_QUOTES)?>"
                                                 >
                                                     Edit
                                                 </a>
@@ -632,7 +617,6 @@
                     document.getElementById("editPhone").value = patient.phone;
                     document.getElementById("editEmail").value = patient.email;
                     document.getElementById("editGender").value = patient.gender;
-                    document.getElementById("editAddress").value = patient.address;
                 });
             });
 
