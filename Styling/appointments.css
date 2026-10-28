@@ -413,6 +413,18 @@ button {
     font-weight: 600;
 }
 
+.time-slot.disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+    background-color: #eef2f3;
+    color: #9aa7ac;
+}
+
+.time-slot[hidden] {
+    display: none;
+}
+
 /* Form buttons */
 .form-actions {
     display: flex;
