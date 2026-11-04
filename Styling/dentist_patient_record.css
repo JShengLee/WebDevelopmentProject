@@ -1042,6 +1042,10 @@ button {
     background: #a48bc7;
 }
 
+.legend-dot.others {
+    background: #f39c12; /* Amber/Orange color */
+}
+
 .tooth-chart {
     grid-column: 1 / -1;
     padding: 20px 12px;
@@ -1121,6 +1125,12 @@ button {
     color: #8267a9;
 }
 
+.tooth-button.others {
+    background: #fdf5e6;
+    border-color: #f5c6cb;
+    color: #d35400;
+}
+
 .tooth-symbol {
     font-size: 19px;
 }
@@ -1133,7 +1143,7 @@ button {
 .tooth-editor {
     grid-column: 1 / -1;
     display: grid;
-    grid-template-columns: 1fr 1fr auto;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     align-items: end;
     gap: 14px;
     margin-top: 12px;
