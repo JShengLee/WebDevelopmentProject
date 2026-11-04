@@ -12,7 +12,7 @@
         <title>Admin Dashboard | BrightSmile Dental Clinic</title>
 
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="../Styling/admin_homepage.css?v=1">
+        <link rel="stylesheet" href="../Styling/admin_homepage.css?v=24">
     </head>
 
     <body>
@@ -167,12 +167,108 @@
                                 </div>
                             </div>
                     </section>
+                    <?php
+                        $appointmentsql = "SELECT  u.FullName, s.ServiceName, a.AppointmentDate, a.AppointmentTime, a.AppointmentStatus
+                                        FROM appointment a
+                                        INNER JOIN patient p  ON a.PatientID = p.PatientID
+                                        INNER JOIN user u ON p.UserID = u.UserID
+                                        INNER JOIN `service` s on a.ServiceID = s.ServiceID
+                                        ORDER BY AppointmentID DESC
+                                        LIMIT 5";
+                        $appointmentstmt = $pdo->prepare($appointmentsql);
+                        $appointmentstmt->execute();
 
-                    <!-- Dentist Carousel -->
+                        $stocksql = "SELECT * FROM inventory WHERE QuantityInStock < 10 ORDER BY ReorderLevel ASC LIMIT 5";
+                        $stockstmt = $pdo->prepare($stocksql);
+                        $stockstmt->execute();
+                    ?>
                     <div>
-                    <section class="dashboard-card activity-card">
-                        <div>
-                            Something
+                    <section>
+                        <div class="appointment-stock-container">
+                            <div class="appointment">
+                                <div class="section-heading">
+                                    <div>
+                                        <i></i>
+                                        <h2>Recent Appointments</h2>
+                                    </div>
+
+                                    <a href="admin_appointment_list.php">View all</a>
+                                </div>
+                                <div>
+                                    <table class="table appointment-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Patient</th>
+                                                <th>Service</th>
+                                                <th>Date & Time</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php while($appointment = $appointmentstmt->fetch()): ?>
+
+                                                <tr>
+                                                    <td><?=htmlspecialchars($appointment["FullName"])?></td>
+                                                    <td><?=htmlspecialchars($appointment["ServiceName"])?></td>
+                                                    <td><?=htmlspecialchars($appointment["AppointmentDate"])?> <?=htmlspecialchars($appointment["AppointmentTime"])?></td>
+                                                    <?php if($appointment["AppointmentStatus"] === "Pending"): ?>
+                                                        <td>
+                                                            <p class="pending">Pending</p>
+                                                        </td>
+                                                    <?php elseif($appointment["AppointmentStatus"] === "Confirmed"): ?>
+                                                        <td>
+                                                            <p class="confirmed">Confirmed</p>
+                                                        </td>
+                                                    <?php elseif($appointment["AppointmentStatus"] === "Completed"): ?>
+                                                        <td>
+                                                            <p class="completed">Completed</p>
+                                                        </td>
+                                                    <?php elseif($appointment["AppointmentStatus"] === "Cancelled"): ?>
+                                                        <td>
+                                                            <p class="cancelled">Cancelled</p>
+                                                        </td>
+                                                    <?php endif; ?>
+                                                </tr>
+
+                                            <?php endwhile;?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+
+                            <div class="stock">
+                                <div class="section-heading">
+                                    <div>
+                                        <i></i>
+                                        <h2>Low Stock Items</h2>
+                                    </div>
+
+                                    <a href="admin_stock_list.php">View all</a>
+                                </div>
+                                <div>
+                                    <table class="table appointment-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Item ID</th>
+                                                <th>Item Name</th>
+                                                <th>Current Stock</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php while($stock = $stockstmt->fetch()): ?>
+
+                                                <tr>
+                                                    <td><?=htmlspecialchars($stock["ItemID"])?></td>
+                                                    <td><?=htmlspecialchars($stock["ItemName"])?></td>
+                                                    <td><?=htmlspecialchars($stock["QuantityInStock"])?></td>
+                                                </tr>
+
+                                            <?php endwhile;?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </section>
                 </div>
@@ -195,12 +291,14 @@
 
                 $dentistCount = [];
 
-                $sqlCount = "SELECT Specialty, COUNT(*) AS Amount FROM dentist GROUP BY Specialty";
+                $sqlCount = "SELECT dept.DepartmentName, COUNT(*) AS Amount 
+                            FROM dentist d INNER JOIN department dept ON d.DeptID = dept.DeptID
+                            GROUP BY d.DeptID";
 
                 $count = $pdo->query($sqlCount);
 
                 while ($row = $count->fetch()){
-                    $dentistCount[$row["Specialty"]] = $row["Amount"];
+                    $dentistCount[$row["DepartmentName"]] = $row["Amount"];
                 }
 
                 //This is for the service

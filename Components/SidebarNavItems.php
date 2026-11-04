@@ -79,15 +79,15 @@
 
     <a href="admin_dentist_list.php" class="nav-item<?= isActive('admin_dentist_list.php', $current_page) ?>">
         <span class="nav-icon"><i class="fab fa-black-tie"></i></span>
-        <span>Doctors</span>
+        <span>Dentists</span>
     </a>
 
-<a href="admin_department_list.php" class="nav-item">
+<a href="admin_department_list.php" class="nav-item <?= isActive('admin_department_list.php', $current_page) ?>">
     <span class="nav-icon"><i class="fas fa-sitemap"></i></span>
     <span>Department</span>
 </a>
 
-<a href="admin_service_list.php" class="nav-item">
+<a href="admin_service_list.php" class="nav-item <?= isActive('admin_service_list.php', $current_page) ?>">
     <span class="nav-icon"><i class="fas fa-concierge-bell"></i></span>
     <span>Services</span>
 </a>
@@ -97,21 +97,28 @@
         <span>Patients</span>
     </a>
 
-<a href="admin_appointment_list.php" class="nav-item">
+<a href="admin_appointment_list.php" class="nav-item <?= isActive('admin_appointment_list.php', $current_page) ?>">
     <span class="nav-icon"><i class="fas fa-calendar-alt"></i></span>
     <span>Appointments</span>
 </a>
 
-<a href="admin_stock_list.php" class="nav-item">
+<a href="admin_stock_list.php" class="nav-item <?= isActive('admin_stock_list.php', $current_page) ?>">
     <span class="nav-icon"><i class="fas fa-boxes"></i></span>
     <span>Inventory</span>
 </a>
 
+<a href="admin_message_list.php" class="nav-item <?= isActive('admin_message_list.php', $current_page) ?>">
+    <span class="nav-icon"><i class="fas fa-envelope"></i></span>
+    <span>Messages</span>
+</a>
+
 <?php endif; ?>
 
+<?php if ($role !== "Admin"): ?>
 <p class="nav-title second-title">ACCOUNT</p>
 
 <a href="<?= htmlspecialchars($profile_page); ?>" class="nav-item<?= isActive($profile_page, $current_page) ?>">
     <span class="nav-icon"><i class="fas fa-user"></i></span>
     <span>My Profile</span>
 </a>
+<?php endif; ?>

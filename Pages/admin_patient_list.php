@@ -4,6 +4,27 @@
 ?>
 
 <?php
+
+    function derive_malaysian_ic_date_of_birth(string $icDigits): ?string
+    {
+        if (!preg_match('/^[0-9]{12}$/D', $icDigits)) {
+            return null;
+        }
+
+        $yearDigits = (int) substr($icDigits, 0, 2);
+        $year = $yearDigits <= (int) date('y') ? 2000 + $yearDigits : 1900 + $yearDigits;
+        $dateValue = sprintf('%04d-%02d-%02d', $year, (int) substr($icDigits, 2, 2), (int) substr($icDigits, 4, 2));
+        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $dateValue);
+        $dateErrors = DateTimeImmutable::getLastErrors();
+
+        if (!$date || ($dateErrors && ($dateErrors['warning_count'] > 0 || $dateErrors['error_count'] > 0))
+            || $date->format('Y-m-d') !== $dateValue || $date > new DateTimeImmutable('today')) {
+            return null;
+        }
+
+        return $dateValue;
+    }
+
     if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["action"] ?? "") === "addPatient"){
         $fullName = trim($_POST["fullName"]);
         $email = trim($_POST["email"]);
@@ -11,7 +32,10 @@
         $phone = trim($_POST["phone"]);
         $icnum = trim($_POST["icnum"]);
         $gender = trim($_POST["gender"]);
-        $address = trim($_POST["address"]);
+
+        $normalizedIcNumber = str_replace('-', '', $icnum);
+        $validIcFormat = preg_match('/^(?:[0-9]{12}|[0-9]{6}-[0-9]{2}-[0-9]{4})$/D', $icnum) === 1;
+        $dateOfBirth = $validIcFormat ? (derive_malaysian_ic_date_of_birth($normalizedIcNumber) ?? '') : '';
 
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
@@ -33,7 +57,7 @@
                 $phone]
             );
 
-            $addPatient = "INSERT INTO patient (PatientID, UserID, Gender, Address, Approval)
+            $addPatient = "INSERT INTO patient (PatientID, UserID, Gender , DateOfBirth ,Approval)
                         VALUES (?, ?, ?, ?, 'Yes')";
     
             $stmtAddPatient = $pdo->prepare($addPatient);
@@ -42,7 +66,7 @@
                 [$userID,
                 $userID,
                 $gender,
-                $address]
+                $dateOfBirth]
             );
 
             $pdo->commit();
@@ -75,7 +99,6 @@
         $gender = trim($_POST["editGender"]);
         $email = trim($_POST["editEmail"]);
         $phone = trim($_POST["editPhone"]);
-        $address = trim($_POST["editAddress"]);
 
         try{
             $pdo->beginTransaction();
@@ -92,13 +115,12 @@
                 $userID]
             );
 
-            $editPatient = "UPDATE patient SET Gender = ?, Address = ? WHERE UserID = ?";
+            $editPatient = "UPDATE patient SET Gender = ? WHERE UserID = ?";
 
             $stmtEditPatient = $pdo->prepare($editPatient);
 
             $stmtEditPatient->execute(
                 [$gender,
-                $address,
                 $userID]
             );
 
@@ -129,11 +151,11 @@
         try{
             $pdo->beginTransaction();
 
-            $deleteDentist = "DELETE FROM dentist WHERE UserID = ?";
+            $deletePatient = "DELETE FROM patient WHERE UserID = ?";
 
-            $stmtDeleteDentist = $pdo->prepare($deleteDentist);
+            $stmtDeletePatient = $pdo->prepare($deletePatient);
 
-            $stmtDeleteDentist->execute(
+            $stmtDeletePatient->execute(
                 [$userID]
             );
 
@@ -151,6 +173,7 @@
                     alert('The user has been deleted.');
                     window.location.href = window.location.pathname;
                 </script>";
+
 
             exit;
         } catch (PDOException $e){
@@ -202,7 +225,7 @@
         <title>Admin Patient List | BrightSmile Dental Clinic</title>
 
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="../Styling/admin_dentist_list.css?v=17">
+        <link rel="stylesheet" href="../Styling/admin_dentist_list.css?v=19">
     </head>
 
     <body>
@@ -301,11 +324,6 @@
                                             </select>
                                         </div>
 
-                                        <div class="mb-3">
-                                            <label for="address" class="form-label">Address</label>
-                                            <input type="text" class="form-control" id="address" name="address">
-                                        </div>
-
                                         <div class="modal-footer">
                                             <a class="primary-button"
                                                 onclick="document.getElementById('addPatientForm').requestSubmit(); return false;">
@@ -392,11 +410,6 @@
                                         <div class="mb-3">
                                             <label for="editEmail" class="form-label">Email</label>
                                             <input type="email" class="form-control" id="editEmail" name="editEmail" required>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="editAddress" class="form-label">Address</label>
-                                            <input type="text" class="form-control" id="editAddress" name="editAddress" required>
                                         </div>
 
                                         <div class="modal-footer">
@@ -598,7 +611,6 @@
                                                 data-phone="<?=htmlspecialchars($patient['Phone'])?>"
                                                 data-email="<?=htmlspecialchars($patient['Email'], ENT_QUOTES)?>"
                                                 data-gender="<?=htmlspecialchars($patient['Gender'], ENT_QUOTES)?>"
-                                                data-address="<?=htmlspecialchars($patient['Address'], ENT_QUOTES)?>"
                                                 >
                                                     Edit
                                                 </a>
@@ -632,7 +644,6 @@
                     document.getElementById("editPhone").value = patient.phone;
                     document.getElementById("editEmail").value = patient.email;
                     document.getElementById("editGender").value = patient.gender;
-                    document.getElementById("editAddress").value = patient.address;
                 });
             });
 
@@ -640,7 +651,7 @@
                 button.addEventListener("click", function (){
                     const patient = this.dataset;
 
-                    document.getElementById("deleteUserID").value = patient.patientid;
+                    document.getElementById("deleteUserID").value = patient.userid;
                 });
             });   
         </script>

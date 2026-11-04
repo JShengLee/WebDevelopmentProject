@@ -15,7 +15,7 @@
 
     <!-- Sidebar Bottom -->
     <div class="sidebar-bottom">
-        <?php if (($_SESSION['role'] ?? '') !== 'Dentist'): ?>
+        <?php if (($_SESSION['role'] ?? '') !== 'Dentist' && ($_SESSION['role'] ?? '') !== 'Admin'): ?>
             <a class="help-box" href="contact.php">
                 <div class="help-icon">
                     ?

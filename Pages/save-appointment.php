@@ -7,8 +7,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !verify_csrf_token()) {
     exit;
 }
 
-$serviceId = filter_input(INPUT_POST, 'service_id', FILTER_VALIDATE_INT);
-$dentistId = filter_input(INPUT_POST, 'dentist_id', FILTER_VALIDATE_INT);
+$serviceId = filter_input(INPUT_POST, 'service', FILTER_VALIDATE_INT);
+$dentistId = filter_input(INPUT_POST, 'dentist', FILTER_VALIDATE_INT);
 $appointmentDate = trim($_POST['appointment_date'] ?? '');
 $appointmentTime = trim($_POST['appointment_time'] ?? '');
 $notes = trim($_POST['notes'] ?? '');
@@ -31,18 +31,64 @@ if ($appointmentDate < $minimumAppointmentDate) {
     exit;
 }
 
-$serviceStatement = $pdo->prepare('SELECT 1 FROM service WHERE ServiceID = :service_id');
+$serviceStatement = $pdo->prepare('SELECT ServiceID, Duration, Category FROM service WHERE ServiceID = :service_id');
 $serviceStatement->execute(['service_id' => $serviceId]);
-$dentistStatement = $pdo->prepare(
-    "SELECT 1 FROM dentist d INNER JOIN user u ON u.UserID = d.UserID
-     WHERE d.DentistID = :dentist_id AND u.Role = 'Dentist'"
-);
-$dentistStatement->execute(['dentist_id' => $dentistId]);
+$serviceRow = $serviceStatement->fetch(PDO::FETCH_ASSOC);
 
-if (!$serviceStatement->fetchColumn() || !$dentistStatement->fetchColumn()) {
+if (!$serviceRow) {
     set_flash('error', 'Choose a valid service, dentist, date, and time.');
     header('Location: book-appointment.php');
     exit;
+}
+
+$assignmentStatement = $pdo->prepare(
+    "SELECT 1
+     FROM service s
+     INNER JOIN dentist d ON d.DentistID = :dentist_id
+     INNER JOIN user u ON u.UserID = d.UserID AND u.Role = 'Dentist'
+     LEFT JOIN department dep ON dep.DeptID = d.DeptID
+     WHERE s.ServiceID = :service_id
+         AND (
+             (LOWER(s.Category) = 'general'
+                 AND (LOWER(dep.DepartmentName) = 'general' OR LOWER(d.Specialty) = 'general'))
+             OR (LOWER(s.Category) LIKE 'ortho%'
+                 AND (LOWER(dep.DepartmentName) LIKE 'ortho%' OR LOWER(d.Specialty) LIKE 'ortho%'))
+         )"
+);
+$assignmentStatement->execute(['dentist_id' => $dentistId, 'service_id' => $serviceId]);
+
+if (!$assignmentStatement->fetchColumn()) {
+    set_flash('error', 'Choose a valid service, dentist, date, and time.');
+    header('Location: book-appointment.php');
+    exit;
+}
+
+$bookingStart = strtotime($appointmentDate . ' ' . $appointmentTime);
+$serviceDurationMinutes = max(60, (int) round((float) ($serviceRow['Duration'] ?? 1) * 60));
+$bookingEnd = $bookingStart + $serviceDurationMinutes * 60;
+
+$overlapStatement = $pdo->prepare(
+    "SELECT a.AppointmentID, a.AppointmentDate, a.AppointmentTime,
+            s.Duration AS ServiceDurationHours
+     FROM appointment a
+     INNER JOIN service s ON s.ServiceID = a.ServiceID
+     WHERE a.DentistID = :dentist_id
+       AND a.AppointmentDate = :appointment_date
+       AND a.AppointmentStatus NOT IN ('Cancelled', 'Rejected')
+       AND a.AppointmentID IS NOT NULL"
+);
+$overlapStatement->execute(['dentist_id' => $dentistId, 'appointment_date' => $appointmentDate]);
+
+while ($existing = $overlapStatement->fetch(PDO::FETCH_ASSOC)) {
+    $existingStart = strtotime($appointmentDate . ' ' . $existing['AppointmentTime']);
+    $existingDurationMinutes = max(60, (int) round((float) ($existing['ServiceDurationHours'] ?? 1) * 60));
+    $existingEnd = $existingStart + $existingDurationMinutes * 60;
+
+    if ($bookingStart < $existingEnd && $existingStart < $bookingEnd) {
+        set_flash('error', 'The selected time slot is no longer available. Please choose another time.');
+        header('Location: book-appointment.php');
+        exit;
+    }
 }
 
 try {
@@ -58,7 +104,10 @@ try {
         'appointment_time' => $appointmentTime,
         'notes' => $notes !== '' ? $notes : null,
     ]);
-    set_flash('success', 'Your appointment request was submitted.');
+    set_flash(
+        'appointment_success',
+        'Your appointment request has been submitted successfully! Please wait for the administrator to review and approve your booking.'
+    );
     header('Location: appointments.php');
 } catch (PDOException $exception) {
     if ($exception->getCode() === '23000' && (int) ($exception->errorInfo[1] ?? 0) === 1062) {

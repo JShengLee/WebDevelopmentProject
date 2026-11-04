@@ -118,7 +118,7 @@
         <title>Admin Service List | BrightSmile Dental Clinic</title>
 
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="../Styling/admin_dentist_list.css?v=17">
+        <link rel="stylesheet" href="../Styling/admin_dentist_list.css?v=19">
     </head>
 
     <body>
@@ -235,7 +235,23 @@
 
                                         <div class="mb-3">
                                             <label for="category" class="form-label">Category</label>
-                                            <input type="text" class="form-control" id="category" name="category" required>
+                                            <input type="text" class="form-control" id="category" name="category" list="categoryOptions" required>
+
+                                            <datalist id="categoryOptions">
+                                                <?php
+                                                    $addcatesql = "SELECT DISTINCT Category FROM service ORDER BY Category ASC";
+                                                    $addcateresult = $pdo->query($addcatesql);
+                                                    
+                                                    $cateList = [];
+                                                    while ($cate = $addcateresult->fetch()){
+                                                        $cateList[] = $cate;
+                                                    }
+
+                                                    foreach ($cateList as $cate):
+                                                ?>
+                                                <option value="<?=$cate["Category"]?>">
+                                                <?php endforeach;?>
+                                            </datalist>
                                         </div>
 
                                         <div class="modal-footer">

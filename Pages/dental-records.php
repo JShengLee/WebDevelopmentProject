@@ -2,16 +2,38 @@
 require_once __DIR__ . '/../includes/patient_bootstrap.php';
 $recordStatement = $pdo->prepare(
     'SELECT r.RecordID, r.RecordDate, r.Diagnosis, r.ClinicalNotes, duser.FullName AS DentistName,
-            s.ServiceName
+            s.ServiceName, a.AppointmentID
      FROM dentalrecord r
+     INNER JOIN patient p ON p.PatientID = r.PatientID
+     INNER JOIN user patient_user ON patient_user.UserID = p.UserID AND patient_user.Role = \'Patient\'
+     INNER JOIN appointment a ON a.AppointmentID = r.AppointmentID
+         AND a.PatientID = r.PatientID AND LOWER(a.AppointmentStatus) = \'completed\'
      INNER JOIN dentist d ON d.DentistID = r.DentistID
-     INNER JOIN user duser ON duser.UserID = d.UserID
-     LEFT JOIN appointment a ON a.AppointmentID = r.AppointmentID
-     LEFT JOIN service s ON s.ServiceID = a.ServiceID
-     WHERE r.PatientID = :patient_id
-     ORDER BY r.RecordDate DESC, r.RecordID DESC'
+     INNER JOIN user duser ON duser.UserID = d.UserID AND duser.Role = \'Dentist\'
+     INNER JOIN service s ON s.ServiceID = a.ServiceID
+     WHERE p.PatientID = :record_patient_id AND patient_user.UserID = :record_user_id
+
+     UNION ALL
+
+     SELECT NULL AS RecordID, a.AppointmentDate AS RecordDate, NULL AS Diagnosis, NULL AS ClinicalNotes,
+            duser.FullName AS DentistName, s.ServiceName, a.AppointmentID
+     FROM appointment a
+     INNER JOIN patient p ON p.PatientID = a.PatientID
+     INNER JOIN user patient_user ON patient_user.UserID = p.UserID AND patient_user.Role = \'Patient\'
+     INNER JOIN dentist d ON d.DentistID = a.DentistID
+     INNER JOIN user duser ON duser.UserID = d.UserID AND duser.Role = \'Dentist\'
+     INNER JOIN service s ON s.ServiceID = a.ServiceID
+     LEFT JOIN dentalrecord r ON r.AppointmentID = a.AppointmentID AND r.PatientID = a.PatientID
+     WHERE p.PatientID = :appointment_patient_id AND patient_user.UserID = :appointment_user_id
+         AND LOWER(a.AppointmentStatus) = \'completed\' AND r.RecordID IS NULL
+     ORDER BY RecordDate DESC, RecordID DESC, AppointmentID DESC'
 );
-$recordStatement->execute(['patient_id' => $currentPatient['PatientID']]);
+$recordStatement->execute([
+    'record_patient_id' => $currentPatient['PatientID'],
+    'record_user_id' => $currentPatient['UserID'],
+    'appointment_patient_id' => $currentPatient['PatientID'],
+    'appointment_user_id' => $currentPatient['UserID'],
+]);
 $records = $recordStatement->fetchAll();
 $treatmentStatement = $pdo->prepare('SELECT RecordID, TreatmentName, TreatmentDetails FROM treatment WHERE RecordID IN (SELECT RecordID FROM dentalrecord WHERE PatientID = :patient_id) ORDER BY TreatmentDate DESC');
 $treatmentStatement->execute(['patient_id' => $currentPatient['PatientID']]);
@@ -92,8 +114,8 @@ $activePlanCount = (int) $activePlanStatement->fetchColumn();
                                 <?php foreach ($records as $record): ?>
                                     <?php
                                         $recordType = preg_match('/ortho|brace/i', (string) $record['ServiceName']) ? 'orthodontics' : 'general';
-                                        $recordTreatments = $treatmentsByRecord[$record['RecordID']] ?? [];
-                                        $recordPrescriptions = $prescriptionsByRecord[$record['RecordID']] ?? [];
+                                        $recordTreatments = $record['RecordID'] !== null ? ($treatmentsByRecord[$record['RecordID']] ?? []) : [];
+                                        $recordPrescriptions = $record['RecordID'] !== null ? ($prescriptionsByRecord[$record['RecordID']] ?? []) : [];
                                     ?>
                                     <tr data-type="<?= escape_html($recordType) ?>">
                                         <td><?= escape_html(date('d M Y', strtotime($record['RecordDate']))) ?></td>

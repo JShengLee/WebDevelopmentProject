@@ -173,7 +173,7 @@
         <title>Admin Dentist List | BrightSmile Dental Clinic</title>
 
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="../Styling/admin_dentist_list.css?v=17">
+        <link rel="stylesheet" href="../Styling/admin_dentist_list.css?v=19">
     </head>
 
     <body>
@@ -192,7 +192,7 @@
                 ?>
                 <!-- Page content -->
                 <div class="page-content">
-                    <span class="page-label"> DOCTORS </span>
+                    <span class="page-label"> DENTISTS </span>
                     <form method="GET" id="searchForm">
                         <div class="top-container">
                             <div class="form-container">
@@ -482,7 +482,7 @@
 
                     <div class="table-container">
                         <table class="dentist-table">
-                            <thead>
+                            <thead class="table-header">
                                 <tr>
                                     <th>User ID</th>
                                     <th>Full Name</th>
