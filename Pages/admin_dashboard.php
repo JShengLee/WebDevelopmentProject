@@ -38,8 +38,14 @@
                             <span class="page-label">
                                 ADMIN DASHBOARD
                             </span>
+                            <?php
+                                $sql = "SELECT * FROM user WHERE UserID = ?";
+                                $stmt = $pdo->prepare($sql);
+                                $stmt->execute([$currentPatient['UserID']]);
+                                $user = $stmt->fetch(PDO::FETCH_ASSOC);
+                            ?>
                             <h1>
-                                Good day, Joshua 👋
+                                Good day, <?= htmlspecialchars($user['FullName'] ) ?> 👋
                             </h1>
                         </div>
                     </section>

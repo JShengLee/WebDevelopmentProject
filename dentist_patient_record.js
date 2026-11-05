@@ -70,7 +70,6 @@ document.addEventListener("DOMContentLoaded", function () {
             : "";
     }
 
-
     // Helper function for AJAX calls
     async function sendRequest(payload) {
         payload.patientID = patientID;
@@ -93,6 +92,23 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
+    // Dynamic show/hide handler for custom condition input box
+    const toothConditionSelect = document.getElementById("toothCondition");
+    const customConditionGroup = document.getElementById("customConditionGroup");
+    const customConditionInput = document.getElementById("customToothCondition");
+
+    if (toothConditionSelect && customConditionGroup) {
+        toothConditionSelect.addEventListener("change", function () {
+            if (this.value === "others") {
+                customConditionGroup.style.display = "block";
+                if (customConditionInput) customConditionInput.focus();
+            } else {
+                customConditionGroup.style.display = "none";
+                if (customConditionInput) customConditionInput.value = "";
+            }
+        });
+    }
+
     // Reset all forms
     function resetVisitForms() {
         document.querySelectorAll("form").forEach(form => form.reset());
@@ -101,7 +117,7 @@ document.addEventListener("DOMContentLoaded", function () {
         Object.keys(toothNotesMap).forEach(key => delete toothNotesMap[key]);
 
         document.querySelectorAll(".tooth-button").forEach(button => {
-            button.classList.remove("healthy", "cavity", "treated", "selected");
+            button.classList.remove("healthy", "cavity", "treated", "others", "selected");
             button.setAttribute("aria-pressed", "false");
         });
 
@@ -109,8 +125,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const selectedToothField = document.getElementById("selectedTooth");
         if (selectedToothField) selectedToothField.value = "None selected";
-        const toothConditionField = document.getElementById("toothCondition");
-        if (toothConditionField) toothConditionField.value = "healthy";
+        
+        if (toothConditionSelect) toothConditionSelect.value = "healthy";
+        if (customConditionGroup) customConditionGroup.style.display = "none";
+        if (customConditionInput) customConditionInput.value = "";
     }
 
     function setFieldValue(id, value) {
@@ -148,20 +166,29 @@ document.addEventListener("DOMContentLoaded", function () {
 
         (record.teeth || []).forEach(tooth => {
             const number = String(tooth.number);
-            const condition = String(tooth.condition || "").toLowerCase();
+            const rawCondition = String(tooth.condition || "").trim();
+            const condLower = rawCondition.toLowerCase();
             const notes = tooth.notes || "";
 
-            let chartCondition = "healthy";
-            if (condition.includes("cavity")) chartCondition = "cavity";
-            else if (condition.includes("treated") || condition.includes("fill")) chartCondition = "treated";
+            let chartClass = "healthy";
 
-            toothStates[number] = chartCondition;
+            if (condLower === "healthy") {
+                chartClass = "healthy";
+            } else if (condLower.includes("cavity")) {
+                chartClass = "cavity";
+            } else if (condLower.includes("treated") || condLower.includes("fill")) {
+                chartClass = "treated";
+            } else {
+                chartClass = "others";
+            }
+
+            toothStates[number] = rawCondition;
             toothNotesMap[number] = notes;
 
             const toothButton = document.querySelector(`.tooth-button[data-tooth="${number}"]`);
             if (toothButton) {
-                toothButton.classList.remove("healthy", "cavity", "treated");
-                toothButton.classList.add(chartCondition);
+                toothButton.classList.remove("healthy", "cavity", "treated", "others");
+                toothButton.classList.add(chartClass);
             }
         });
 
@@ -311,7 +338,20 @@ document.addEventListener("DOMContentLoaded", function () {
         button.addEventListener("click", function () {
             selectedTooth = String(number);
             document.getElementById("selectedTooth").value = "Tooth " + number;
-            document.getElementById("toothCondition").value = toothStates[number] || "healthy";
+
+            const currentCond = toothStates[number] || "healthy";
+            const condLower = currentCond.toLowerCase();
+
+            if (["healthy", "cavity", "treated"].includes(condLower)) {
+                if (toothConditionSelect) toothConditionSelect.value = condLower;
+                if (customConditionGroup) customConditionGroup.style.display = "none";
+                if (customConditionInput) customConditionInput.value = "";
+            } else {
+                if (toothConditionSelect) toothConditionSelect.value = "others";
+                if (customConditionGroup) customConditionGroup.style.display = "block";
+                if (customConditionInput) customConditionInput.value = currentCond;
+            }
+
             document.getElementById("toothNotes").value = toothNotesMap[number] || "";
 
             document.querySelectorAll(".tooth-button").forEach(item => {
@@ -350,17 +390,29 @@ document.addEventListener("DOMContentLoaded", function () {
                 alert("Please select a tooth first.");
                 return;
             }
-            const condition = document.getElementById("toothCondition").value;
-            const notes = toothNotesInput ? toothNotesInput.value.trim() : "";
 
-            toothStates[selectedTooth] = condition;
-            toothNotesMap[selectedTooth] = notes;
+            let conditionVal = toothConditionSelect ? toothConditionSelect.value : "healthy";
+            let finalConditionText = conditionVal;
+
+            if (conditionVal === "others") {
+                const customText = customConditionInput ? customConditionInput.value.trim() : "";
+                if (!customText) {
+                    alert("Please enter the custom condition.");
+                    if (customConditionInput) customConditionInput.focus();
+                    return;
+                }
+                finalConditionText = customText;
+            }
+
+            toothStates[selectedTooth] = finalConditionText;
+            toothNotesMap[selectedTooth] = toothNotesInput ? toothNotesInput.value.trim() : "";
 
             const toothButton = document.querySelector(`.tooth-button[data-tooth="${selectedTooth}"]`);
             if (toothButton) {
-                toothButton.classList.remove("healthy", "cavity", "treated");
-                toothButton.classList.add(condition);
+                toothButton.classList.remove("healthy", "cavity", "treated", "others");
+                toothButton.classList.add(conditionVal);
             }
+
             alert(`Tooth ${selectedTooth} updated on chart.`);
         });
     }
