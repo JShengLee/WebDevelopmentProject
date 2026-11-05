@@ -118,6 +118,81 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['role'] = $user['Role'];
                 $_SESSION['full_name'] = $user['FullName'];
                 set_login_session_cookie(isset($_POST['remember']) && $_POST['remember'] === '1');
+
+                if ($user["Role"] === "Admin") {
+
+                    require_once __DIR__ . '/../email_helper.php';
+
+                    $sql = "
+                        SELECT 
+                            p.PatientID,
+                            u.FullName,
+                            u.Email,
+                            d.*
+                        FROM patient p
+                        INNER JOIN user u 
+                            ON p.UserID = u.UserID
+                        INNER JOIN dentalrecord d 
+                            ON p.PatientID = d.PatientID
+                        ORDER BY p.PatientID
+                    ";
+
+                    $stmt = $pdo->prepare($sql);
+                    $stmt->execute();
+
+                    $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                    $patientReports = [];
+
+                    foreach ($records as $record) {
+
+                        $patientID = $record['PatientID'];
+
+                        if (!isset($patientReports[$patientID])) {
+                            $patientReports[$patientID] = [
+                                'name' => $record['FullName'],
+                                'email' => $record['Email'],
+                                'records' => []
+                            ];
+                        }
+
+                        $patientReports[$patientID]['records'][] = $record;
+                    }
+
+                    foreach ($patientReports as $patientID => $patient) {
+
+                        $subject = "Your Dental Report - BrightSmile Dental";
+
+                        $body = "
+                            <h2>Dental Report</h2>
+
+                            <p>Dear " . htmlspecialchars($patient['name']) . ",</p>
+
+                            <p>
+                                Here is your dental record report
+                                from BrightSmile Dental.
+                            </p>
+
+                            <h3>Your Records</h3>
+
+                            <p>Total Records: " . count($patient['records']) . "</p>
+
+                            <p>
+                                Please contact BrightSmile Dental if you have
+                                any questions regarding your dental records.
+                            </p>
+
+                            <p>Regards,<br>BrightSmile Dental</p>
+                        ";
+
+                        sendEmail(
+                            $patient['email'],
+                            $subject,
+                            $body
+                        );
+                    }
+                }
+
                 header('Location: ' . ($user['Role'] === 'Dentist' ? 'dentist_dashboard.php' : 'admin_dashboard.php'));
                 exit;
             }
