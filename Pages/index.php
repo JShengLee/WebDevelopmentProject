@@ -15,9 +15,6 @@ $nextAppointment = $nextAppointmentStatement->fetch();
 $recordCountStatement = $pdo->prepare('SELECT COUNT(*) FROM dentalrecord WHERE PatientID = :patient_id');
 $recordCountStatement->execute(['patient_id' => $currentPatient['PatientID']]);
 $recordCount = (int) $recordCountStatement->fetchColumn();
-$treatmentStatement = $pdo->prepare('SELECT TreatmentType, CurrentStage, NextAdjustmentDate FROM orthodonticrecord WHERE PatientID = :patient_id ORDER BY OrthoRecordID DESC LIMIT 1');
-$treatmentStatement->execute(['patient_id' => $currentPatient['PatientID']]);
-$currentTreatment = $treatmentStatement->fetch();
 $recentRecordsStatement = $pdo->prepare(
         'SELECT RecordDate, Diagnosis, ClinicalNotes FROM dentalrecord
          WHERE PatientID = :patient_id ORDER BY RecordDate DESC, RecordID DESC LIMIT 3'
@@ -93,31 +90,6 @@ $recentRecords = $recentRecordsStatement->fetchAll();
 
                             <p class="card-description">
                                 <?= $nextAppointment ? escape_html(date('g:i A', strtotime($nextAppointment['AppointmentTime'])) . ' · ' . $nextAppointment['ServiceName']) : 'No upcoming appointment' ?>
-                            </p>
-                        </div>
-
-                        <!-- Treatment Progress -->
-                        <div class="summary-card">
-                            <div class="card-top">
-                                <div class="card-icon treatment-icon">
-                                    %
-                                </div>
-
-                                <span class="card-status"><?= $currentTreatment ? 'Ongoing' : 'No plan' ?></span>
-                            </div>
-
-                            <p class="card-label">
-                                TREATMENT PROGRESS
-                            </p>
-
-                                <h2><?= escape_html($currentTreatment['CurrentStage'] ?? '—') ?></h2>
-
-                            <div class="progress-bar">
-                                <div class="progress-value"<?= $currentTreatment ? '' : ' style="width: 0"' ?>></div>
-                            </div>
-
-                            <p class="card-description">
-                                <?= escape_html($currentTreatment['TreatmentType'] ?? 'No orthodontic treatment') ?>
                             </p>
                         </div>
 

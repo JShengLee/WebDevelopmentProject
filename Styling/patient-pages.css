@@ -252,6 +252,30 @@ a {
     font-weight: 650;
 }
 
+.appointment-status-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.cancel-appointment-form {
+    display: inline-flex;
+    margin: 0;
+}
+
+.cancel-appointment-form .text-link {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #187d79;
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 650;
+    white-space: nowrap;
+}
+
+.status-pill.confirmed,
 .status-pill.completed {
     background: #e6f4ef;
     color: #287d60;
