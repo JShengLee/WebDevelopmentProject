@@ -275,7 +275,6 @@ a {
     white-space: nowrap;
 }
 
-.status-pill.confirmed,
 .status-pill.completed {
     background: #e6f4ef;
     color: #287d60;
@@ -406,12 +405,13 @@ a {
     gap: 7px;
     font-size: 12px;
     font-weight: 650;
-    background-color: #42B1CC;
+    background-color: #42B1CC !important;
     border: none;
     border-radius:7px;
-    padding: 3px;
-    padding-left: 5px;
-    padding-right: 5px;
+    padding: 3px !important;
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+    color: white !important;
 }
 
 .treatment-grid,
