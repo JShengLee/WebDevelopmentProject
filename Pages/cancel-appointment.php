@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !verify_csrf_token() || !$appointme
 
 $statement = $pdo->prepare(
     "UPDATE appointment SET AppointmentStatus = 'Cancelled'
-     WHERE AppointmentID = :appointment_id AND PatientID = :patient_id AND AppointmentStatus = 'Pending'"
+     WHERE AppointmentID = :appointment_id AND PatientID = :patient_id AND AppointmentStatus = 'Confirmed'"
 );
 $statement->execute([
     'appointment_id' => $appointmentId,

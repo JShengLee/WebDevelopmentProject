@@ -7,8 +7,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !verify_csrf_token()) {
     exit;
 }
 
-$serviceId = filter_input(INPUT_POST, 'service', FILTER_VALIDATE_INT);
-$dentistId = filter_input(INPUT_POST, 'dentist', FILTER_VALIDATE_INT);
+$serviceId = filter_input(INPUT_POST, 'service_id', FILTER_VALIDATE_INT);
+$dentistId = filter_input(INPUT_POST, 'dentist_id', FILTER_VALIDATE_INT);
 $appointmentDate = trim($_POST['appointment_date'] ?? '');
 $appointmentTime = trim($_POST['appointment_time'] ?? '');
 $notes = trim($_POST['notes'] ?? '');
@@ -93,8 +93,8 @@ while ($existing = $overlapStatement->fetch(PDO::FETCH_ASSOC)) {
 
 try {
     $statement = $pdo->prepare(
-        'INSERT INTO appointment (PatientID, DentistID, ServiceID, AppointmentDate, AppointmentTime, AppointmentNotes)
-         VALUES (:patient_id, :dentist_id, :service_id, :appointment_date, :appointment_time, :notes)'
+        'INSERT INTO appointment (PatientID, DentistID, ServiceID, AppointmentDate, AppointmentTime, AppointmentStatus, AppointmentNotes)
+         VALUES (:patient_id, :dentist_id, :service_id, :appointment_date, :appointment_time, "Confirmed", :notes)'
     );
     $statement->execute([
         'patient_id' => $currentPatient['PatientID'],
@@ -104,10 +104,125 @@ try {
         'appointment_time' => $appointmentTime,
         'notes' => $notes !== '' ? $notes : null,
     ]);
-    set_flash(
-        'appointment_success',
-        'Your appointment request has been submitted successfully! Please wait for the administrator to review and approve your booking.'
-    );
+    set_flash('success', 'Your appointment request was submitted.');
+
+    $today = new DateTimeImmutable('today');
+    $oneWeekLater = $today->modify('+7 days');
+
+    $appointment = new DateTimeImmutable($appointmentDate);
+    $daysLeft = $today->diff($appointment)->days;
+
+    if ($appointment >= $today && $appointment <= $oneWeekLater) {
+        require_once __DIR__ . '/../email_helper.php';
+
+        $subject = "Upcoming Appointment - BrightSmile Dental";
+
+        $body = "
+            <div style='
+                font-family: Arial, sans-serif;
+                background-color: #f6f9fa;
+                padding: 30px;
+                color: #333333;
+            '>
+
+                <div style='
+                    max-width: 600px;
+                    margin: 0 auto;
+                    background-color: #ffffff;
+                    border-radius: 10px;
+                    overflow: hidden;
+                    border: 1px solid #e5e7eb;
+                '>
+
+                    <div style='
+                        background-color: #42B1CC;
+                        padding: 25px;
+                        text-align: center;
+                        color: white;
+                    '>
+                        <h2 style='margin: 0;'>
+                            BrightSmile Dental
+                        </h2>
+                        <p style='margin: 8px 0 0;'>
+                            Appointment Notification
+                        </p>
+                    </div>
+
+                    <div style='padding: 30px;'>
+
+                        <h2 style='color: #333333;'>
+                            Upcoming Dental Appointment
+                        </h2>
+
+                        <p>
+                            Dear " . htmlspecialchars($currentPatient['FullName']) . ",
+                        </p>
+
+                        <p style='line-height: 1.6; color: #555555;'>
+                            This is a reminder that your dental appointment
+                            is scheduled in the next ". $daysLeft ." days.
+                        </p>
+
+                        <div style='
+                            background-color: #f0f9fb;
+                            padding: 20px;
+                            border-radius: 8px;
+                            margin: 20px 0;
+                        '>
+                            <h3 style='color: #26869D; margin-top: 0;'>
+                                Appointment Details
+                            </h3>
+
+                            <p>
+                                Appointment Date:
+                                <strong>" . htmlspecialchars(date('d M Y', strtotime($appointmentDate))) . "</strong>
+                            </p>
+
+                            <p style='margin-bottom: 0;'>
+                                Appointment Time:
+                                <strong>" . htmlspecialchars(date('g:i A', strtotime($appointmentTime))) . "</strong>
+                            </p>
+                        </div>
+
+                        <p style='line-height: 1.6; color: #555555;'>
+                            Please remember to arrive 10-15 minutes early
+                            for your appointment.
+                        </p>
+
+                        <p style='line-height: 1.6; color: #555555;'>
+                            If you have any questions or need to make changes
+                            to your appointment, please contact BrightSmile Dental.
+                        </p>
+
+                        <p style='margin-top: 30px;'>
+                            Regards,<br>
+                            <strong>BrightSmile Dental</strong>
+                        </p>
+
+                    </div>
+
+                    <div style='
+                        background-color: #f6f9fa;
+                        padding: 15px;
+                        text-align: center;
+                        font-size: 12px;
+                        color: #888888;
+                    '>
+                        &copy; " . date('Y') . " BrightSmile Dental.
+                        All rights reserved.
+                    </div>
+
+                </div>
+            </div>
+        ";
+
+        sendEmail(
+            $currentPatient['Email'],
+            $subject,
+            $body
+        );
+    }
+
     header('Location: appointments.php');
 } catch (PDOException $exception) {
     if ($exception->getCode() === '23000' && (int) ($exception->errorInfo[1] ?? 0) === 1062) {

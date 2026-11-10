@@ -281,9 +281,9 @@ a {
     color: #287d60;
 }
 
-.status-pill.pending {
-    background: #fff3dd;
-    color: #9a6a15;
+.status-pill.confirmed {
+    background: #eaf8fb !important;
+    color: #42B1CC !important;
 }
 
 .status-pill.cancelled {
@@ -404,9 +404,14 @@ a {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    color: #187d79;
     font-size: 12px;
     font-weight: 650;
+    background-color: #42B1CC;
+    border: none;
+    border-radius:7px;
+    padding: 3px;
+    padding-left: 5px;
+    padding-right: 5px;
 }
 
 .treatment-grid,

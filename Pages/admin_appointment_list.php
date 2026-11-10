@@ -200,9 +200,6 @@
                             <div class="filterbar">
                                 <select name="status" id="status" class="filter" onchange="this.form.submit()">
                                     <option value="" <?= ($_GET['status'] ?? '') === '' ? 'selected' : '' ?>>All Status</option>
-                                    <option value="Pending" <?= ($_GET['status'] ?? '') === 'Pending' ? 'selected' : '' ?>>
-                                        Pending
-                                    </option>
                                     <option value="Confirmed" <?= ($_GET['status'] ?? '') === 'Confirmed' ? 'selected' : '' ?>>
                                         Confirmed
                                     </option>
@@ -372,11 +369,7 @@
                                                 <p class="appointment-time"><?=$appointment["AppointmentTime"]?></p>
                                             </div>
                                         </td>
-                                        <?php if($appointment["AppointmentStatus"] === "Pending"): ?>
-                                            <td>
-                                                <p class="pending">Pending</p>
-                                            </td>
-                                        <?php elseif($appointment["AppointmentStatus"] === "Confirmed"): ?>
+                                        <?php if($appointment["AppointmentStatus"] === "Confirmed"): ?>
                                             <td>
                                                 <p class="confirmed">Confirmed</p>
                                             </td>
@@ -395,11 +388,6 @@
                                                 <input type="hidden" name="appointmentID" value="<?=$appointment["AppointmentID"]?>"/>
                                                 <div class="action-row">
                                                     <select name="status">
-                                                        <option value="Pending"
-                                                            <?=$appointment["AppointmentStatus"] === "Pending" ? "selected" : "" ?>
-                                                            disabled>
-                                                            Pending
-                                                        </option>
                                                         <option value="Confirmed"
                                                             <?=$appointment["AppointmentStatus"] === "Confirmed" ? "selected" : "" ?>>
                                                             Confirmed

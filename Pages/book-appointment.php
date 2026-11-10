@@ -107,7 +107,7 @@
                             </div>
                             <div class="form-actions">
                                 <a class="cancel-button" href="appointments.php">Cancel</a>
-                                <button class="confirm-button" type="submit" <?= !$services || !$dentists ? 'disabled' : '' ?>>Request appointment</button>
+                                <button class="confirm-button" type="submit" <?= !$services || !$dentists ? 'disabled' : '' ?>>Book appointment</button>
                             </div>
                         </form>
                     </section>
