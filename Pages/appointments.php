@@ -36,7 +36,7 @@ $appointments = $appointmentStatement->fetchAll();
     <link rel="icon" type="image/x-icon" href="../Logo.png">
     <title>Appointments | BrightSmile Dental Clinic</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../Styling/patient-pages.css">
+    <link rel="stylesheet" href="../Styling/patient-pages.css?v=7">
 </head>
 <body>
     <!-- Main application -->
@@ -109,14 +109,17 @@ $appointments = $appointmentStatement->fetchAll();
                                         <td><?= escape_html($appointment['DentistName']) ?></td>
                                         <td><?= escape_html(date('d M Y', strtotime($appointment['AppointmentDate']))) ?><small><?= escape_html(date('g:i A', strtotime($appointment['AppointmentTime']))) ?></small></td>
                                         <td>BrightSmile Clinic</td>
-                                        <td><span class="status-pill <?= escape_html($statusClass) ?>"><?= escape_html($appointment['AppointmentStatus']) ?></span>
-                                            <?php if ($appointment['AppointmentStatus'] === 'Pending'): ?>
-                                                <form action="cancel-appointment.php" method="post">
-                                                    <input type="hidden" name="csrf_token" value="<?= escape_html(csrf_token()) ?>">
-                                                    <input type="hidden" name="appointment_id" value="<?= (int) $appointment['AppointmentID'] ?>">
-                                                    <button class="text-link" type="submit">Cancel</button>
-                                                </form>
-                                            <?php endif; ?>
+                                        <td>
+                                            <div style="display:flex;width:100%;gap:10px;">
+                                                <span class="status-pill <?= escape_html($statusClass) ?>"><?= escape_html($appointment['AppointmentStatus']) ?></span>
+                                                    <?php if ($appointment['AppointmentStatus'] === 'Confirmed'): ?>
+                                                        <form action="cancel-appointment.php" method="post">
+                                                            <input type="hidden" name="csrf_token" value="<?= escape_html(csrf_token()) ?>">
+                                                            <input type="hidden" name="appointment_id" value="<?= (int) $appointment['AppointmentID'] ?>">
+                                                            <button class="text-link" type="submit" style="color:white;">Cancel</button>
+                                                        </form>
+                                                    <?php endif; ?>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
