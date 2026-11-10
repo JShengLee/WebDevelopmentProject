@@ -6,7 +6,7 @@
     <link rel="icon" type="image/x-icon" href="../Logo.png">
     <title>Book Appointment | BrightSmile Dental Clinic</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../Styling/appointments.css">
+    <link rel="stylesheet" href="../Styling/appointments.css?v=1">
 </head>
 <body>
     <!-- Main application -->
@@ -119,7 +119,7 @@
                                 <div class="summary-row"><span>Dentist</span><strong id="summary-dentist">Not selected</strong></div>
                                 <div class="summary-row"><span>Date</span><strong id="summary-date">Not selected</strong></div>
                                 <div class="summary-row"><span>Time</span><strong id="summary-time">Not selected</strong></div>
-                                <div class="status-row"><span>Request status</span><span class="pending-badge">Pending</span></div>
+                                <div class="status-row"><span>Request status</span><span class="pending-badge">Confirmed</span></div>
                             </div>
                         </section>
                         <section class="notice-card"><div class="notice-icon" aria-hidden="true">!</div><div><h3>Before your appointment</h3><ul><li>Arrive 10–15 minutes early.</li><li>Bring identification and relevant dental records.</li><li>The clinic will confirm your requested time.</li></ul></div></section>

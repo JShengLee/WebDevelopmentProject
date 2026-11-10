@@ -130,9 +130,9 @@ $appointments = $appointmentStatement->fetchAll();
                                         <td><?= escape_html(date('d M Y', strtotime($appointment['AppointmentDate']))) ?><small><?= escape_html(date('g:i A', strtotime($appointment['AppointmentTime']))) ?></small></td>
                                         <td>BrightSmile Clinic</td>
                                         <td>
-                                            <div class="appointment-status-actions">
+                                            <div class="appointment-status-actions" style="display:flex;gap:5px;">
                                                 <span class="status-pill <?= escape_html($statusClass) ?>"><?= escape_html($appointment['AppointmentStatus']) ?></span>
-                                                <?php if ($statusClass === 'pending'): ?>
+                                                <?php if ($statusClass === 'confirmed'): ?>
                                                 <form class="cancel-appointment-form" action="cancel-appointment.php" method="post">
                                                     <input type="hidden" name="csrf_token" value="<?= escape_html(csrf_token()) ?>">
                                                     <input type="hidden" name="appointment_id" value="<?= (int) $appointment['AppointmentID'] ?>">
