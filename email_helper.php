@@ -34,12 +34,16 @@ function sendEmail(
         $mail->Subject = $subject;
         $mail->Body = $body;
 
-        $mail->AltBody = strip_tags(
-            str_replace(
-                ['<br>', '<br/>', '<br />', '</p>', '</h1>', '</h2>'],
-                "\n",
-                $body
-            )
+        $mail->AltBody = html_entity_decode(
+            strip_tags(
+                str_replace(
+                    ['<br>', '<br/>', '<br />', '</p>', '</h1>', '</h2>', '</h3>'],
+                    "\n",
+                    $body
+                )
+            ),
+            ENT_QUOTES | ENT_HTML5,
+            'UTF-8'
         );
 
         $mail->send();

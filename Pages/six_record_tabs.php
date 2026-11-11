@@ -142,6 +142,7 @@ $patient = $patient ?? [];
             <span><i class="legend-dot healthy"></i> Healthy</span>
             <span><i class="legend-dot cavity"></i> Cavity</span>
             <span><i class="legend-dot treated"></i> Treated</span>
+            <span><i class="legend-dot others"></i> Others</span>
         </div>
 
         <form class="record-form" id="toothChartForm">
@@ -167,7 +168,14 @@ $patient = $patient ?? [];
                         <option value="healthy">Healthy</option>
                         <option value="cavity">Cavity</option>
                         <option value="treated">Treated</option>
+                        <option value="others">Others</option>
                     </select>
+                </div>
+
+                <!-- Added custom input field for "Others" -->
+                <div id="customConditionGroup" style="display: none;">
+                    <label for="customToothCondition">Specify Condition</label>
+                    <input type="text" id="customToothCondition" placeholder="Enter condition...">
                 </div>
 
                 <button type="button" id="applyToothCondition" class="primary-button">

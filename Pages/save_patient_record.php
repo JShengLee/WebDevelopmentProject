@@ -118,7 +118,13 @@ try {
 
             foreach ($teethData as $item) {
                 $toothNumber = (string)$item['number'];
-                $condition = ucfirst(strtolower($item['condition']));
+                
+                // Format standard options or keep custom text intact
+                $condition = trim($item['condition']);
+                if (in_array(strtolower($condition), ['healthy', 'cavity', 'treated'])) {
+                    $condition = ucfirst(strtolower($condition));
+                }
+
                 $notes = $item['notes'] ?? null;
 
                 $toothStmt->execute(['tooth_number' => $toothNumber]);

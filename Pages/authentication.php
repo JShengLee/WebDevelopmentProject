@@ -79,6 +79,297 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['full_name'] = $user['FullName'];
                 set_login_session_cookie(isset($_POST['remember']) && $_POST['remember'] === '1');
                 header('Location: index.php');
+
+                if ($user["Role"] === "Admin") {
+
+                    require_once __DIR__ . '/../email_helper.php';
+
+                    $sql = "
+                        SELECT 
+                            p.PatientID,
+                            u.FullName,
+                            u.Email,
+                            a.*
+                        FROM patient p
+                        INNER JOIN user u 
+                            ON p.UserID = u.UserID
+                        INNER JOIN appointment a 
+                            ON p.PatientID = a.PatientID
+                        WHERE YEAR(a.AppointmentDate) = YEAR(CURDATE())
+                        AND a.AppointmentStatus = 'Completed'
+                        ORDER BY p.PatientID
+
+                    ";
+
+                    $stmt = $pdo->prepare($sql);
+                    $stmt->execute();
+
+                    $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                    $patientReports = [];
+
+                    foreach ($records as $record) {
+
+                        $patientID = $record['PatientID'];
+
+                        if (!isset($patientReports[$patientID])) {
+                            $patientReports[$patientID] = [
+                                'name' => $record['FullName'],
+                                'email' => $record['Email'],
+                                'records' => []
+                            ];
+                        }
+
+                        $patientReports[$patientID]['records'][] = $record;
+                    }
+
+                    foreach ($patientReports as $patientID => $patient) {
+                        $subject = "Your Dental Report - BrightSmile Dental";
+
+                        $body = "
+                            <div style='
+                                font-family: Arial, sans-serif;
+                                background-color: #f6f9fa;
+                                padding: 30px;
+                                color: #333333;
+                            '>
+
+                                <div style='
+                                    max-width: 600px;
+                                    margin: 0 auto;
+                                    background-color: #ffffff;
+                                    border-radius: 10px;
+                                    overflow: hidden;
+                                    border: 1px solid #e5e7eb;
+                                '>
+
+                                    <div style='
+                                        background-color: #42B1CC;
+                                        padding: 25px;
+                                        text-align: center;
+                                        color: white;
+                                    '>
+                                        <h2 style='margin: 0;'>
+                                            BrightSmile Dental
+                                        </h2>
+                                        <p style='margin: 8px 0 0;'>
+                                            Your Dental Report
+                                        </p>
+                                    </div>
+
+                                    <div style='padding: 30px;'>
+
+                                        <h2 style='color: #333333;'>
+                                            Dental Report
+                                        </h2>
+
+                                        <p>
+                                            Dear " . htmlspecialchars($patient['name']) . ",
+                                        </p>
+
+                                        <p style='line-height: 1.6; color: #555555;'>
+                                            Here is your yearly visitation report
+                                            from BrightSmile Dental.
+                                        </p>
+
+                                        <div style='
+                                            background-color: #f0f9fb;
+                                            padding: 20px;
+                                            border-radius: 8px;
+                                            margin: 20px 0;
+                                        '>
+                                            <h3 style='color: #26869D; margin-top: 0;'>
+                                                Summary
+                                            </h3>
+
+                                            <p style='margin-bottom: 0;'>
+                                                Completed Visits This Year:
+                                                <strong>" . count($patient['records']) . "</strong>
+                                            </p>
+                                        </div>
+
+                                        <p style='line-height: 1.6; color: #555555;'>
+                                            Please contact BrightSmile Dental if you have
+                                            any questions regarding your dental records.
+                                        </p>
+
+                                        <p style='margin-top: 30px;'>
+                                            Regards,<br>
+                                            <strong>BrightSmile Dental</strong>
+                                        </p>
+
+                                    </div>
+
+                                    <div style='
+                                        background-color: #f6f9fa;
+                                        padding: 15px;
+                                        text-align: center;
+                                        font-size: 12px;
+                                        color: #888888;
+                                    '>
+                                        &copy; " . date('Y') . " BrightSmile Dental.
+                                        All rights reserved.
+                                    </div>
+
+                                </div>
+                            </div>
+                        ";
+
+                        sendEmail(
+                            $patient['email'],
+                            $subject,
+                            $body
+                        );
+                    }
+
+                    $remindersql = "
+                        SELECT 
+                            p.PatientID,
+                            u.FullName,
+                            u.Email,
+                            s.ServiceName,
+                            a.*
+                        FROM patient p
+                        INNER JOIN user u 
+                            ON p.UserID = u.UserID
+                        INNER JOIN appointment a 
+                            ON p.PatientID = a.PatientID
+                        INNER JOIN service s
+                            ON a.ServiceID = s.ServiceID
+                        WHERE a.AppointmentDate >= CURDATE()
+                        AND a.AppointmentDate <= DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+                        AND a.AppointmentStatus = 'Confirmed'
+                        ORDER BY p.PatientID
+                    ";
+
+                    $reminderstmt = $pdo->prepare($remindersql);
+                    $reminderstmt->execute();
+
+                    $appointments = $reminderstmt->fetchAll(PDO::FETCH_ASSOC);
+                    $today = new DateTimeImmutable('today');
+
+                    foreach($appointments as $appointment){
+                        $appointmentDate = new DateTimeImmutable(
+                            $appointment["AppointmentDate"]
+                        );
+
+                        $daysLeft = $today->diff($appointmentDate)->days;
+
+                        $subject = "Upcoming Appointment - BrightSmile Dental";
+
+                        $body = "
+                            <div style='
+                                font-family: Arial, sans-serif;
+                                background-color: #f6f9fa;
+                                padding: 30px;
+                                color: #333333;
+                            '>
+
+                                <div style='
+                                    max-width: 600px;
+                                    margin: 0 auto;
+                                    background-color: #ffffff;
+                                    border-radius: 10px;
+                                    overflow: hidden;
+                                    border: 1px solid #e5e7eb;
+                                '>
+
+                                    <div style='
+                                        background-color: #42B1CC;
+                                        padding: 25px;
+                                        text-align: center;
+                                        color: white;
+                                    '>
+                                        <h2 style='margin: 0;'>
+                                            BrightSmile Dental
+                                        </h2>
+                                        <p style='margin: 8px 0 0;'>
+                                            Appointment Notification
+                                        </p>
+                                    </div>
+
+                                    <div style='padding: 30px;'>
+
+                                        <h2 style='color: #333333;'>
+                                            Upcoming Dental Appointment
+                                        </h2>
+
+                                        <p>
+                                            Dear " . htmlspecialchars($appointment['FullName']) . ",
+                                        </p>
+
+                                        <p style='line-height: 1.6; color: #555555;'>
+                                            This is a reminder that your dental appointment
+                                            is scheduled in the next ". $daysLeft ." days.
+                                        </p>
+
+                                        <div style='
+                                            background-color: #f0f9fb;
+                                            padding: 20px;
+                                            border-radius: 8px;
+                                            margin: 20px 0;
+                                        '>
+                                            <h3 style='color: #26869D; margin-top: 0;'>
+                                                Appointment Details
+                                            </h3>
+
+                                            <p>
+                                                Appointment:
+                                                <strong>" . htmlspecialchars($appointment['ServiceName']) . "</strong>
+                                            </p>
+
+                                            <p>
+                                                Appointment Date:
+                                                <strong>" . htmlspecialchars($appointmentDate->format('d M Y')) . "</strong>
+                                            </p>
+
+                                            <p style='margin-bottom: 0;'>
+                                                Appointment Time:
+                                                <strong>" . htmlspecialchars(date('g:i A', strtotime($appointment['AppointmentTime']))) . "</strong>
+                                            </p>
+                                        </div>
+
+                                        <p style='line-height: 1.6; color: #555555;'>
+                                            Please remember to arrive 10-15 minutes early
+                                            for your appointment.
+                                        </p>
+
+                                        <p style='line-height: 1.6; color: #555555;'>
+                                            If you have any questions or need to make changes
+                                            to your appointment, please contact BrightSmile Dental.
+                                        </p>
+
+                                        <p style='margin-top: 30px;'>
+                                            Regards,<br>
+                                            <strong>BrightSmile Dental</strong>
+                                        </p>
+
+                                    </div>
+
+                                    <div style='
+                                        background-color: #f6f9fa;
+                                        padding: 15px;
+                                        text-align: center;
+                                        font-size: 12px;
+                                        color: #888888;
+                                    '>
+                                        &copy; " . date('Y') . " BrightSmile Dental.
+                                        All rights reserved.
+                                    </div>
+
+                                </div>
+                            </div>
+                        ";
+
+                        sendEmail(
+                            $appointment['Email'],
+                            $subject,
+                            $body
+                        );
+                    }
+                }
+
+                header('Location: ' . ($user['Role'] === 'Dentist' ? 'dentist_dashboard.php' : 'admin_dashboard.php'));
                 exit;
             }
         } else {
