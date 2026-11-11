@@ -935,3 +935,44 @@ button {
         padding: 18px;
     }
 }
+
+@media (max-width: 768px) {
+    .booking-layout {
+        flex-direction: column;
+        gap: 18px;
+        position: relative;
+        padding-bottom: 66px;
+    }
+
+    .summary-column {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-actions {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        justify-content: stretch;
+        flex-direction: row;
+        gap: 12px;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        border-top: 0;
+    }
+
+    .cancel-button,
+    .confirm-button {
+        display: inline-flex;
+        flex: 1;
+        align-items: center;
+        justify-content: center;
+        width: auto;
+        min-width: 0;
+        min-height: 48px;
+        padding: 12px 10px;
+        font-size: 13px;
+    }
+}
