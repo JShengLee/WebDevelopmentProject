@@ -339,7 +339,8 @@
                                 OR dentist.Specialty = ?
                                 OR dentist.DeptID = ?
                                 OR department.DepartmentName = ?
-                                )";
+                                )
+                                ORDER BY dentist.DentistID ASC";
 
                                 $searchTerm = "%" . $search . "%";
 
@@ -349,7 +350,8 @@
                                 $sql = "SELECT user.FullName, user.UserID, user.Email, user.Phone, dentist.Specialty, dentist.DeptID, department.DepartmentName 
                                 FROM user JOIN dentist ON user.UserID = dentist.UserID 
                                 JOIN department ON dentist.DeptID = department.DeptID
-                                WHERE department.DeptID = ?";
+                                WHERE department.DeptID = ?
+                                ORDER BY dentist.DentistID ASC";
                                 $stmt = $pdo->prepare($sql);
                                 $stmt->execute([$department]);
                             }
@@ -362,7 +364,8 @@
                                 OR user.UserID = ?
                                 OR dentist.Specialty = ?
                                 OR dentist.DeptID = ?
-                                OR department.DepartmentName = ?";
+                                OR department.DepartmentName = ?
+                                ORDER BY dentist.DentistID ASC";
 
                                 $searchTerm = "%" . $search . "%";
 
@@ -371,7 +374,8 @@
                             } else { 
                                 $sql = "SELECT user.FullName, user.UserID, user.Email, user.Phone, dentist.Specialty, dentist.DeptID, department.DepartmentName 
                                 FROM user JOIN dentist ON user.UserID = dentist.UserID 
-                                JOIN department ON dentist.DeptID = department.DeptID";
+                                JOIN department ON dentist.DeptID = department.DeptID
+                                ORDER BY dentist.DentistID ASC";
                                 $stmt = $pdo->prepare($sql);
                                 $stmt->execute();
                             }

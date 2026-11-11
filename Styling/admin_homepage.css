@@ -737,13 +737,6 @@ button {
     border-top-right-radius: 12px;
 }
 
-.pending{
-    background-color: #FEF3C7; 
-    text-align: center;
-    border-radius: 999px;
-    color: #D97706;
-}
-
 .confirmed{
     background-color: #eaf8fb; 
     text-align: center;

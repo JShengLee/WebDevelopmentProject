@@ -79,6 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['full_name'] = $user['FullName'];
                 set_login_session_cookie(isset($_POST['remember']) && $_POST['remember'] === '1');
                 header('Location: index.php');
+                exit;
 
                 if ($user["Role"] === "Admin") {
 

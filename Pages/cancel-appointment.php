@@ -18,7 +18,7 @@ $statement->execute([
 ]);
 
 set_flash($statement->rowCount() === 1 ? 'success' : 'error', $statement->rowCount() === 1
-    ? 'Your pending appointment was cancelled.'
-    : 'Only your pending appointments can be cancelled.');
+    ? 'Your confirmed appointment was cancelled.'
+    : 'Only confirmed appointments can be cancelled.');
 header('Location: appointments.php');
 exit;

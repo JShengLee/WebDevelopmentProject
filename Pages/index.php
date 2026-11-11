@@ -6,7 +6,7 @@ $nextAppointmentStatement = $pdo->prepare(
          INNER JOIN service s ON s.ServiceID = a.ServiceID
          INNER JOIN dentist d ON d.DentistID = a.DentistID
          INNER JOIN user u ON u.UserID = d.UserID
-         WHERE a.PatientID = :patient_id AND a.AppointmentStatus IN ('Pending', 'Confirmed')
+         WHERE a.PatientID = :patient_id AND a.AppointmentStatus = 'Confirmed'
              AND TIMESTAMP(a.AppointmentDate, a.AppointmentTime) >= NOW()
          ORDER BY a.AppointmentDate, a.AppointmentTime LIMIT 1"
 );

@@ -24,11 +24,11 @@
              INNER JOIN user u ON u.UserID = d.UserID
              LEFT JOIN department dep ON dep.DeptID = d.DeptID
              WHERE u.Role = 'Dentist'
-             ORDER BY u.FullName"
+             ORDER BY d.DentistID ASC, u.FullName ASC"
         )->fetchAll();
         $appointmentBlocks = $pdo->query(
             "SELECT a.DentistID, a.AppointmentDate, a.AppointmentTime, a.AppointmentStatus,
-                    s.Duration AS ServiceDurationHours
+                    s.Duration AS ServiceDurationMinutes
              FROM appointment a
              INNER JOIN service s ON s.ServiceID = a.ServiceID
              WHERE a.AppointmentStatus NOT IN ('Cancelled', 'Rejected')
@@ -59,7 +59,7 @@
                 </div>
                 <div class="booking-layout">
                     <section class="booking-card">
-                        <div class="card-heading"><div><h2>Appointment details</h2><p>Requests are confirmed by the clinic.</p></div><span class="step-number">1</span></div>
+                        <div class="card-heading"><div><h2>Appointment details</h2><p>Your appointment is confirmed when booked.</p></div><span class="step-number">1</span></div>
                         <?php if ($flash): ?><p role="status" class="form-message"><?= escape_html($flash['message']) ?></p><?php endif; ?>
                         <?php if (!$services || !$dentists): ?><p role="status" class="form-message">Appointments are unavailable until services and dentists are configured.</p><?php endif; ?>
                         <form id="appointmentForm" action="save-appointment.php" method="post">
@@ -69,7 +69,7 @@
                                 <select id="service" name="service" required>
                                     <option value="">Choose a dental service</option>
                                     <?php foreach ($services as $serviceOption): ?>
-                                        <option value="<?= (int) $serviceOption['ServiceID'] ?>" data-category="<?= escape_html($normalizeCategory($serviceOption['Category'])) ?>" data-duration-hours="<?= (float) ($serviceOption['Duration'] ?? 0) ?>"><?= escape_html($serviceOption['ServiceName']) ?> (<?= (int) ($serviceOption['Duration'] ?? 0) ?>h)</option>
+                                        <option value="<?= (int) $serviceOption['ServiceID'] ?>" data-category="<?= escape_html($normalizeCategory($serviceOption['Category'])) ?>" data-duration-minutes="<?= (int) ($serviceOption['Duration'] ?? 0) ?>"><?= escape_html($serviceOption['ServiceName']) ?> (<?= (int) ($serviceOption['Duration'] ?? 0) ?> min)</option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -89,8 +89,25 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="appointment-date">Select date</label>
-                                <input type="date" id="appointment-date" name="appointment_date" min="<?= escape_html($minimumAppointmentDate) ?>" required>
+                                <label class="form-label" for="date-picker-trigger">Select date</label>
+                                <div class="date-picker" id="appointment-date-picker">
+                                    <input type="hidden" id="appointment-date" name="appointment_date" value="" data-min-date="<?= escape_html($minimumAppointmentDate) ?>">
+                                    <button type="button" class="date-picker-trigger" id="date-picker-trigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="appointment-calendar">
+                                        <span id="date-picker-value">Choose an available date</span>
+                                        <i class="fa-regular fa-calendar" aria-hidden="true"></i>
+                                    </button>
+                                    <div class="date-picker-calendar" id="appointment-calendar" role="dialog" aria-label="Choose appointment date" hidden>
+                                        <div class="date-picker-header">
+                                            <button type="button" id="calendar-previous" aria-label="Previous month">‹</button>
+                                            <h2 id="calendar-month" aria-live="polite"></h2>
+                                            <button type="button" id="calendar-next" aria-label="Next month">›</button>
+                                        </div>
+                                        <div class="calendar-grid calendar-weekdays" aria-hidden="true">
+                                            <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                                        </div>
+                                        <div class="calendar-grid" id="calendar-days"></div>
+                                    </div>
+                                </div>
                                 <small>Choose a date at least two days from today.</small>
                             </div>
                             <div class="form-group">
@@ -119,10 +136,10 @@
                                 <div class="summary-row"><span>Dentist</span><strong id="summary-dentist">Not selected</strong></div>
                                 <div class="summary-row"><span>Date</span><strong id="summary-date">Not selected</strong></div>
                                 <div class="summary-row"><span>Time</span><strong id="summary-time">Not selected</strong></div>
-                                <div class="status-row"><span>Request status</span><span class="pending-badge">Confirmed</span></div>
+                                <div class="status-row"><span>Appointment status</span><span class="confirmed-badge">Confirmed</span></div>
                             </div>
                         </section>
-                        <section class="notice-card"><div class="notice-icon" aria-hidden="true">!</div><div><h3>Before your appointment</h3><ul><li>Arrive 10–15 minutes early.</li><li>Bring identification and relevant dental records.</li><li>The clinic will confirm your requested time.</li></ul></div></section>
+                        <section class="notice-card"><div class="notice-icon" aria-hidden="true">!</div><div><h3>Before your appointment</h3><ul><li>Arrive 10–15 minutes early.</li><li>Bring identification and relevant dental records.</li><li>Your appointment is confirmed once booked.</li></ul></div></section>
                     </aside>
                 </div>
             </section>
@@ -132,6 +149,14 @@
         const service = document.getElementById('service');
         const dentist = document.getElementById('dentist');
         const date = document.getElementById('appointment-date');
+        const datePicker = document.getElementById('appointment-date-picker');
+        const datePickerTrigger = document.getElementById('date-picker-trigger');
+        const datePickerValue = document.getElementById('date-picker-value');
+        const calendar = document.getElementById('appointment-calendar');
+        const calendarMonth = document.getElementById('calendar-month');
+        const calendarDays = document.getElementById('calendar-days');
+        const previousMonthButton = document.getElementById('calendar-previous');
+        const nextMonthButton = document.getElementById('calendar-next');
         const selectedTime = document.getElementById('selected-time');
         const timeSlots = [...document.querySelectorAll('.time-slot')];
         const noTimeSlotsMessage = document.getElementById('no-time-slots');
@@ -159,6 +184,85 @@
             '16:00': 16 * 60,
         };
         window.appointmentBlocks = <?php echo json_encode($appointmentBlocks, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+        const minimumDate = new Date(`${date.dataset.minDate}T00:00:00`);
+        let visibleMonth = new Date(minimumDate.getFullYear(), minimumDate.getMonth(), 1);
+
+        function localDateString(value) {
+            const year = value.getFullYear();
+            const month = String(value.getMonth() + 1).padStart(2, '0');
+            const day = String(value.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function renderCalendar() {
+            calendarMonth.textContent = visibleMonth.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+            previousMonthButton.disabled = visibleMonth.getFullYear() === minimumDate.getFullYear()
+                && visibleMonth.getMonth() === minimumDate.getMonth();
+            calendarDays.replaceChildren();
+
+            const firstDay = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1);
+            const offset = (firstDay.getDay() + 6) % 7;
+            const daysInMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 0).getDate();
+
+            for (let index = 0; index < offset; index += 1) {
+                const spacer = document.createElement('span');
+                spacer.className = 'calendar-day-spacer';
+                spacer.setAttribute('aria-hidden', 'true');
+                calendarDays.appendChild(spacer);
+            }
+
+            for (let day = 1; day <= daysInMonth; day += 1) {
+                const dayDate = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), day);
+                const dateValue = localDateString(dayDate);
+                const isSunday = dayDate.getDay() === 0;
+                const dayButton = document.createElement('button');
+                dayButton.type = 'button';
+                dayButton.className = 'calendar-day';
+                dayButton.textContent = String(day);
+                dayButton.disabled = isSunday || dateValue < date.dataset.minDate;
+                dayButton.setAttribute('aria-label', dayDate.toLocaleDateString('en-GB', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                }));
+                if (isSunday) {
+                    dayButton.classList.add('calendar-day-closed');
+                    dayButton.title = 'Clinic closed';
+                }
+                if (dateValue === date.value) {
+                    dayButton.classList.add('calendar-day-selected');
+                    dayButton.setAttribute('aria-pressed', 'true');
+                }
+                dayButton.addEventListener('click', () => {
+                    date.value = dateValue;
+                    datePickerValue.textContent = dayDate.toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                    });
+                    closeCalendar();
+                    updateSummaryDate();
+                    applyAvailableSlots();
+                });
+                calendarDays.appendChild(dayButton);
+            }
+        }
+
+        function openCalendar() {
+            if (date.value) {
+                const selectedDate = new Date(`${date.value}T00:00:00`);
+                visibleMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+            }
+            renderCalendar();
+            calendar.hidden = false;
+            datePickerTrigger.setAttribute('aria-expanded', 'true');
+        }
+
+        function closeCalendar() {
+            calendar.hidden = true;
+            datePickerTrigger.setAttribute('aria-expanded', 'false');
+        }
 
         function updateSummaryDate() {
             summary.date.textContent = date.value
@@ -200,8 +304,7 @@
                 return;
             }
 
-            const durationHours = Number(selectedService.dataset.durationHours || 0);
-            const requiredMinutes = Math.max(60, (durationHours || 1) * 60);
+            const requiredMinutes = Math.max(1, Number(selectedService.dataset.durationMinutes || 60));
             const selectedDateBookings = window.appointmentBlocks
                 ? window.appointmentBlocks.filter((booking) => Number(booking.DentistID) === Number(selectedDentist) && booking.AppointmentDate === selectedDate && booking.AppointmentStatus !== 'Cancelled' && booking.AppointmentStatus !== 'Rejected')
                 : [];
@@ -211,7 +314,7 @@
                 const slotEndMinutes = slotStartMinutes + requiredMinutes;
                 const hasOverlap = selectedDateBookings.some((booking) => {
                     const bookedStartMinutes = toMinutes(booking.AppointmentTime);
-                    const durationMinutes = Number(booking.ServiceDurationHours || 1) * 60;
+                    const durationMinutes = Number(booking.ServiceDurationMinutes || 60);
                     const bookedEndMinutes = bookedStartMinutes + durationMinutes;
                     return overlaps(slotStartMinutes, slotEndMinutes, bookedStartMinutes, bookedEndMinutes);
                 });
@@ -254,9 +357,35 @@
             applyAvailableSlots();
         });
 
-        date.addEventListener('change', () => {
-            updateSummaryDate();
-            applyAvailableSlots();
+        datePickerTrigger.addEventListener('click', () => {
+            if (calendar.hidden) {
+                openCalendar();
+            } else {
+                closeCalendar();
+            }
+        });
+
+        previousMonthButton.addEventListener('click', () => {
+            visibleMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1);
+            renderCalendar();
+        });
+
+        nextMonthButton.addEventListener('click', () => {
+            visibleMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1);
+            renderCalendar();
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!datePicker.contains(event.target)) {
+                closeCalendar();
+            }
+        });
+
+        datePicker.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && !calendar.hidden) {
+                closeCalendar();
+                datePickerTrigger.focus();
+            }
         });
 
         timeSlots.forEach((slot) => slot.addEventListener('click', () => {
@@ -269,19 +398,12 @@
             summary.time.textContent = slot.textContent.trim();
         }));
 
-        function localDateString(value) {
-            const year = value.getFullYear();
-            const month = String(value.getMonth() + 1).padStart(2, '0');
-            const day = String(value.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
-
-        const minimumDate = new Date();
-        minimumDate.setHours(0, 0, 0, 0);
-        minimumDate.setDate(minimumDate.getDate() + 2);
-        date.min = localDateString(minimumDate);
-
         document.getElementById('appointmentForm').addEventListener('submit', (event) => {
+            if (!date.value) {
+                alert('Please select an available appointment date.');
+                event.preventDefault();
+                return;
+            }
             if (!selectedTime.value) {
                 alert('Please select an available appointment time.');
                 event.preventDefault();

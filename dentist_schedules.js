@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const appointmentCountText = document.getElementById("appointmentCountText");
 
     const totalAppointments = document.getElementById("totalAppointments");
-    const waitingAppointments = document.getElementById("waitingAppointments");
+    const confirmedAppointments = document.getElementById("confirmedAppointments");
     const completedAppointments = document.getElementById("completedAppointments");
 
     const modal = document.getElementById("appointmentModal");
@@ -96,15 +96,15 @@ document.addEventListener("DOMContentLoaded", function () {
     function updateSummary(appointments) {
         totalAppointments.textContent = appointments.length;
 
-        const waitingCount = appointments.filter(function (appointment) {
-            return appointment.status === "Pending";
+        const confirmedCount = appointments.filter(function (appointment) {
+            return appointment.status === "Confirmed";
         }).length;
 
         const completedCount = appointments.filter(function (appointment) {
             return appointment.status === "Completed";
         }).length;
 
-        waitingAppointments.textContent = waitingCount;
+        confirmedAppointments.textContent = confirmedCount;
         completedAppointments.textContent = completedCount;
     }
 

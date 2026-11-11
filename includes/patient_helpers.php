@@ -32,6 +32,32 @@ function verify_csrf_token(): bool
         && hash_equals($_SESSION['csrf_token'], $_POST['csrf_token']);
 }
 
+function create_missing_completed_appointment_records(PDO $pdo): void
+{
+    $pdo->exec(
+        "INSERT INTO dentalrecord (PatientID, DentistID, AppointmentID, RecordDate)
+         SELECT a.PatientID, a.DentistID, a.AppointmentID, a.AppointmentDate
+         FROM appointment a
+         LEFT JOIN dentalrecord r ON r.AppointmentID = a.AppointmentID
+         WHERE a.AppointmentStatus = 'Completed' AND r.RecordID IS NULL"
+    );
+}
+
+function sync_completed_appointment_record(PDO $pdo, int $appointmentID): void
+{
+    $statement = $pdo->prepare(
+        "INSERT INTO dentalrecord (PatientID, DentistID, AppointmentID, RecordDate)
+         SELECT PatientID, DentistID, AppointmentID, AppointmentDate
+         FROM appointment
+         WHERE AppointmentID = :appointment_id AND AppointmentStatus = 'Completed'
+         ON DUPLICATE KEY UPDATE
+             PatientID = VALUES(PatientID),
+             DentistID = VALUES(DentistID),
+             RecordDate = VALUES(RecordDate)"
+    );
+    $statement->execute(['appointment_id' => $appointmentID]);
+}
+
 function set_flash(string $type, string $message): void
 {
     $_SESSION['flash'] = ['type' => $type, 'message' => $message];

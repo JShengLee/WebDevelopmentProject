@@ -18,15 +18,15 @@ $stmt = $pdo->prepare($sqlAppointments);
 $stmt->execute(['dentist_id' => $dentistID]);
 $appointmentCount = $stmt->fetchColumn();
 
-// 2. Count today's pending appointments (waiting patients)
-$sqlWaiting = "SELECT COUNT(*) AS total
+// 2. Count today's confirmed appointments
+$sqlConfirmedToday = "SELECT COUNT(*) AS total
                FROM appointment
                WHERE DentistID = :dentist_id
                AND AppointmentDate = CURDATE()
-               AND AppointmentStatus = 'Pending'";
-$stmt = $pdo->prepare($sqlWaiting);
+               AND AppointmentStatus = 'Confirmed'";
+$stmt = $pdo->prepare($sqlConfirmedToday);
 $stmt->execute(['dentist_id' => $dentistID]);
-$waitingCount = $stmt->fetchColumn();
+$confirmedTodayCount = $stmt->fetchColumn();
 
 // 3. Count patients whose latest record WITH THIS DENTIST is not completed
 $sqlOrtho = "SELECT COUNT(*) AS total
@@ -209,20 +209,20 @@ function getInitials($name) {
                                 </div>
 
                                 <span class="card-status">
-                                    Waiting
+                                    Confirmed
                                 </span>
                             </div>
 
                             <p class="card-label">
-                                WAITING PATIENTS
+                                CONFIRMED TODAY
                             </p>
 
                             <h2>
-                                <?= (int)$waitingCount ?>
+                                <?= (int)$confirmedTodayCount ?>
                             </h2>
 
                             <p class="card-description">
-                                Patients waiting for consultation
+                                Confirmed appointments scheduled for today
                             </p>
                         </div>
 
