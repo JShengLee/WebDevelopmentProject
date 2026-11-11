@@ -567,12 +567,6 @@ button {
     color: #5a9a6b;
 }
 
-.status-badge.pending {
-    background-color: #fff7e8;
-    color: #c48a36;
-}
-
-
 /* QUICK ACTIONS */
 
 .quick-actions {

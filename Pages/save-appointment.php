@@ -64,12 +64,12 @@ if (!$assignmentStatement->fetchColumn()) {
 }
 
 $bookingStart = strtotime($appointmentDate . ' ' . $appointmentTime);
-$serviceDurationMinutes = max(60, (int) round((float) ($serviceRow['Duration'] ?? 1) * 60));
+$serviceDurationMinutes = max(1, (int) ($serviceRow['Duration'] ?? 60));
 $bookingEnd = $bookingStart + $serviceDurationMinutes * 60;
 
 $overlapStatement = $pdo->prepare(
     "SELECT a.AppointmentID, a.AppointmentDate, a.AppointmentTime,
-            s.Duration AS ServiceDurationHours
+            s.Duration AS ServiceDurationMinutes
      FROM appointment a
      INNER JOIN service s ON s.ServiceID = a.ServiceID
      WHERE a.DentistID = :dentist_id
@@ -81,7 +81,7 @@ $overlapStatement->execute(['dentist_id' => $dentistId, 'appointment_date' => $a
 
 while ($existing = $overlapStatement->fetch(PDO::FETCH_ASSOC)) {
     $existingStart = strtotime($appointmentDate . ' ' . $existing['AppointmentTime']);
-    $existingDurationMinutes = max(60, (int) round((float) ($existing['ServiceDurationHours'] ?? 1) * 60));
+    $existingDurationMinutes = max(1, (int) ($existing['ServiceDurationMinutes'] ?? 60));
     $existingEnd = $existingStart + $existingDurationMinutes * 60;
 
     if ($bookingStart < $existingEnd && $existingStart < $bookingEnd) {
@@ -104,7 +104,7 @@ try {
         'appointment_time' => $appointmentTime,
         'notes' => $notes !== '' ? $notes : null,
     ]);
-    set_flash('success', 'Your appointment request was submitted.');
+    set_flash('appointment_success', 'Your appointment is confirmed.');
 
     $today = new DateTimeImmutable('today');
     $oneWeekLater = $today->modify('+7 days');

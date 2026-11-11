@@ -229,8 +229,8 @@
                                         </div>
 
                                         <div class="mb-3">
-                                            <label for="duration" class="form-label">Duration</label>
-                                            <input type="text" class="form-control" id="duration" name="duration" required>
+                                            <label for="duration" class="form-label">Duration (minutes)</label>
+                                            <input type="number" class="form-control" id="duration" name="duration" min="1" step="1" required>
                                         </div>
 
                                         <div class="mb-3">
@@ -353,8 +353,8 @@
                                         </div>
 
                                         <div class="mb-3">
-                                            <label for="editDuration" class="form-label">Duration</label>
-                                            <input type="text" class="form-control" id="editDuration" name="editDuration" required>
+                                            <label for="editDuration" class="form-label">Duration (minutes)</label>
+                                            <input type="number" class="form-control" id="editDuration" name="editDuration" min="1" step="1" required>
                                         </div>
 
                                         <div class="mb-3">
@@ -411,7 +411,7 @@
                                     <th>Service Name</th>
                                     <th>Description</th>
                                     <th>Price</th>
-                                    <th>Duration</th>
+                                    <th>Duration (minutes)</th>
                                     <th>Category</th>
                                     <th style="text-align:center;">Action</th>
                                 </tr>

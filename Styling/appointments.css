@@ -345,7 +345,6 @@ button {
 }
 
 .form-group select,
-.form-group input[type="date"],
 .form-group textarea {
     width: 100%;
     border: 1px solid #dfe8eb;
@@ -369,7 +368,6 @@ button {
 }
 
 .form-group select:focus,
-.form-group input[type="date"]:focus,
 .form-group textarea:focus {
     border-color: #42b1cc;
     box-shadow: 0 0 0 3px rgba(66, 177, 204, 0.10);
@@ -380,6 +378,150 @@ button {
     font-size: 11px;
     color: #99a5aa;
     margin-top: 6px;
+}
+
+.form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #4b5b64;
+    margin-bottom: 8px;
+}
+
+.date-picker {
+    position: relative;
+}
+
+.date-picker-trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid #dfe8eb;
+    background: #fff;
+    border-radius: 8px;
+    padding: 11px 13px;
+    color: #52626a;
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.date-picker-trigger:focus-visible,
+.date-picker-trigger[aria-expanded="true"] {
+    border-color: #42b1cc;
+    box-shadow: 0 0 0 3px rgba(66, 177, 204, 0.10);
+    outline: none;
+}
+
+.date-picker-calendar {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 20;
+    width: min(100%, 320px);
+    padding: 12px;
+    border: 1px solid #dfe8eb;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(38, 50, 56, 0.14);
+}
+
+.date-picker-calendar[hidden] {
+    display: none;
+}
+
+.date-picker-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.date-picker-header h2 {
+    margin: 0;
+    color: #43515a;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.date-picker-header button,
+.calendar-day {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: #52626a;
+}
+
+.date-picker-header button {
+    width: 32px;
+    height: 32px;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.date-picker-header button:hover:not(:disabled),
+.calendar-day:not(:disabled):hover {
+    background: #eaf8fb;
+    color: #26869d;
+}
+
+.date-picker-header button:disabled {
+    color: #cbd4d8;
+    cursor: not-allowed;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 3px;
+}
+
+.calendar-weekdays {
+    margin-bottom: 4px;
+}
+
+.calendar-weekdays span {
+    padding: 5px 0;
+    color: #89969d;
+    font-size: 10px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.calendar-day,
+.calendar-day-spacer {
+    min-width: 0;
+    height: 34px;
+}
+
+.calendar-day {
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.calendar-day:disabled {
+    color: #cbd4d8;
+    cursor: not-allowed;
+}
+
+.calendar-day-closed:disabled {
+    color: #d7dddf;
+    text-decoration: line-through;
+}
+
+.calendar-day-selected {
+    background: #42b1cc;
+    color: #fff;
+    font-weight: 700;
+}
+
+.calendar-day-selected:not(:disabled):hover {
+    background: #329ab2;
+    color: #fff;
 }
 
 /* Time slots */
@@ -517,7 +659,7 @@ button {
     color: #8b999f;
 }
 
-.pending-badge {
+.confirmed-badge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
