@@ -217,11 +217,7 @@
                                                     <td><?=htmlspecialchars($appointment["FullName"])?></td>
                                                     <td><?=htmlspecialchars($appointment["ServiceName"])?></td>
                                                     <td><?=htmlspecialchars($appointment["AppointmentDate"])?> <?=htmlspecialchars($appointment["AppointmentTime"])?></td>
-                                                    <?php if($appointment["AppointmentStatus"] === "Pending"): ?>
-                                                        <td>
-                                                            <p class="pending">Pending</p>
-                                                        </td>
-                                                    <?php elseif($appointment["AppointmentStatus"] === "Confirmed"): ?>
+                                                    <?php if($appointment["AppointmentStatus"] === "Confirmed"): ?>
                                                         <td>
                                                             <p class="confirmed">Confirmed</p>
                                                         </td>

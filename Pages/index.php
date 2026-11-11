@@ -6,12 +6,19 @@ $nextAppointmentStatement = $pdo->prepare(
          INNER JOIN service s ON s.ServiceID = a.ServiceID
          INNER JOIN dentist d ON d.DentistID = a.DentistID
          INNER JOIN user u ON u.UserID = d.UserID
-         WHERE a.PatientID = :patient_id AND a.AppointmentStatus IN ('Pending', 'Confirmed')
+         WHERE a.PatientID = :patient_id AND a.AppointmentStatus = 'Confirmed'
              AND TIMESTAMP(a.AppointmentDate, a.AppointmentTime) >= NOW()
          ORDER BY a.AppointmentDate, a.AppointmentTime LIMIT 1"
 );
 $nextAppointmentStatement->execute(['patient_id' => $currentPatient['PatientID']]);
 $nextAppointment = $nextAppointmentStatement->fetch();
+$dashboardServicesStatement = $pdo->query(
+    'SELECT ServiceID, ServiceName, Category, Description, Price
+     FROM service
+     ORDER BY ServiceID ASC
+     LIMIT 4'
+);
+$dashboardServices = $dashboardServicesStatement->fetchAll();
 $recordCountStatement = $pdo->prepare('SELECT COUNT(*) FROM dentalrecord WHERE PatientID = :patient_id');
 $recordCountStatement->execute(['patient_id' => $currentPatient['PatientID']]);
 $recordCount = (int) $recordCountStatement->fetchColumn();
@@ -65,6 +72,29 @@ $recentRecords = $recentRecordsStatement->fetchAll();
                         <a href="book-appointment.php" class="primary-button">
                             + Book Appointment
                         </a>
+                    </section>
+
+                    <!-- Our Services -->
+                    <section class="dashboard-services" aria-labelledby="dashboard-services-title">
+                        <div class="section-heading">
+                            <h2 id="dashboard-services-title">Our Services</h2>
+                            <a href="services.php">View More</a>
+                        </div>
+
+                        <div class="dashboard-service-grid">
+                            <?php foreach ($dashboardServices as $service): ?>
+                                <article class="dashboard-service-card">
+                                    <div class="dashboard-service-icon" aria-hidden="true">+</div>
+                                    <div class="dashboard-service-content">
+                                        <?php if (!empty($service['Category'])): ?>
+                                            <span class="dashboard-service-category"><?= escape_html($service['Category']) ?></span>
+                                        <?php endif; ?>
+                                        <h3><?= escape_html($service['ServiceName']) ?></h3>
+                                        <p><?= escape_html($service['Description'] ?? '') ?></p>
+                                    </div>
+                                </article>
+                            <?php endforeach; ?>
+                        </div>
                     </section>
 
                     <!-- Summary cards -->

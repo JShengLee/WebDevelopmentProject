@@ -13,22 +13,31 @@
     $completedcountStmt->execute();
     $completedcount = $completedcountStmt->fetchColumn();
 
-    $pendingcountSql = "SELECT COUNT(*) FROM appointment WHERE AppointmentStatus = 'Pending'";
-    $pendingcountStmt = $pdo->prepare($pendingcountSql);
-    $pendingcountStmt->execute();
-    $pendingcount = $pendingcountStmt->fetchColumn();
+    $cancelledcountSql = "SELECT COUNT(*) FROM appointment WHERE AppointmentStatus = 'Cancelled'";
+    $cancelledcountStmt = $pdo->prepare($cancelledcountSql);
+    $cancelledcountStmt->execute();
+    $cancelledcount = $cancelledcountStmt->fetchColumn();
 
     if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["action"] ?? "") === "updateStatus"){
-        $status = $_POST["status"];
-        $appointmentID = $_POST["appointmentID"];
+        $status = $_POST["status"] ?? "";
+        $appointmentID = filter_var($_POST["appointmentID"] ?? null, FILTER_VALIDATE_INT);
+        $allowedStatuses = ["Confirmed", "Completed", "Cancelled"];
 
-        try{
+        if (!in_array($status, $allowedStatuses, true) || !$appointmentID) {
+            echo "<script>alert('Unable to update appointment status.');</script>";
+        } else try{
+            $pdo->beginTransaction();
             $updateStatusSql = "UPDATE appointment SET AppointmentStatus = ? WHERE AppointmentID = ?";
             $updateStatusStmt = $pdo->prepare($updateStatusSql);
             $updateStatusStmt->execute([
                 $status,
                 $appointmentID
             ]);
+
+            if ($status === "Completed") {
+                sync_completed_appointment_record($pdo, (int) $appointmentID);
+            }
+            $pdo->commit();
 
             $emailSql = "SELECT u.Email, u.FullName, s.ServiceName, a.AppointmentDate, a.AppointmentTime
                         FROM appointment a
@@ -72,6 +81,9 @@
 
             exit;
         } catch (PDOException $e){
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             error_log($e->getMessage());
 
             echo"<script>
@@ -175,13 +187,13 @@
                         </div>
 
                         <div class="summary-card">
-                            <div class="summary-icon pending-label">
-                                <i class="fas fa-clock"></i>
+                            <div class="summary-icon cancelled-label">
+                                <i class="fas fa-ban"></i>
                             </div>
                             <div>
-                                <p class="summary-caption">PENDING REQUESTS</p>
-                                <strong><?=$pendingcount?></strong>
-                                <p>Awaiting approval</p>
+                                <p class="summary-caption">CANCELLED</p>
+                                <strong><?=$cancelledcount?></strong>
+                                <p>Cancelled visits</p>
                             </div>
                         </div>
                     </div>

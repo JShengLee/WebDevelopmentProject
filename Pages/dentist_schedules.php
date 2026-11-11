@@ -37,7 +37,7 @@ foreach ($rows as $row) {
     // Calculate the appointment end time based on service duration
     $startTime = new DateTime($row['AppointmentTime']);
     $endTime = clone $startTime;
-    $endTime->modify('+' . (int)$row['Duration'] . ' hours');
+    $endTime->modify('+' . (int)$row['Duration'] . ' minutes');
 
     // Generate patient initials
     $nameParts = preg_split('/\s+/', trim($row['PatientName']));
@@ -131,13 +131,13 @@ foreach ($rows as $row) {
                 </div>
 
                 <div class="appointment-summary-card">
-                    <div class="summary-icon waiting-icon">
-                        <i class="fas fa-clock"></i>
+                    <div class="summary-icon confirmed-icon">
+                        <i class="fas fa-calendar-check"></i>
                     </div>
 
                     <div>
-                        <p>Pending</p>
-                        <h2 id="waitingAppointments">0</h2>
+                        <p>Confirmed</p>
+                        <h2 id="confirmedAppointments">0</h2>
                     </div>
                 </div>
 
@@ -210,7 +210,6 @@ foreach ($rows as $row) {
                                 aria-label="Filter by appointment status">
                             <option value="All">All Statuses</option>
                             <option value="Confirmed">Confirmed</option>
-                            <option value="Pending">Pending</option>
                             <option value="Completed">Completed</option>
                             <option value="Cancelled">Cancelled</option>
                         </select>
@@ -239,11 +238,6 @@ foreach ($rows as $row) {
                     <span>
                         <i class="legend-dot confirmed-dot"></i>
                         Confirmed
-                    </span>
-
-                    <span>
-                        <i class="legend-dot pending-dot"></i>
-                        Pending
                     </span>
 
                     <span>
