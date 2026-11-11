@@ -83,10 +83,10 @@ $headerInitials = strtoupper(
 
         <div class="header-right">
             <!-- Notification -->
-            <button class="notification-button">
+            <!-- <button class="notification-button">
                 <span><i class="fa-regular fa-bell"></i></span>
                 <span class="notification-dot"></span>
-            </button>
+            </button> -->
 
             <!-- User -->
             <div class="user-profile">
