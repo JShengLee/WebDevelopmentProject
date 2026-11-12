@@ -384,7 +384,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const appointmentId = currentAppointment.raw_id || String(currentAppointment.id).replace(/\D/g, '');
             const patientId = currentAppointment.raw_patient_id || String(currentAppointment.patient_id).replace(/\D/g, '');
 
-            window.location.href = `${targetPage}?id=${encodeURIComponent(patientId)}&appointment_id=${encodeURIComponent(appointmentId)}&action=new_record`;
+            window.location.href = `${targetPage}?id=${encodeURIComponent(patientId)}&appointment_id=${encodeURIComponent(appointmentId)}&action=new_record&source=schedule`;
         });
     }
 

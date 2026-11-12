@@ -165,6 +165,7 @@ if ($patientID) {
 
             if (isset($recordDetails[$recordID])) {
                 $recordDetails[$recordID]['treatments'][] = [
+                    'id' => (int) $row['TreatmentID'],
                     'name' => $row['TreatmentName'],
                     'details' => $row['TreatmentDetails'] ?? '',
                     'date' => $row['TreatmentDate']

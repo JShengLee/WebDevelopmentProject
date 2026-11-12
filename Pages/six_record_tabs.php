@@ -94,7 +94,7 @@ $patient = $patient ?? [];
         <form class="record-form" id="examinationForm">
             <div class="form-group">
                 <label for="examDate">Examination Date</label>
-                <input type="date" id="examDate" required>
+                <input type="date" id="examDate" max="<?= escape_html(date('Y-m-d')) ?>" required>
             </div>
 
             <div class="form-group">
@@ -207,7 +207,7 @@ $patient = $patient ?? [];
         <form class="record-form" id="treatmentForm">
             <div class="form-group">
                 <label for="diagnosisDate">Treatment Date</label>
-                <input type="date" id="diagnosisDate" required>
+                <input type="date" id="diagnosisDate" max="<?= escape_html(date('Y-m-d')) ?>" required>
             </div>
 
             <div class="form-group">
@@ -250,10 +250,8 @@ $patient = $patient ?? [];
 
         <form class="record-form" id="prescriptionForm">
             <div class="form-group full-width">
-                <label for="prescriptionRecord">Dental Record</label>
-                <select id="prescriptionRecord" required>
-                    <option value="">Select dental record</option>
-                </select>
+                <label for="prescriptionRecordDisplay">Dental Record</label>
+                <input type="text" id="prescriptionRecordDisplay" value="Select or start a visit" readonly disabled>
             </div>
 
             <div class="form-group">
@@ -295,7 +293,7 @@ $patient = $patient ?? [];
 
             <div class="form-group">
                 <label for="startDate">Start Date</label>
-                <input type="date" id="startDate">
+                <input type="date" id="startDate" max="<?= escape_html(date('Y-m-d')) ?>" required>
             </div>
 
             <div class="form-group">
