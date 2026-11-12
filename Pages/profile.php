@@ -201,15 +201,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="profile-grid">
                                 <div class="form-group">
                                     <label for="currentPassword">Current Password</label>
-                                    <input type="password" id="currentPassword" name="current_password" autocomplete="current-password" required>
+                                    <div class="password-wrapper">
+                                        <input type="password" id="currentPassword" name="current_password" autocomplete="current-password" required>
+                                        <button type="button" class="show-password" data-toggle-password="currentPassword" aria-label="Show password">
+                                            <i class="fa-regular fa-eye"></i>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="form-group">
                                     <label for="newPassword">New Password</label>
-                                    <input type="password" id="newPassword" name="new_password" autocomplete="new-password" minlength="8" required>
+                                    <div class="password-wrapper">
+                                        <input type="password" id="newPassword" name="new_password" autocomplete="new-password" minlength="8" required>
+                                        <button type="button" class="show-password" data-toggle-password="newPassword" aria-label="Show password">
+                                            <i class="fa-regular fa-eye"></i>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="form-group">
                                     <label for="confirmPassword">Confirm New Password</label>
-                                    <input type="password" id="confirmPassword" name="confirm_password" autocomplete="new-password" minlength="8" required>
+                                    <div class="password-wrapper">
+                                        <input type="password" id="confirmPassword" name="confirm_password" autocomplete="new-password" minlength="8" required>
+                                        <button type="button" class="show-password" data-toggle-password="confirmPassword" aria-label="Show password">
+                                            <i class="fa-regular fa-eye"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             <div class="password-actions">

@@ -28,8 +28,84 @@ if (!$patientID) {
     exit;
 }
 
+function is_fresh_dental_record(int $recordID, int $patientID, int $dentistID): bool
+{
+    $record = $_SESSION['fresh_dental_records'][(string) $recordID] ?? null;
+
+    return is_array($record)
+        && (int) ($record['patientID'] ?? 0) === $patientID
+        && (int) ($record['dentistID'] ?? 0) === $dentistID;
+}
+
+function validate_record_date($value, string $fieldName, bool $allowEmpty = false): ?string
+{
+    if (($value === null || $value === '') && $allowEmpty) {
+        return null;
+    }
+
+    if (!is_string($value) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+        throw new InvalidArgumentException($fieldName . ' must be a valid date.');
+    }
+
+    $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+    $errors = DateTimeImmutable::getLastErrors();
+
+    if (
+        !$date
+        || ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0))
+        || $date->format('Y-m-d') !== $value
+    ) {
+        throw new InvalidArgumentException($fieldName . ' must be a valid date.');
+    }
+
+    if ($value > date('Y-m-d')) {
+        throw new InvalidArgumentException($fieldName . ' cannot be in the future.');
+    }
+
+    return $value;
+}
+
 try {
     switch ($action) {
+
+        case 'initialize_record_page':
+            unset($_SESSION['active_dental_record'], $_SESSION['fresh_dental_records']);
+            echo json_encode(['success' => true]);
+            break;
+
+        case 'clear_active_visit':
+            unset($_SESSION['active_dental_record']);
+            echo json_encode(['success' => true]);
+            break;
+
+        case 'activate_visit':
+            $recordID = filter_var($data['recordID'] ?? null, FILTER_VALIDATE_INT);
+            if (!$recordID) {
+                echo json_encode(['success' => false, 'message' => 'Missing Dental Record ID.']);
+                break;
+            }
+
+            $stmt = $pdo->prepare(
+                "SELECT RecordID FROM dentalrecord
+                 WHERE RecordID = :record_id AND PatientID = :patient_id"
+            );
+            $stmt->execute([
+                'record_id' => $recordID,
+                'patient_id' => $patientID
+            ]);
+
+            if (!$stmt->fetch()) {
+                echo json_encode(['success' => false, 'message' => 'Dental record not found for this patient.']);
+                break;
+            }
+
+            $_SESSION['active_dental_record'] = [
+                'recordID' => (int) $recordID,
+                'patientID' => (int) $patientID,
+                'dentistID' => $dentistID
+            ];
+            echo json_encode(['success' => true]);
+            break;
 
         case 'create_visit':
             $rawApptID = $data['appointmentID'] ?? null;
@@ -39,39 +115,78 @@ try {
                 $appointmentID = null;
             }
 
+            $appointmentTreatmentName = null;
+            if ($appointmentID !== null) {
+                $appointmentStmt = $pdo->prepare(
+                    "SELECT s.ServiceName
+                     FROM appointment a
+                     JOIN service s ON s.ServiceID = a.ServiceID
+                     WHERE a.AppointmentID = :appointment_id
+                       AND a.PatientID = :patient_id
+                       AND a.DentistID = :dentist_id
+                       AND a.AppointmentStatus = 'Confirmed'"
+                );
+                $appointmentStmt->execute([
+                    'appointment_id' => $appointmentID,
+                    'patient_id' => $patientID,
+                    'dentist_id' => $dentistID
+                ]);
+                $appointment = $appointmentStmt->fetch();
+
+                if (!$appointment) {
+                    echo json_encode(['success' => false, 'message' => 'Confirmed appointment not found for this patient.']);
+                    break;
+                }
+
+                $appointmentTreatmentName = $appointment['ServiceName'];
+            }
+
+            $recordDate = date('Y-m-d');
             if ($appointmentID !== null) {
                 $stmt = $pdo->prepare(
-                    "INSERT INTO dentalrecord (PatientID, DentistID, AppointmentID, RecordDate) 
-                     VALUES (:patient_id, :dentist_id, :appointment_id, CURDATE())"
+                    "INSERT INTO dentalrecord (PatientID, DentistID, AppointmentID, RecordDate)
+                     VALUES (:patient_id, :dentist_id, :appointment_id, :record_date)"
                 );
                 $stmt->execute([
                     'patient_id' => $patientID,
                     'dentist_id' => $dentistID,
-                    'appointment_id' => $appointmentID
+                    'appointment_id' => $appointmentID,
+                    'record_date' => $recordDate
                 ]);
             } else {
                 $stmt = $pdo->prepare(
-                    "INSERT INTO dentalrecord (PatientID, DentistID, RecordDate) 
-                     VALUES (:patient_id, :dentist_id, CURDATE())"
+                    "INSERT INTO dentalrecord (PatientID, DentistID, RecordDate)
+                     VALUES (:patient_id, :dentist_id, :record_date)"
                 );
                 $stmt->execute([
                     'patient_id' => $patientID,
-                    'dentist_id' => $dentistID
+                    'dentist_id' => $dentistID,
+                    'record_date' => $recordDate
                 ]);
             }
 
             $newRecordID = (int) $pdo->lastInsertId();
+            $_SESSION['fresh_dental_records'][(string) $newRecordID] = [
+                'patientID' => (int) $patientID,
+                'dentistID' => $dentistID
+            ];
+            $_SESSION['active_dental_record'] = [
+                'recordID' => $newRecordID,
+                'patientID' => (int) $patientID,
+                'dentistID' => $dentistID
+            ];
             echo json_encode([
                 'success' => true,
                 'message' => 'New visit created successfully.',
                 'recordID' => $newRecordID,
-                'recordDate' => date('Y-m-d')
+                'recordDate' => $recordDate,
+                'appointmentTreatmentName' => $appointmentTreatmentName
             ]);
             break;
 
         case 'save_examination':
             $recordID = filter_var($data['recordID'] ?? null, FILTER_VALIDATE_INT);
-            $examDate = $data['examDate'] ?? null;
+            $requestedExamDate = $data['examDate'] ?? null;
             $oralHygiene = $data['oralHygiene'] ?? null;
             $gumCondition = $data['gumCondition'] ?? null;
             $examNotes = $data['examNotes'] ?? null;
@@ -81,9 +196,34 @@ try {
                 exit;
             }
 
+            $recordStmt = $pdo->prepare(
+                "SELECT RecordDate FROM dentalrecord
+                 WHERE RecordID = :record_id AND PatientID = :patient_id"
+            );
+            $recordStmt->execute([
+                'record_id' => $recordID,
+                'patient_id' => $patientID
+            ]);
+            $existingRecord = $recordStmt->fetch();
+
+            if (!$existingRecord) {
+                echo json_encode(['success' => false, 'message' => 'Dental record not found for this patient.']);
+                break;
+            }
+
+            if (is_fresh_dental_record((int) $recordID, (int) $patientID, $dentistID)) {
+                $examDate = validate_record_date($requestedExamDate, 'Examination Date');
+            } else {
+                if ($requestedExamDate !== $existingRecord['RecordDate']) {
+                    echo json_encode(['success' => false, 'message' => 'Examination Date cannot be changed when editing an existing dental record.']);
+                    break;
+                }
+                $examDate = $existingRecord['RecordDate'];
+            }
+
             $stmt = $pdo->prepare(
                 "UPDATE dentalrecord 
-                 SET RecordDate = :exam_date, oralHygiene = :oral_hygiene, gumCondition = :gum_condition, ClinicalNotes = :exam_notes 
+                 SET RecordDate = :exam_date, oralHygiene = :oral_hygiene, gumCondition = :gum_condition, ClinicalNotes = :exam_notes
                  WHERE RecordID = :record_id AND PatientID = :patient_id"
             );
             $stmt->execute([
@@ -148,7 +288,7 @@ try {
         case 'save_treatment':
             $recordID = filter_var($data['recordID'] ?? null, FILTER_VALIDATE_INT);
             $treatmentID = filter_var($data['treatmentID'] ?? null, FILTER_VALIDATE_INT);
-            $treatmentDate = $data['treatmentDate'] ?? date('Y-m-d');
+            $requestedTreatmentDate = $data['treatmentDate'] ?? null;
             $diagnosis = $data['diagnosis'] ?? null;
             $treatmentName = $data['treatmentName'] ?? null;
             $treatmentDetails = $data['treatmentDetails'] ?? null;
@@ -158,27 +298,71 @@ try {
                 exit;
             }
 
+            $recordStmt = $pdo->prepare(
+                "SELECT RecordDate FROM dentalrecord
+                 WHERE RecordID = :record_id AND PatientID = :patient_id"
+            );
+            $recordStmt->execute([
+                'record_id' => $recordID,
+                'patient_id' => $patientID
+            ]);
+            $existingRecord = $recordStmt->fetch();
+
+            if (!$existingRecord) {
+                echo json_encode(['success' => false, 'message' => 'Dental record not found for this patient.']);
+                break;
+            }
+
+            if ($treatmentID) {
+                $checkTreat = $pdo->prepare(
+                    "SELECT TreatmentID, TreatmentDate FROM treatment
+                     WHERE RecordID = :record_id AND TreatmentID = :treatment_id"
+                );
+                $checkTreat->execute([
+                    'record_id' => $recordID,
+                    'treatment_id' => $treatmentID
+                ]);
+            } else {
+                $checkTreat = $pdo->prepare(
+                    "SELECT TreatmentID, TreatmentDate FROM treatment
+                     WHERE RecordID = :record_id
+                     ORDER BY TreatmentDate DESC, TreatmentID DESC LIMIT 1"
+                );
+                $checkTreat->execute(['record_id' => $recordID]);
+            }
+            $existingTreat = $checkTreat->fetch();
+
+            if ($treatmentID && !$existingTreat) {
+                echo json_encode(['success' => false, 'message' => 'Treatment does not belong to this dental record.']);
+                break;
+            }
+            if ($existingTreat) {
+                $treatmentID = (int) $existingTreat['TreatmentID'];
+            }
+
+            if (is_fresh_dental_record((int) $recordID, (int) $patientID, $dentistID)) {
+                $treatmentDate = validate_record_date($requestedTreatmentDate, 'Treatment Date');
+            } else {
+                $savedTreatmentDate = $existingTreat['TreatmentDate'] ?? $existingRecord['RecordDate'];
+                if ($requestedTreatmentDate !== $savedTreatmentDate) {
+                    echo json_encode(['success' => false, 'message' => 'Treatment Date cannot be changed when editing an existing dental record.']);
+                    break;
+                }
+                $treatmentDate = $savedTreatmentDate;
+            }
+
             $pdo->beginTransaction();
 
             // 1. Always update Diagnosis on the parent dental record
-            $diagStmt = $pdo->prepare("UPDATE dentalrecord SET Diagnosis = :diagnosis WHERE RecordID = :record_id");
+            $diagStmt = $pdo->prepare(
+                "UPDATE dentalrecord SET Diagnosis = :diagnosis
+                 WHERE RecordID = :record_id AND PatientID = :patient_id"
+            );
             $diagStmt->execute([
                 'diagnosis' => $diagnosis,
-                'record_id' => $recordID
+                'record_id' => $recordID,
+                'patient_id' => $patientID
             ]);
-
-            // 2. If treatmentID wasn't passed, check if a treatment already exists for this RecordID
-            if (!$treatmentID) {
-                $checkTreat = $pdo->prepare(
-                    "SELECT TreatmentID FROM treatment WHERE RecordID = :record_id ORDER BY TreatmentID DESC LIMIT 1"
-                );
-                $checkTreat->execute(['record_id' => $recordID]);
-                $existingTreat = $checkTreat->fetch();
-
-                if ($existingTreat) {
-                    $treatmentID = (int) $existingTreat['TreatmentID'];
-                }
-            }
 
             if ($treatmentID) {
                 // UPDATE existing treatment record
@@ -225,24 +409,29 @@ try {
             break;
 
         case 'save_prescription':
-            $recordID = filter_var($data['recordID'] ?? null, FILTER_VALIDATE_INT);
+            $activeRecord = $_SESSION['active_dental_record'] ?? null;
+            if (
+                !is_array($activeRecord)
+                || (int) ($activeRecord['patientID'] ?? 0) !== (int) $patientID
+                || (int) ($activeRecord['dentistID'] ?? 0) !== $dentistID
+            ) {
+                echo json_encode(['success' => false, 'message' => 'Select or start a dental visit before saving a prescription.']);
+                break;
+            }
+
+            $recordID = (int) $activeRecord['recordID'];
             $medicationName = trim($data['medicationName'] ?? '');
             $dosage = trim($data['dosage'] ?? '');
             $instructions = trim($data['instructions'] ?? '');
-
-            if (!$recordID || $recordID <= 0) {
-                echo json_encode(['success' => false, 'message' => 'Missing or invalid Dental Record ID.']);
-                break;
-            }
 
             if ($medicationName === '') {
                 echo json_encode(['success' => false, 'message' => 'Please enter a medication name.']);
                 break;
             }
 
-            // Check that the dental record belongs to this patient
             $checkRecord = $pdo->prepare(
-                "SELECT RecordID FROM dentalrecord WHERE RecordID = :record_id AND PatientID = :patient_id"
+                "SELECT RecordID FROM dentalrecord
+                 WHERE RecordID = :record_id AND PatientID = :patient_id"
             );
             $checkRecord->execute([
                 'record_id' => $recordID,
@@ -309,80 +498,71 @@ try {
             break;
 
         case 'save_orthodontics':
-            $orthoRecordID = filter_var($data['orthoRecordID'] ?? null, FILTER_VALIDATE_INT);
+            $recordID = filter_var($data['recordID'] ?? null, FILTER_VALIDATE_INT);
             $treatmentType = trim($data['treatmentType'] ?? '');
-            $startDate = !empty($data['startDate']) ? $data['startDate'] : null;
+            $requestedStartDate = $data['startDate'] ?? null;
             $currentStage = trim($data['currentStage'] ?? '');
             $nextAdjustment = !empty($data['nextAdjustment']) ? $data['nextAdjustment'] : null;
             $progressNotes = trim($data['progressNotes'] ?? '');
 
-            // If orthoRecordID wasn't passed, check if the patient already has an existing orthodontic record
-            if (!$orthoRecordID) {
-                $checkOrtho = $pdo->prepare(
-                    "SELECT OrthoRecordID 
-                     FROM orthodonticrecord 
-                     WHERE PatientID = :patient_id 
-                     ORDER BY OrthoRecordID DESC 
-                     LIMIT 1"
-                );
-                $checkOrtho->execute(['patient_id' => $patientID]);
-                $existingOrtho = $checkOrtho->fetch();
-
-                if ($existingOrtho) {
-                    $orthoRecordID = (int) $existingOrtho['OrthoRecordID'];
-                }
+            if (!$recordID) {
+                echo json_encode(['success' => false, 'message' => 'Missing Dental Record ID.']);
+                break;
             }
 
-            if ($orthoRecordID) {
-                // UPDATE existing orthodontic record
-                $stmt = $pdo->prepare(
-                    "UPDATE orthodonticrecord
-                     SET TreatmentType = :treatment_type,
-                         StartDate = :start_date,
-                         CurrentStage = :current_stage,
-                         ProgressNotes = :progress_notes,
-                         NextAdjustmentDate = :next_adjustment
-                     WHERE OrthoRecordID = :ortho_record_id AND PatientID = :patient_id"
-                );
-                $stmt->execute([
-                    'treatment_type' => $treatmentType,
-                    'start_date' => $startDate,
-                    'current_stage' => $currentStage,
-                    'progress_notes' => $progressNotes,
-                    'next_adjustment' => $nextAdjustment,
-                    'ortho_record_id' => $orthoRecordID,
-                    'patient_id' => $patientID
-                ]);
+            $recordStmt = $pdo->prepare(
+                "SELECT RecordID FROM dentalrecord
+                 WHERE RecordID = :record_id AND PatientID = :patient_id"
+            );
+            $recordStmt->execute([
+                'record_id' => $recordID,
+                'patient_id' => $patientID
+            ]);
+            $existingRecord = $recordStmt->fetch();
 
-                $message = 'Orthodontic record updated successfully.';
-            } else {
-                // INSERT new orthodontic record if no previous record exists
-                $stmt = $pdo->prepare(
-                    "INSERT INTO orthodonticrecord (PatientID, DentistID, TreatmentType, StartDate, CurrentStage, ProgressNotes, NextAdjustmentDate) 
-                     VALUES (:patient_id, :dentist_id, :treatment_type, :start_date, :current_stage, :progress_notes, :next_adjustment)"
-                );
-                $stmt->execute([
-                    'patient_id' => $patientID,
-                    'dentist_id' => $dentistID,
-                    'treatment_type' => $treatmentType,
-                    'start_date' => $startDate,
-                    'current_stage' => $currentStage,
-                    'progress_notes' => $progressNotes,
-                    'next_adjustment' => $nextAdjustment
-                ]);
-
-                $orthoRecordID = (int) $pdo->lastInsertId();
-                $message = 'Orthodontic record created successfully.';
+            if (!$existingRecord) {
+                echo json_encode(['success' => false, 'message' => 'Dental record not found for this patient.']);
+                break;
             }
+
+            $startDate = validate_record_date(
+                $requestedStartDate,
+                'Orthodontic Start Date',
+                true
+            );
+
+            $stmt = $pdo->prepare(
+                "INSERT INTO orthodonticrecord
+                    (PatientID, DentistID, TreatmentType, StartDate, CurrentStage, ProgressNotes, NextAdjustmentDate)
+                 VALUES
+                    (:patient_id, :dentist_id, :treatment_type, :start_date, :current_stage, :progress_notes, :next_adjustment)"
+            );
+            $stmt->execute([
+                'patient_id' => $patientID,
+                'dentist_id' => $dentistID,
+                'treatment_type' => $treatmentType,
+                'start_date' => $startDate,
+                'current_stage' => $currentStage,
+                'progress_notes' => $progressNotes,
+                'next_adjustment' => $nextAdjustment
+            ]);
+
+            $orthoRecordID = (int) $pdo->lastInsertId();
 
             echo json_encode([
-                'success' => true, 
-                'message' => $message,
+                'success' => true,
+                'message' => 'Orthodontic record created successfully.',
                 'orthoRecordID' => $orthoRecordID
             ]);
             break;
     }
 
+} catch (InvalidArgumentException $e) {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 } catch (Exception $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();

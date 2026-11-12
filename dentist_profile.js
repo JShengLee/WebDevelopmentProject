@@ -45,6 +45,32 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    // Toggle password visibility (blue eye icon)
+    function resetPasswordVisibility() {
+        document.querySelectorAll("[data-toggle-password]").forEach(function (button) {
+            const targetInput = document.getElementById(button.dataset.togglePassword);
+            if (targetInput) {
+                targetInput.type = "password";
+            }
+            button.setAttribute("aria-label", "Show password");
+            button.innerHTML = '<i class="fa-regular fa-eye"></i>';
+        });
+    }
+
+    document.querySelectorAll("[data-toggle-password]").forEach(function (button) {
+        button.addEventListener("click", function () {
+            const targetInput = document.getElementById(button.dataset.togglePassword);
+            if (!targetInput) return;
+
+            const isHidden = targetInput.type === "password";
+            targetInput.type = isHidden ? "text" : "password";
+            button.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
+            button.innerHTML = isHidden
+                ? '<i class="fa-regular fa-eye-slash"></i>'
+                : '<i class="fa-regular fa-eye"></i>';
+        });
+    });
+
     // Password Panel Toggle
     const passwordButton = document.getElementById("passwordButton");
     const passwordPanel = document.getElementById("passwordPanel");
@@ -55,6 +81,8 @@ document.addEventListener("DOMContentLoaded", function () {
             passwordPanel.hidden = !passwordPanel.hidden;
             if (!passwordPanel.hidden) {
                 document.getElementById("currentPassword").focus();
+            } else {
+                resetPasswordVisibility();
             }
         });
     }
@@ -62,6 +90,8 @@ document.addEventListener("DOMContentLoaded", function () {
     if (cancelPasswordButton && passwordPanel) {
         cancelPasswordButton.addEventListener("click", function () {
             passwordPanel.hidden = true;
+            passwordPanel.querySelector("form").reset();
+            resetPasswordVisibility();
         });
     }
 });

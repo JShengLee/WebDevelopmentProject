@@ -1,9 +1,12 @@
 <?php
-require_once __DIR__ . '/../includes/patient_bootstrap.php';
+require_once __DIR__ . '/../includes/patient_helpers.php';
 
 // Verify authentication & retrieve logged-in dentist details
 $currentDentist = require_patient($pdo);
 $dentistID = $currentDentist['DentistID'];
+
+// Update expired appointments based on linked dental records
+sync_expired_appointments($pdo, $currentDentist);
 
 // Retrieve appointments, patient, service details, and check if a dental record already exists
 $sql = "SELECT
@@ -243,6 +246,11 @@ foreach ($rows as $row) {
                     <span>
                         <i class="legend-dot completed-dot"></i>
                         Completed
+                    </span>
+
+                    <span>
+                        <i class="legend-dot cancelled-dot"></i>
+                        Cancelled
                     </span>
                 </div>
 

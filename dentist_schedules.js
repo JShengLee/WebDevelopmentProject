@@ -302,12 +302,13 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("modalStatus").textContent = appointment.status;
         document.getElementById("modalNotes").textContent = appointment.notes;
 
-        // Show 'Start New Visit' button ONLY if status is Confirmed AND no dental record exists yet
+        // Show 'Start New Visit' only for today's confirmed appointments without a record.
         if (startVisitButton) {
             const isConfirmed = appointment.status.toLowerCase() === "confirmed";
+            const isToday = appointment.date === formatDateInput(today);
             const hasExistingRecord = Boolean(appointment.has_record);
 
-            if (isConfirmed && !hasExistingRecord) {
+            if (isToday && isConfirmed && !hasExistingRecord) {
                 startVisitButton.style.display = "inline-flex";
             } else {
                 startVisitButton.style.display = "none";
@@ -383,7 +384,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const appointmentId = currentAppointment.raw_id || String(currentAppointment.id).replace(/\D/g, '');
             const patientId = currentAppointment.raw_patient_id || String(currentAppointment.patient_id).replace(/\D/g, '');
 
-            window.location.href = `${targetPage}?id=${encodeURIComponent(patientId)}&appointment_id=${encodeURIComponent(appointmentId)}&action=new_record`;
+            window.location.href = `${targetPage}?id=${encodeURIComponent(patientId)}&appointment_id=${encodeURIComponent(appointmentId)}&action=new_record&source=schedule`;
         });
     }
 

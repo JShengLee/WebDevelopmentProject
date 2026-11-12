@@ -481,8 +481,10 @@ button {
 
 
 /* APPOINTMENT LIST */
-
 .appointment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Adjust spacing between rows as needed */
     max-height: 380px; /* Adjust height to fit ~4 to 5 rows comfortably */
     overflow-y: auto;  /* Adds a vertical scrollbar when content exceeds max-height */
     padding-right: 8px; /* Prevents scrollbar from overlapping text */
