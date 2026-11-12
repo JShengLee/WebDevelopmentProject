@@ -1,7 +1,6 @@
 <?php
     require_once __DIR__ . '/../includes/patient_bootstrap.php';
     require_once __DIR__ . '/../email_helper.php';
-    // include "../dbconnection.php";
 ?>
 
 <?php

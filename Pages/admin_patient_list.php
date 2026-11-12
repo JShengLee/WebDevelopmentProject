@@ -316,7 +316,6 @@
 
                                         <div class="mb-3">
                                             <label for="gender" class="form-label">Gender</label>
-                                            <!-- <input type="text" class="form-control" id="specialty" name="specialty" required> -->
                                              <select class="form-select" id="gender" name="gender" required>
                                                 <option value="">Select Gender</option>
                                                 <option value="Male">Male</option>
