@@ -396,37 +396,32 @@ $departments =$deptStmt->fetchAll();
 
                                 <div class="form-group">
                                     <label for="currentPassword">Current Password</label>
-                                    <input
-                                        type="password"
-                                        id="currentPassword"
-                                        name="currentPassword"
-                                        autocomplete="current-password"
-                                        required
-                                    >
+                                    <div class="password-wrapper">
+                                        <input type="password" id="currentPassword" name="currentPassword" autocomplete="current-password" required>
+                                        <button type="button" class="show-password" data-toggle-password="currentPassword" aria-label="Show password">
+                                            <i class="fa-regular fa-eye"></i>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="newPassword">New Password</label>
-                                    <input
-                                        type="password"
-                                        id="newPassword"
-                                        name="newPassword"
-                                        autocomplete="new-password"
-                                        required
-                                        minlength="8"
-                                    >
+                                    <div class="password-wrapper">
+                                        <input type="password" id="newPassword" name="newPassword" autocomplete="new-password" required minlength="8">
+                                        <button type="button" class="show-password" data-toggle-password="newPassword" aria-label="Show password">
+                                            <i class="fa-regular fa-eye"></i>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="confirmPassword">Confirm New Password</label>
-                                    <input
-                                        type="password"
-                                        id="confirmPassword"
-                                        name="confirmPassword"
-                                        autocomplete="new-password"
-                                        required
-                                        minlength="8"
-                                    >
+                                    <div class="password-wrapper">
+                                        <input type="password" id="confirmPassword" name="confirmPassword" autocomplete="new-password" required minlength="8">
+                                        <button type="button" class="show-password" data-toggle-password="confirmPassword" aria-label="Show password">
+                                            <i class="fa-regular fa-eye"></i>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div class="password-actions">
