@@ -500,16 +500,6 @@
 
                     <div class="inventory-container">
                         <table class="dentist-table">
-                            <!-- <thead>
-                                <tr>
-                                    <th>Item ID</th>
-                                    <th>Item Name</th>
-                                    <th>Category</th>
-                                    <th>Quantity</th>
-                                    <th style="text-align:center;">Status</th>
-                                    <th style="text-align:center;">Action</th>
-                                </tr>
-                            </thead> -->
                             <tbody>
                                 <?php 
                                     while ($stock = $stmt->fetch()):

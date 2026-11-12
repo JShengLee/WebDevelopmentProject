@@ -208,11 +208,6 @@
                                     <form method="POST" id="addServiceForm">
                                         <input type="hidden" name="action" value="addService">
 
-                                        <!-- <div class="mb-3">
-                                            <label for="serviceID" class="form-label">ServiceID</label>
-                                            <input type="text" class="form-control" id="serviceID" name="serviceID" required>
-                                        </div> -->
-
                                         <div class="mb-3">
                                             <label for="serviceName" class="form-label">Service Name</label>
                                             <input type="text" class="form-control" id="serviceName" name="serviceName" required>

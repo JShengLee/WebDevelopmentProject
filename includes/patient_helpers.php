@@ -70,32 +70,6 @@ function take_flash(): ?array
     return $flash;
 }
 
-// function require_patient(PDO $pdo): array
-// {
-//     if (empty($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'Patient') {
-//         header('Location: authentication.php');
-//         exit;
-//     }
-
-//     $statement = $pdo->prepare(
-//         'SELECT u.UserID, u.FullName, u.Email, u.Phone, p.PatientID, p.DateOfBirth, p.Gender
-//          FROM user u
-//          INNER JOIN patient p ON p.UserID = u.UserID
-//          WHERE u.UserID = :user_id AND u.Role = \'Patient\''
-//     );
-//     $statement->execute(['user_id' => $_SESSION['user_id']]);
-//     $patient = $statement->fetch();
-
-//     if (!$patient) {
-//         $_SESSION = [];
-//         session_destroy();
-//         header('Location: authentication.php');
-//         exit;
-//     }
-
-//     return $patient;
-// }
-
 function require_patient(PDO $pdo): array
 {
     if (!empty($_SESSION["user_id"])){

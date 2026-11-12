@@ -1,6 +1,5 @@
 <?php
     require_once __DIR__ . '/../includes/patient_bootstrap.php';
-    // include "../dbconnection.php";
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -59,13 +58,6 @@
                                 </h2>
                                 <a href="admin_dentist_list.php">View all</a>
                             </div>
-                            <!-- <h2>
-                                18 Sep
-                            </h2>
-
-                            <p class="card-description">
-                                10:00 AM · General Check-up
-                            </p> -->
                             <div class="card-content">
                                 <div class="doctor-summary">
                                     <div class="doctor-gauge">
@@ -100,13 +92,6 @@
                                 </h2>
                                 <a href="admin_service_list.php">View all</a>
                             </div>
-                            <!-- <h2>
-                                18 Sep
-                            </h2>
-
-                            <p class="card-description">
-                                10:00 AM · General Check-up
-                            </p> -->
                             <div class="card-content">
                                 <div class="doctor-summary">
                                     <div class="doctor-gauge">
@@ -141,13 +126,6 @@
                                 </h2>
                                 <a href="admin_patient_list.php">View all</a>
                             </div>
-                            <!-- <h2>
-                                18 Sep
-                            </h2>
-
-                            <p class="card-description">
-                                10:00 AM · General Check-up
-                            </p> -->
                             <div class="card-content">
                                 <div class="doctor-summary">
                                     <div class="doctor-gauge">
