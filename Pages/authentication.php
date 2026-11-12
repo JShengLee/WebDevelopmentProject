@@ -44,6 +44,17 @@ function derive_malaysian_ic_date_of_birth(string $icDigits): ?string
     return $dateValue;
 }
 
+function normalize_malaysian_phone(string $phone): string
+{
+    $digits = preg_replace('/\D+/', '', $phone);
+
+    if ($digits !== null && str_starts_with($digits, '60')) {
+        return '0' . substr($digits, 2);
+    }
+
+    return $digits ?? '';
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $activeForm = ($_POST['form_action'] ?? '') === 'register' ? 'register' : 'login';
 
@@ -524,42 +535,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $registrationError = 'The passwords do not match.';
         } else {
             try {
-                $pdo->beginTransaction();
-                $userId = generate_role_user_id($pdo, 'Patient');
-                $userStatement = $pdo->prepare(
-                    'INSERT INTO user (UserID, FullName, Email, PasswordHash, Phone, ic_number, Role)
-                     VALUES (:user_id, :full_name, :email, :password_hash, :phone, :ic_number, \'Patient\')'
-                );
-                $userStatement->execute([
-                    'user_id' => $userId,
-                    'full_name' => $fullName,
-                    'email' => $registrationEmail,
-                    'password_hash' => password_hash($password, PASSWORD_DEFAULT),
-                    'phone' => $phone !== '' ? $phone : null,
-                    'ic_number' => $normalizedIcNumber,
-                ]);
-                $patientStatement = $pdo->prepare(
-                    'INSERT INTO patient (PatientID, UserID, DateOfBirth, Approval)
-                     VALUES (:patient_id, :user_id, :date_of_birth, \'No\')'
-                );
-                $patientStatement->execute([
-                    'patient_id' => $userId,
-                    'user_id' => $userId,
-                    'date_of_birth' => $dateOfBirth !== '' ? $dateOfBirth : null,
-                ]);
-                $pdo->commit();
-                release_role_user_id_lock($pdo);
+                $emailCheck = $pdo->prepare('SELECT 1 FROM user WHERE Email = :email LIMIT 1');
+                $emailCheck->execute(['email' => $registrationEmail]);
 
-                set_flash('success', 'Registration submitted successfully! Your account is currently awaiting admin approval. Please wait until your registration is approved before logging in.');
-                header('Location: authentication.php');
-                exit;
+                if ($emailCheck->fetchColumn() !== false) {
+                    $registrationError = 'An account with this email address already exists.';
+                } elseif ($phone !== '') {
+                    $phoneCheck = $pdo->query('SELECT Phone FROM user WHERE Phone IS NOT NULL AND Phone <> \'\'');
+                    $normalizedPhone = normalize_malaysian_phone($phone);
+                    $phoneExists = false;
+
+                    foreach ($phoneCheck->fetchAll(PDO::FETCH_COLUMN) as $existingPhone) {
+                        if (normalize_malaysian_phone((string) $existingPhone) === $normalizedPhone) {
+                            $phoneExists = true;
+                            break;
+                        }
+                    }
+
+                    if ($phoneExists) {
+                        $registrationError = 'An account with this phone number already exists.';
+                    }
+                }
+
+                if ($registrationError === '') {
+                    $pdo->beginTransaction();
+                    $userId = generate_role_user_id($pdo, 'Patient');
+                    $userStatement = $pdo->prepare(
+                        'INSERT INTO user (UserID, FullName, Email, PasswordHash, Phone, ic_number, Role)
+                         VALUES (:user_id, :full_name, :email, :password_hash, :phone, :ic_number, \'Patient\')'
+                    );
+                    $userStatement->execute([
+                        'user_id' => $userId,
+                        'full_name' => $fullName,
+                        'email' => $registrationEmail,
+                        'password_hash' => password_hash($password, PASSWORD_DEFAULT),
+                        'phone' => $phone !== '' ? normalize_malaysian_phone($phone) : null,
+                        'ic_number' => $normalizedIcNumber,
+                    ]);
+                    $patientStatement = $pdo->prepare(
+                        'INSERT INTO patient (PatientID, UserID, DateOfBirth, Approval)
+                         VALUES (:patient_id, :user_id, :date_of_birth, \'No\')'
+                    );
+                    $patientStatement->execute([
+                        'patient_id' => $userId,
+                        'user_id' => $userId,
+                        'date_of_birth' => $dateOfBirth !== '' ? $dateOfBirth : null,
+                    ]);
+                    $pdo->commit();
+                    release_role_user_id_lock($pdo);
+
+                    set_flash('success', 'Registration submitted successfully! Your account is currently awaiting admin approval. Please wait until your registration is approved before logging in.');
+                    header('Location: authentication.php');
+                    exit;
+                }
             } catch (Throwable $exception) {
                 if ($pdo->inTransaction()) {
                     $pdo->rollBack();
                 }
                 release_role_user_id_lock($pdo);
                 $registrationError = (string) $exception->getCode() === '23000'
-                    ? 'An account with this email address or IC number already exists.'
+                    ? 'An account with this email address, phone number, or IC number already exists.'
                     : 'Your account could not be created. Please try again.';
             }
         }
