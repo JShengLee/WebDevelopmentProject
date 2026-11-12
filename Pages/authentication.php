@@ -401,8 +401,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $registrationError = 'Enter a valid 12-digit IC number, with or without hyphens.';
         } elseif ($dateOfBirth === '') {
             $registrationError = 'The IC number must contain a valid date of birth that is not in the future.';
-        } elseif ($phone !== '' && !preg_match('/^[0-9]{10,11}$/D', $phone)) {
-            $registrationError = 'Enter a phone number containing 10 or 11 digits only.';
+        } elseif ($phone !== '' && preg_match('/^(\+?60|0)1[0-9]-?[0-9]{7,8}$/D', $phone) !== 1) {
+            $registrationError = 'Please enter a valid Malaysian phone number (e.g., 012-9876543 or +6012-9876543).';
         } elseif (strlen($password) < 8) {
             $registrationError = 'Password must contain at least 8 characters.';
         } elseif ($password !== $confirmPassword) {
@@ -486,7 +486,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
 
                         <!-- Login Form -->
-                        <?php if ($flash || $loginError): ?><div class="security-notice destructive" role="alert"><p><?= escape_html($loginError ?: $flash['message']) ?></p></div><?php endif; ?>
+                        <?php if ($flash || $loginError): ?><div class="security-notice <?= ($loginError !== '' || ($flash['type'] ?? '') !== 'success') ? 'destructive' : 'success' ?>" role="<?= ($loginError !== '' || ($flash['type'] ?? '') !== 'success') ? 'alert' : 'status' ?>"><p><?= escape_html($loginError ?: $flash['message']) ?></p></div><?php endif; ?>
                         <form class="login-form" action="authentication.php" method="post">
                             <input type="hidden" name="form_action" value="login">
                             <input type="hidden" name="csrf_token" value="<?= escape_html(csrf_token()) ?>">
@@ -565,7 +565,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <div class="form-group"><label for="full_name">Full Name (as per IC)</label><input id="full_name" name="full_name" value="<?= escape_html($fullName) ?>" placeholder="Enter your full name (e.g. Joshua Lee Jia Sheng)" autocomplete="name" required></div>
                                 <div class="form-group"><label for="register_email">Email</label><input id="register_email" name="email" type="email" value="<?= escape_html($registrationEmail) ?>" placeholder="Enter your email (e.g. joshua@example.com)" autocomplete="email" required></div>
                                 <div class="form-group"><label for="ic_number">IC Number</label><input id="ic_number" name="ic_number" type="text" value="<?= escape_html($icNumber) ?>" placeholder="Enter your IC number (e.g. 980102105123 or 980102-10-5123)" pattern="(?:[0-9]{12}|[0-9]{6}-[0-9]{2}-[0-9]{4})" maxlength="14" autocomplete="off" required></div>
-                                <div class="form-group"><label for="phone">Phone Number</label><input id="phone" name="phone" type="tel" value="<?= escape_html($phone) ?>" placeholder="Enter your phone number (e.g. 0123456789)" inputmode="numeric" pattern="[0-9]{10,11}" maxlength="11" autocomplete="tel"></div>
+                                <div class="form-group"><label for="phone">Phone Number</label><input id="phone" name="phone" type="tel" value="<?= escape_html($phone) ?>" placeholder="Enter your phone number (e.g., 012-9876543 or +6012-9876543)" inputmode="tel" pattern="^(\+?60|0)1[0-9]-?[0-9]{7,8}$" title="Please enter a valid Malaysian phone number (e.g., 012-9876543 or +6012-9876543)." autocomplete="tel"></div>
                                 <div class="form-group"><label for="date_of_birth">Date of Birth</label><input id="date_of_birth" name="date_of_birth" type="text" value="<?= escape_html($dateOfBirth) ?>" placeholder="Auto-generated from IC number" readonly required></div>
                                 <div class="form-group"><label for="register_password">Password</label><input id="register_password" name="password" type="password" minlength="8" autocomplete="new-password" required placeholder="Enter your password"></div>
                                 <div class="form-group"><label for="confirm_password">Confirm password</label><input id="confirm_password" name="confirm_password" type="password" minlength="8" autocomplete="new-password" required placeholder="Enter your password again"></div>
