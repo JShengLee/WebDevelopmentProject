@@ -770,6 +770,10 @@ button {
     background-color: #5aa873;
 }
 
+.cancelled-dot {
+    background-color: #d66b6b;
+}
+
 /* ========================================
    APPOINTMENT DETAILS MODAL
 ======================================== */

@@ -32,15 +32,44 @@ function verify_csrf_token(): bool
         && hash_equals($_SESSION['csrf_token'], $_POST['csrf_token']);
 }
 
-function create_missing_completed_appointment_records(PDO $pdo): void
+function sync_expired_appointments(PDO $pdo, array $user): void
 {
-    $pdo->exec(
-        "INSERT INTO dentalrecord (PatientID, DentistID, AppointmentID, RecordDate)
-         SELECT a.PatientID, a.DentistID, a.AppointmentID, a.AppointmentDate
-         FROM appointment a
-         LEFT JOIN dentalrecord r ON r.AppointmentID = a.AppointmentID
-         WHERE a.AppointmentStatus = 'Completed' AND r.RecordID IS NULL"
+    if (isset($user['DentistID'])) {
+        $filterColumn = 'DentistID';
+        $filterValue  = $user['DentistID'];
+    } elseif (isset($user['PatientID'])) {
+        $filterColumn = 'PatientID';
+        $filterValue  = $user['PatientID'];
+    } else {
+        return;
+    }
+
+    $stmt = $pdo->prepare(
+        "UPDATE appointment a
+         INNER JOIN service s ON s.ServiceID = a.ServiceID
+         SET a.AppointmentStatus = CASE
+             WHEN EXISTS (
+                 SELECT 1
+                 FROM dentalrecord dr
+                 WHERE dr.AppointmentID = a.AppointmentID
+             ) THEN 'Completed'
+             ELSE 'Cancelled'
+         END
+         WHERE a.{$filterColumn} = :id
+           AND DATE_ADD(
+               TIMESTAMP(a.AppointmentDate, a.AppointmentTime),
+               INTERVAL s.Duration MINUTE
+           ) <= CURRENT_TIMESTAMP()
+           AND a.AppointmentStatus <> CASE
+               WHEN EXISTS (
+                   SELECT 1
+                   FROM dentalrecord dr
+                   WHERE dr.AppointmentID = a.AppointmentID
+               ) THEN 'Completed'
+               ELSE 'Cancelled'
+           END"
     );
+    $stmt->execute(['id' => $filterValue]);
 }
 
 function sync_completed_appointment_record(PDO $pdo, int $appointmentID): void
