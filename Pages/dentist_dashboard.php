@@ -60,7 +60,7 @@ $sqlTodayAppts = "SELECT
                   JOIN service s ON a.ServiceID = s.ServiceID
                   WHERE a.DentistID = :dentist_id
                   AND a.AppointmentDate = CURDATE()
-                  AND a.AppointmentStatus != 'Cancelled'
+                  AND a.AppointmentStatus = 'Confirmed'
                   ORDER BY a.AppointmentTime ASC";
 $stmt = $pdo->prepare($sqlTodayAppts);
 $stmt->execute(['dentist_id' => $dentistID]);

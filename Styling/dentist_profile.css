@@ -665,6 +665,40 @@ button {
     color: #31865b;
 }
 
+/* Hide default browser password reveal/clear icons (Edge / IE) */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+    display: none;
+}
+
+/* Custom blue eye toggle*/
+.password-wrapper {
+    position: relative;
+}
+
+.password-wrapper input {
+    padding-right: 42px;
+}
+
+.show-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: none;
+    color: #42B1CC;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.show-password:hover {
+    color: #238ba5;
+}
+
 /* ==============================
    Success Message
 ============================== */

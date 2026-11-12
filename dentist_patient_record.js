@@ -18,7 +18,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const changeVisitButton = document.getElementById("changeVisit");
 
     let activeVisitID = null;
-    let currentOrthoID = null; 
     let currentTreatmentID = null;
 
     function populateServiceDropdown() {
@@ -34,48 +33,12 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
     
-    function populatePrescriptionDropdown(currentRecordID, currentDate) {
-        const prescriptionRecord = document.getElementById("prescriptionRecord");
-        if (!prescriptionRecord) return;
-
-        // Clear old options, including sample data.
-        prescriptionRecord.innerHTML =
-            '<option value="">Select dental record</option>';
-
-        // Add the patient's existing dental records.
-        Object.values(recordDetails).forEach(record => {
-            const option = document.createElement("option");
-            option.value = String(record.id);
-            option.textContent = `Record #${record.id} — ${record.date}`;
-            prescriptionRecord.appendChild(option);
-        });
-
-        // Add the newly created record if it is not in the page's
-        // original database data yet.
-        const currentID = String(currentRecordID);
-
-        const alreadyExists = Array.from(prescriptionRecord.options)
-            .some(option => option.value === currentID);
-
-        if (currentRecordID && !alreadyExists) {
-            const option = document.createElement("option");
-            option.value = currentID;
-            option.textContent = `Record #${currentID} — ${currentDate}`;
-            prescriptionRecord.appendChild(option);
-        }
-
-        // Automatically select the currently active visit.
-        prescriptionRecord.value = currentRecordID
-            ? currentID
-            : "";
-    }
-
     // Helper function for AJAX calls
     async function sendRequest(payload) {
         payload.patientID = patientID;
         
         const apptId = urlParams.get('appointment_id');
-        if (apptId) {
+        if (payload.action === "create_visit" && apptId) {
             payload.appointmentID = parseInt(String(apptId).replace(/\D/g, ''), 10);
         }
 
@@ -91,6 +54,8 @@ document.addEventListener("DOMContentLoaded", function () {
             return { success: false, message: "Network error occurred." };
         }
     }
+
+    let activeVisitContextRequest = sendRequest({ action: "initialize_record_page" });
 
     // Dynamic show/hide handler for custom condition input box
     const toothConditionSelect = document.getElementById("toothCondition");
@@ -148,6 +113,26 @@ document.addEventListener("DOMContentLoaded", function () {
         field.value = fieldValue;
     }
 
+    function setVisitDateFieldsLocked(locked) {
+        ["examDate", "diagnosisDate"].forEach(id => {
+            const field = document.getElementById(id);
+            if (!field) return;
+            field.disabled = locked;
+            field.title = locked
+                ? "This saved date cannot be changed when editing a dental record."
+                : "";
+            field.setAttribute("aria-disabled", String(locked));
+        });
+    }
+
+    function fillNewVisitDates() {
+        const today = document.getElementById("examDate").max;
+        setVisitDateFieldsLocked(false);
+        setFieldValue("examDate", today);
+        setFieldValue("diagnosisDate", today);
+        setFieldValue("startDate", today);
+    }
+
     function formatInputDate(value) {
         if (!value) return "";
         return String(value).substring(0, 10);
@@ -201,7 +186,6 @@ document.addEventListener("DOMContentLoaded", function () {
         setFieldValue("treatmentName", treatment?.name || "");
         setFieldValue("treatmentDetails", treatment?.details || "");
 
-        populatePrescriptionDropdown(record.id, record.date);
         const prescriptions = record.prescriptions || [];
         const prescription = prescriptions.length > 0 ? prescriptions[0] : null;
 
@@ -210,25 +194,39 @@ document.addEventListener("DOMContentLoaded", function () {
         setFieldValue("prescriptionInstructions", prescription?.instructions || "");
 
         const orthodonticRecord = orthodonticRecords.length > 0 ? orthodonticRecords[0] : null;
-        currentOrthoID = orthodonticRecord ? orthodonticRecord.OrthoRecordID : null; // Save Ortho ID
-        
         setFieldValue("treatmentType", orthodonticRecord?.TreatmentType || "");
-        setFieldValue("startDate", formatInputDate(orthodonticRecord?.StartDate));
+        const orthoStartDate = orthodonticRecord ? orthodonticRecord.StartDate : record.date;
+        setFieldValue("startDate", formatInputDate(orthoStartDate));
         setFieldValue("currentStage", orthodonticRecord?.CurrentStage || "");
         setFieldValue("nextAdjustment", formatInputDate(orthodonticRecord?.NextAdjustmentDate));
         setFieldValue("progressNotes", orthodonticRecord?.ProgressNotes || "");
+        setVisitDateFieldsLocked(true);
     }
 
-    function openVisit(id, date, treatment, isNewVisit = false) {
+    async function openVisit(id, date, treatment, isNewVisit = false, appointmentTreatmentName = "") {
+        await activeVisitContextRequest;
+        const activation = await sendRequest({
+            action: "activate_visit",
+            recordID: id
+        });
+        if (!activation.success) {
+            alert(activation.message || "Unable to open this dental record.");
+            return;
+        }
+
         activeVisitID = id;
 
         if (isNewVisit) {
             resetVisitForms();
             currentTreatmentID = null; // Reset treatment ID for new visit
-            // Set the dropdown to the newly created dental record.
-            populatePrescriptionDropdown(id, date);
+            fillNewVisitDates();
+            setFieldValue("prescriptionRecordDisplay", `Record #${id} — ${date}`);
+            if (appointmentTreatmentName) {
+                setFieldValue("treatmentName", appointmentTreatmentName);
+            }
         } else {
             loadVisitDetails(id);
+            setFieldValue("prescriptionRecordDisplay", `Record #${id} — ${date}`);
         }
 
         activeVisitTitle.textContent = "Dental Visit";
@@ -258,17 +256,18 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     document.querySelectorAll(".view-visit-button").forEach(button => {
-        button.addEventListener("click", function () {
-            openVisit(button.dataset.visitId, button.dataset.visitDate, button.dataset.visitTreatment);
+        button.addEventListener("click", async function () {
+            await openVisit(button.dataset.visitId, button.dataset.visitDate, button.dataset.visitTreatment);
         });
     });
 
     // 1. START NEW VISIT (Create database record via PHP)
     if (startNewVisitButton) {
         startNewVisitButton.addEventListener("click", async function () {
+            await activeVisitContextRequest;
             const res = await sendRequest({ action: "create_visit" });
             if (res.success) {
-                openVisit(res.recordID, res.recordDate, "New dental visit", true);
+                await openVisit(res.recordID, res.recordDate, "New dental visit", true);
                 alert("New visit created successfully! Record ID: #" + res.recordID);
             } else {
                 alert("Error creating new visit: " + res.message);
@@ -279,6 +278,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (changeVisitButton) {
         changeVisitButton.addEventListener("click", function () {
             activeVisitID = null;
+            activeVisitContextRequest = sendRequest({ action: "clear_active_visit" });
             activeVisitBanner.hidden = true;
             visitWorkspace.hidden = true;
             if (visitHistory) visitHistory.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -492,14 +492,10 @@ document.addEventListener("DOMContentLoaded", function () {
     if (prescriptionForm) {
         prescriptionForm.addEventListener("submit", async function (e) {
             e.preventDefault();
-            const recordSelect = document.getElementById("prescriptionRecord");
-            const targetRecordID = recordSelect ? recordSelect.value : activeVisitID;
-
-            if (!targetRecordID) return alert("Please select a dental record.");
+            if (!activeVisitID) return alert("Select or start a visit first.");
 
             const res = await sendRequest({
                 action: "save_prescription",
-                recordID: targetRecordID,
                 medicationName: document.getElementById("medicationName").value,
                 dosage: document.getElementById("dosage").value,
                 instructions: document.getElementById("prescriptionInstructions").value
@@ -518,17 +514,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const res = await sendRequest({
                 action: "save_orthodontics",
-                orthoRecordID: currentOrthoID, // Pass the active OrthoRecordID if editing
+                recordID: activeVisitID,
                 treatmentType: document.getElementById("treatmentType").value,
                 startDate: document.getElementById("startDate").value,
                 currentStage: document.getElementById("currentStage").value,
                 nextAdjustment: document.getElementById("nextAdjustment").value,
                 progressNotes: document.getElementById("progressNotes").value
             });
-
-            if (res.success && res.orthoRecordID) {
-                currentOrthoID = res.orthoRecordID; // Update state with newly saved ID
-            }
 
             alert(res.message);
         });
@@ -540,13 +532,21 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (actionParam === 'new_record') {
         (async function () {
+            await activeVisitContextRequest;
             const res = await sendRequest({ 
                 action: "create_visit",
                 appointmentID: appointmentIDParam 
             });
 
             if (res.success) {
-                openVisit(res.recordID, res.recordDate, "New dental visit", true);
+                const scheduleStart = urlParams.get('source') === 'schedule' && appointmentIDParam;
+                await openVisit(
+                    res.recordID,
+                    res.recordDate,
+                    "New dental visit",
+                    true,
+                    scheduleStart ? res.appointmentTreatmentName : ""
+                );
             } else {
                 alert("Error creating visit record: " + res.message);
             }
