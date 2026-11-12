@@ -53,13 +53,103 @@
             if ($patient){
                 $subject = "Appointment Status";
                 $body = "
-                    <h2>Appointment Status</h2>
-                    <p>Hello ".htmlspecialchars($patient["FullName"], ENT_QUOTES, "UTF-8") . ",</p>
-                    <p>Your dental appointment for ".htmlspecialchars($patient["ServiceName"], ENT_QUOTES, "UTF-8")." has been updated to:
-                        <strong>".htmlspecialchars($status, ENT_QUOTES, "UTF-8")."</strong>    
-                    </p>
-                    <p>Appointment ID: #".(int)$appointmentID."</p>
-                    <p>Thank you for choosing BrightSmile Dental.</p>
+                    <div style='
+                        font-family: Arial, sans-serif;
+                        background-color: #f6f9fa;
+                        padding: 30px;
+                        color: #333333;
+                    '>
+
+                        <div style='
+                            max-width: 600px;
+                            margin: 0 auto;
+                            background-color: #ffffff;
+                            border-radius: 10px;
+                            overflow: hidden;
+                            border: 1px solid #e5e7eb;
+                        '>
+
+                            <div style='
+                                background-color: #42B1CC;
+                                padding: 25px;
+                                text-align: center;
+                                color: white;
+                            '>
+                                <h2 style='margin: 0;'>
+                                    BrightSmile Dental
+                                </h2>
+                                <p style='margin: 8px 0 0;'>
+                                    Appointment Notification
+                                </p>
+                            </div>
+
+                            <div style='padding: 30px;'>
+
+                                <h2 style='color: #333333;'>
+                                    Appointment Status Update
+                                </h2>
+
+                                <p>
+                                    Hello " . htmlspecialchars($patient["FullName"], ENT_QUOTES, "UTF-8") . ",
+                                </p>
+
+                                <p style='line-height: 1.6; color: #555555;'>
+                                    Your dental appointment for
+                                    <strong>" . htmlspecialchars($patient["ServiceName"], ENT_QUOTES, "UTF-8") . "</strong>
+                                    has been updated.
+                                </p>
+
+                                <div style='
+                                    background-color: #f0f9fb;
+                                    padding: 20px;
+                                    border-radius: 8px;
+                                    margin: 20px 0;
+                                '>
+
+                                    <h3 style='color: #26869D; margin-top: 0;'>
+                                        Appointment Details
+                                    </h3>
+
+                                    <p>
+                                        Appointment ID:
+                                        <strong>#" . (int)$appointmentID . "</strong>
+                                    </p>
+
+                                    <p style='margin-bottom: 0;'>
+                                        Current Status:
+                                        <strong style='color: #26869D;'>
+                                            " . htmlspecialchars($status, ENT_QUOTES, "UTF-8") . "
+                                        </strong>
+                                    </p>
+
+                                </div>
+
+                                <p style='line-height: 1.6; color: #555555;'>
+                                    Thank you for choosing BrightSmile Dental.
+                                    If you have any questions regarding your appointment,
+                                    please contact our clinic.
+                                </p>
+
+                                <p style='margin-top: 30px;'>
+                                    Regards,<br>
+                                    <strong>BrightSmile Dental</strong>
+                                </p>
+
+                            </div>
+
+                            <div style='
+                                background-color: #f6f9fa;
+                                padding: 15px;
+                                text-align: center;
+                                font-size: 12px;
+                                color: #888888;
+                            '>
+                                &copy; " . date('Y') . " BrightSmile Dental.
+                                All rights reserved.
+                            </div>
+
+                        </div>
+                    </div>
                 ";
 
                 $emailSent = sendEmail(
