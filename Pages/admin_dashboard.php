@@ -38,8 +38,14 @@
                             <span class="page-label">
                                 ADMIN DASHBOARD
                             </span>
+                            <?php
+                                $sql = "SELECT * FROM user WHERE UserID = ?";
+                                $stmt = $pdo->prepare($sql);
+                                $stmt->execute([$currentPatient['UserID']]);
+                                $user = $stmt->fetch(PDO::FETCH_ASSOC);
+                            ?>
                             <h1>
-                                Good day, Joshua 👋
+                                Good day, <?= htmlspecialchars($user['FullName'] ) ?> 👋
                             </h1>
                         </div>
                     </section>
@@ -178,7 +184,7 @@
                         $appointmentstmt = $pdo->prepare($appointmentsql);
                         $appointmentstmt->execute();
 
-                        $stocksql = "SELECT * FROM inventory WHERE QuantityInStock < 10 ORDER BY ReorderLevel ASC LIMIT 5";
+                        $stocksql = "SELECT * FROM inventory ORDER BY QuantityInStock ASC LIMIT 5";
                         $stockstmt = $pdo->prepare($stocksql);
                         $stockstmt->execute();
                     ?>
@@ -211,11 +217,7 @@
                                                     <td><?=htmlspecialchars($appointment["FullName"])?></td>
                                                     <td><?=htmlspecialchars($appointment["ServiceName"])?></td>
                                                     <td><?=htmlspecialchars($appointment["AppointmentDate"])?> <?=htmlspecialchars($appointment["AppointmentTime"])?></td>
-                                                    <?php if($appointment["AppointmentStatus"] === "Pending"): ?>
-                                                        <td>
-                                                            <p class="pending">Pending</p>
-                                                        </td>
-                                                    <?php elseif($appointment["AppointmentStatus"] === "Confirmed"): ?>
+                                                    <?php if($appointment["AppointmentStatus"] === "Confirmed"): ?>
                                                         <td>
                                                             <p class="confirmed">Confirmed</p>
                                                         </td>
@@ -241,7 +243,7 @@
                                 <div class="section-heading">
                                     <div>
                                         <i></i>
-                                        <h2>Low Stock Items</h2>
+                                        <h2>Stock Items</h2>
                                     </div>
 
                                     <a href="admin_stock_list.php">View all</a>
@@ -253,6 +255,7 @@
                                                 <th>Item ID</th>
                                                 <th>Item Name</th>
                                                 <th>Current Stock</th>
+                                                <th>Status</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -262,6 +265,17 @@
                                                     <td><?=htmlspecialchars($stock["ItemID"])?></td>
                                                     <td><?=htmlspecialchars($stock["ItemName"])?></td>
                                                     <td><?=htmlspecialchars($stock["QuantityInStock"])?></td>
+                                                    <td>
+                                                        <div class="quantity">
+                                                            <?php if ($stock["QuantityInStock"] <= 5): ?>
+                                                                <span class="badge bg-danger">Low Stock</span>
+                                                            <?php elseif ($stock["QuantityInStock"] <= 10): ?>
+                                                                <span class="badge bg-warning">Moderate Stock</span>
+                                                            <?php else: ?>
+                                                                <span class="badge bg-success">In Stock</span>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    </td>
                                                 </tr>
 
                                             <?php endwhile;?>

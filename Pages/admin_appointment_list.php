@@ -13,22 +13,31 @@
     $completedcountStmt->execute();
     $completedcount = $completedcountStmt->fetchColumn();
 
-    $pendingcountSql = "SELECT COUNT(*) FROM appointment WHERE AppointmentStatus = 'Pending'";
-    $pendingcountStmt = $pdo->prepare($pendingcountSql);
-    $pendingcountStmt->execute();
-    $pendingcount = $pendingcountStmt->fetchColumn();
+    $cancelledcountSql = "SELECT COUNT(*) FROM appointment WHERE AppointmentStatus = 'Cancelled'";
+    $cancelledcountStmt = $pdo->prepare($cancelledcountSql);
+    $cancelledcountStmt->execute();
+    $cancelledcount = $cancelledcountStmt->fetchColumn();
 
     if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["action"] ?? "") === "updateStatus"){
-        $status = $_POST["status"];
-        $appointmentID = $_POST["appointmentID"];
+        $status = $_POST["status"] ?? "";
+        $appointmentID = filter_var($_POST["appointmentID"] ?? null, FILTER_VALIDATE_INT);
+        $allowedStatuses = ["Confirmed", "Completed", "Cancelled"];
 
-        try{
+        if (!in_array($status, $allowedStatuses, true) || !$appointmentID) {
+            echo "<script>alert('Unable to update appointment status.');</script>";
+        } else try{
+            $pdo->beginTransaction();
             $updateStatusSql = "UPDATE appointment SET AppointmentStatus = ? WHERE AppointmentID = ?";
             $updateStatusStmt = $pdo->prepare($updateStatusSql);
             $updateStatusStmt->execute([
                 $status,
                 $appointmentID
             ]);
+
+            if ($status === "Completed") {
+                sync_completed_appointment_record($pdo, (int) $appointmentID);
+            }
+            $pdo->commit();
 
             $emailSql = "SELECT u.Email, u.FullName, s.ServiceName, a.AppointmentDate, a.AppointmentTime
                         FROM appointment a
@@ -45,13 +54,103 @@
             if ($patient){
                 $subject = "Appointment Status";
                 $body = "
-                    <h2>Appointment Status</h2>
-                    <p>Hello ".htmlspecialchars($patient["FullName"], ENT_QUOTES, "UTF-8") . ",</p>
-                    <p>Your dental appointment for ".htmlspecialchars($patient["ServiceName"], ENT_QUOTES, "UTF-8")." has been updated to:
-                        <strong>".htmlspecialchars($status, ENT_QUOTES, "UTF-8")."</strong>    
-                    </p>
-                    <p>Appointment ID: #".(int)$appointmentID."</p>
-                    <p>Thank you for choosing BrightSmile Dental.</p>
+                    <div style='
+                        font-family: Arial, sans-serif;
+                        background-color: #f6f9fa;
+                        padding: 30px;
+                        color: #333333;
+                    '>
+
+                        <div style='
+                            max-width: 600px;
+                            margin: 0 auto;
+                            background-color: #ffffff;
+                            border-radius: 10px;
+                            overflow: hidden;
+                            border: 1px solid #e5e7eb;
+                        '>
+
+                            <div style='
+                                background-color: #42B1CC;
+                                padding: 25px;
+                                text-align: center;
+                                color: white;
+                            '>
+                                <h2 style='margin: 0;'>
+                                    BrightSmile Dental
+                                </h2>
+                                <p style='margin: 8px 0 0;'>
+                                    Appointment Notification
+                                </p>
+                            </div>
+
+                            <div style='padding: 30px;'>
+
+                                <h2 style='color: #333333;'>
+                                    Appointment Status Update
+                                </h2>
+
+                                <p>
+                                    Hello " . htmlspecialchars($patient["FullName"], ENT_QUOTES, "UTF-8") . ",
+                                </p>
+
+                                <p style='line-height: 1.6; color: #555555;'>
+                                    Your dental appointment for
+                                    <strong>" . htmlspecialchars($patient["ServiceName"], ENT_QUOTES, "UTF-8") . "</strong>
+                                    has been updated.
+                                </p>
+
+                                <div style='
+                                    background-color: #f0f9fb;
+                                    padding: 20px;
+                                    border-radius: 8px;
+                                    margin: 20px 0;
+                                '>
+
+                                    <h3 style='color: #26869D; margin-top: 0;'>
+                                        Appointment Details
+                                    </h3>
+
+                                    <p>
+                                        Appointment ID:
+                                        <strong>#" . (int)$appointmentID . "</strong>
+                                    </p>
+
+                                    <p style='margin-bottom: 0;'>
+                                        Current Status:
+                                        <strong style='color: #26869D;'>
+                                            " . htmlspecialchars($status, ENT_QUOTES, "UTF-8") . "
+                                        </strong>
+                                    </p>
+
+                                </div>
+
+                                <p style='line-height: 1.6; color: #555555;'>
+                                    Thank you for choosing BrightSmile Dental.
+                                    If you have any questions regarding your appointment,
+                                    please contact our clinic.
+                                </p>
+
+                                <p style='margin-top: 30px;'>
+                                    Regards,<br>
+                                    <strong>BrightSmile Dental</strong>
+                                </p>
+
+                            </div>
+
+                            <div style='
+                                background-color: #f6f9fa;
+                                padding: 15px;
+                                text-align: center;
+                                font-size: 12px;
+                                color: #888888;
+                            '>
+                                &copy; " . date('Y') . " BrightSmile Dental.
+                                All rights reserved.
+                            </div>
+
+                        </div>
+                    </div>
                 ";
 
                 $emailSent = sendEmail(
@@ -72,6 +171,9 @@
 
             exit;
         } catch (PDOException $e){
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             error_log($e->getMessage());
 
             echo"<script>
@@ -175,13 +277,13 @@
                         </div>
 
                         <div class="summary-card">
-                            <div class="summary-icon pending-label">
-                                <i class="fas fa-clock"></i>
+                            <div class="summary-icon cancelled-label">
+                                <i class="fas fa-ban"></i>
                             </div>
                             <div>
-                                <p class="summary-caption">PENDING REQUESTS</p>
-                                <strong><?=$pendingcount?></strong>
-                                <p>Awaiting approval</p>
+                                <p class="summary-caption">CANCELLED</p>
+                                <strong><?=$cancelledcount?></strong>
+                                <p>Cancelled visits</p>
                             </div>
                         </div>
                     </div>
@@ -200,9 +302,6 @@
                             <div class="filterbar">
                                 <select name="status" id="status" class="filter" onchange="this.form.submit()">
                                     <option value="" <?= ($_GET['status'] ?? '') === '' ? 'selected' : '' ?>>All Status</option>
-                                    <option value="Pending" <?= ($_GET['status'] ?? '') === 'Pending' ? 'selected' : '' ?>>
-                                        Pending
-                                    </option>
                                     <option value="Confirmed" <?= ($_GET['status'] ?? '') === 'Confirmed' ? 'selected' : '' ?>>
                                         Confirmed
                                     </option>
@@ -372,11 +471,7 @@
                                                 <p class="appointment-time"><?=$appointment["AppointmentTime"]?></p>
                                             </div>
                                         </td>
-                                        <?php if($appointment["AppointmentStatus"] === "Pending"): ?>
-                                            <td>
-                                                <p class="pending">Pending</p>
-                                            </td>
-                                        <?php elseif($appointment["AppointmentStatus"] === "Confirmed"): ?>
+                                        <?php if($appointment["AppointmentStatus"] === "Confirmed"): ?>
                                             <td>
                                                 <p class="confirmed">Confirmed</p>
                                             </td>
@@ -395,11 +490,6 @@
                                                 <input type="hidden" name="appointmentID" value="<?=$appointment["AppointmentID"]?>"/>
                                                 <div class="action-row">
                                                     <select name="status">
-                                                        <option value="Pending"
-                                                            <?=$appointment["AppointmentStatus"] === "Pending" ? "selected" : "" ?>
-                                                            disabled>
-                                                            Pending
-                                                        </option>
                                                         <option value="Confirmed"
                                                             <?=$appointment["AppointmentStatus"] === "Confirmed" ? "selected" : "" ?>>
                                                             Confirmed

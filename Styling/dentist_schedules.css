@@ -363,9 +363,9 @@ button {
     font-size: 17px;
 }
 
-.waiting-icon {
-    background-color: #fff6e7;
-    color: #c48a36;
+.confirmed-icon {
+    background-color: #eaf8fb;
+    color: #42B1CC;
 }
 
 .completed-icon {
@@ -635,18 +635,6 @@ button {
     transform: translateX(2px);
 }
 
-.schedule-appointment.status-pending {
-    border-color: #f0dfbd;
-    border-left-color: #d9a54c;
-    background-color: #fffbf3;
-}
-
-.schedule-appointment.status-waiting {
-    border-color: #f0dfbd;
-    border-left-color: #d9a54c;
-    background-color: #fff8eb;
-}
-
 .schedule-appointment.status-completed {
     border-color: #d4eadb;
     border-left-color: #5aa873;
@@ -672,12 +660,6 @@ button {
     color: #329ab2;
     font-size: 11px;
     font-weight: 700;
-}
-
-.schedule-appointment.status-pending .schedule-avatar,
-.schedule-appointment.status-waiting .schedule-avatar {
-    background-color: #fff0d1;
-    color: #b27a27;
 }
 
 .schedule-appointment.status-completed .schedule-avatar {
@@ -728,12 +710,6 @@ button {
     color: #329ab2;
     font-size: 10px;
     font-weight: 600;
-}
-
-.appointment-status.pending,
-.appointment-status.waiting {
-    background-color: #fff0d1;
-    color: #b27a27;
 }
 
 .appointment-status.completed {
@@ -788,14 +764,6 @@ button {
 
 .confirmed-dot {
     background-color: #42B1CC;
-}
-
-.pending-dot {
-    background-color: #d9a54c;
-}
-
-.waiting-dot {
-    background-color: #e5b453;
 }
 
 .completed-dot {

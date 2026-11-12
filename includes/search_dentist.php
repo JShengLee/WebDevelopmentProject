@@ -12,7 +12,7 @@
             FROM dentist d
             INNER JOIN user u ON d.UserID = u.UserID
             WHERE u.FullName LIKE ?
-            ORDER BY u.FullName ASC
+            ORDER BY d.DentistID ASC, u.FullName ASC
             LIMIT 10";
 
     $stmt = $pdo->prepare($sql);

@@ -8,7 +8,7 @@ $upcomingStatement = $pdo->prepare(
          INNER JOIN patient p ON p.PatientID = a.PatientID
          INNER JOIN user patient_user ON patient_user.UserID = p.UserID AND patient_user.Role = 'Patient'
          WHERE p.PatientID = :patient_id AND patient_user.UserID = :user_id
-             AND LOWER(a.AppointmentStatus) IN ('pending', 'confirmed')
+             AND LOWER(a.AppointmentStatus) = 'confirmed'
              AND TIMESTAMP(a.AppointmentDate, a.AppointmentTime) >= NOW()"
 );
 $upcomingStatement->execute(['patient_id' => $currentPatient['PatientID'], 'user_id' => $currentPatient['UserID']]);
@@ -23,16 +23,16 @@ $completedStatement = $pdo->prepare(
 );
 $completedStatement->execute(['patient_id' => $currentPatient['PatientID'], 'user_id' => $currentPatient['UserID']]);
 $completedCount = (int) $completedStatement->fetchColumn();
-$pendingStatement = $pdo->prepare(
+$cancelledStatement = $pdo->prepare(
     "SELECT COUNT(*)
      FROM appointment a
      INNER JOIN patient p ON p.PatientID = a.PatientID
      INNER JOIN user patient_user ON patient_user.UserID = p.UserID AND patient_user.Role = 'Patient'
      WHERE p.PatientID = :patient_id AND patient_user.UserID = :user_id
-         AND LOWER(a.AppointmentStatus) = 'pending'"
+         AND LOWER(a.AppointmentStatus) = 'cancelled'"
 );
-$pendingStatement->execute(['patient_id' => $currentPatient['PatientID'], 'user_id' => $currentPatient['UserID']]);
-$pendingCount = (int) $pendingStatement->fetchColumn();
+$cancelledStatement->execute(['patient_id' => $currentPatient['PatientID'], 'user_id' => $currentPatient['UserID']]);
+$cancelledCount = (int) $cancelledStatement->fetchColumn();
 $appointmentStatement = $pdo->prepare(
         'SELECT a.AppointmentID, a.AppointmentDate, a.AppointmentTime, a.AppointmentStatus,
                         s.ServiceName, u.FullName AS DentistName
@@ -56,7 +56,7 @@ $appointments = $appointmentStatement->fetchAll();
     <link rel="icon" type="image/x-icon" href="../Logo.png">
     <title>Appointments | BrightSmile Dental Clinic</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../Styling/patient-pages.css">
+    <link rel="stylesheet" href="../Styling/patient-pages.css?v=7">
 </head>
 <body>
     <!-- Main application -->
@@ -86,9 +86,9 @@ $appointments = $appointmentStatement->fetchAll();
                 </div>
 
                 <section class="metric-strip" aria-label="Appointment summary">
-                    <div><span>UPCOMING</span><strong><?= $upcomingCount ?></strong><small>Pending or confirmed visits</small></div>
+                    <div><span>UPCOMING</span><strong><?= $upcomingCount ?></strong><small>Confirmed visits</small></div>
                     <div><span>COMPLETED</span><strong><?= $completedCount ?></strong><small>Visits recorded</small></div>
-                    <div><span>REQUESTS</span><strong><?= $pendingCount ?></strong><small>Awaiting confirmation</small></div>
+                    <div><span>CANCELLED</span><strong><?= $cancelledCount ?></strong><small>Cancelled visits</small></div>
                 </section>
 
                 <?php if ($flash && $flash['type'] !== 'appointment_success'): ?><p class="empty-state" role="status"><?= escape_html($flash['message']) ?></p><?php endif; ?>
@@ -109,7 +109,6 @@ $appointments = $appointmentStatement->fetchAll();
                                 <select id="appointment-status">
                                     <option value="all">All statuses</option>
                                     <option value="confirmed">Confirmed</option>
-                                    <option value="pending">Pending</option>
                                     <option value="completed">Completed</option>
                                     <option value="cancelled">Cancelled</option>
                                 </select>
@@ -130,9 +129,9 @@ $appointments = $appointmentStatement->fetchAll();
                                         <td><?= escape_html(date('d M Y', strtotime($appointment['AppointmentDate']))) ?><small><?= escape_html(date('g:i A', strtotime($appointment['AppointmentTime']))) ?></small></td>
                                         <td>BrightSmile Clinic</td>
                                         <td>
-                                            <div class="appointment-status-actions">
+                                            <div class="appointment-status-actions" style="display:flex;gap:5px;">
                                                 <span class="status-pill <?= escape_html($statusClass) ?>"><?= escape_html($appointment['AppointmentStatus']) ?></span>
-                                                <?php if ($statusClass === 'pending'): ?>
+                                                <?php if ($statusClass === 'confirmed'): ?>
                                                 <form class="cancel-appointment-form" action="cancel-appointment.php" method="post">
                                                     <input type="hidden" name="csrf_token" value="<?= escape_html(csrf_token()) ?>">
                                                     <input type="hidden" name="appointment_id" value="<?= (int) $appointment['AppointmentID'] ?>">
@@ -189,7 +188,7 @@ $appointments = $appointmentStatement->fetchAll();
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h2 class="modal-title fs-5" id="appointmentSuccessTitle">Appointment request submitted</h2>
+                        <h2 class="modal-title fs-5" id="appointmentSuccessTitle">Appointment confirmed</h2>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body"><?= escape_html($flash['message']) ?></div>

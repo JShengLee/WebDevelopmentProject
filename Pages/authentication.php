@@ -11,18 +11,6 @@ $icNumber = '';
 $phone = '';
 $dateOfBirth = '';
 
-function generate_login_captcha(): string
-{
-    $characters = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
-    $captcha = '';
-
-    for ($index = 0; $index < 6; $index++) {
-        $captcha .= $characters[random_int(0, strlen($characters) - 1)];
-    }
-
-    return $captcha;
-}
-
 function set_login_session_cookie(bool $remember): void
 {
     $cookie = session_get_cookie_params();
@@ -34,17 +22,6 @@ function set_login_session_cookie(bool $remember): void
         'httponly' => $cookie['httponly'],
         'samesite' => $cookie['samesite'] ?? 'Lax',
     ]);
-}
-
-if (isset($_GET['refresh_captcha']) || empty($_SESSION['login_captcha'])) {
-    $_SESSION['login_captcha'] = generate_login_captcha();
-}
-
-if (isset($_GET['refresh_captcha'])) {
-    header('Content-Type: application/json; charset=utf-8');
-    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-    echo json_encode(['captcha' => $_SESSION['login_captcha']]);
-    exit;
 }
 
 function derive_malaysian_ic_date_of_birth(string $icDigits): ?string
@@ -75,55 +52,335 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $registrationError = 'Please submit the registration form again.';
         } else {
             $loginError = 'Please submit the sign-in form again.';
-            $_SESSION['login_captcha'] = generate_login_captcha();
         }
     } elseif ($activeForm === 'login') {
-        if (!isset($_POST['captcha'], $_SESSION['login_captcha'])
-            || !is_string($_POST['captcha'])
-            || !hash_equals($_SESSION['login_captcha'], $_POST['captcha'])) {
-            $loginError = 'The CAPTCHA code is incorrect. Please try again.';
-            $_SESSION['login_captcha'] = generate_login_captcha();
-        } else {
-            $email = trim($_POST['email'] ?? '');
-            $password = $_POST['password'] ?? '';
-            $statement = $pdo->prepare('SELECT UserID, FullName, PasswordHash, Role FROM user WHERE Email = :email');
-            $statement->execute(['email' => $email]);
-            $user = $statement->fetch();
+        $email = trim($_POST['email'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $statement = $pdo->prepare('SELECT UserID, FullName, PasswordHash, Role FROM user WHERE Email = :email');
+        $statement->execute(['email' => $email]);
+        $user = $statement->fetch();
 
-            if (!$user || !password_verify($password, $user['PasswordHash'])) {
-            // if (!$user || $password !== $user["PasswordHash"] ) {
-                $loginError = 'Email or password is incorrect.';
-            } elseif ($user['Role'] === 'Patient') {
-                $patientStatement = $pdo->prepare('SELECT PatientID, Approval FROM patient WHERE UserID = :user_id');
-                $patientStatement->execute(['user_id' => $user['UserID']]);
-                $patient = $patientStatement->fetch();
+        if (!$user || !password_verify($password, $user['PasswordHash'])) {
+            $loginError = 'Email or password is incorrect.';
+        } elseif ($user['Role'] === 'Patient') {
+            $patientStatement = $pdo->prepare('SELECT PatientID, Approval FROM patient WHERE UserID = :user_id');
+            $patientStatement->execute(['user_id' => $user['UserID']]);
+            $patient = $patientStatement->fetch();
 
-                if (!$patient) {
-                    $loginError = 'This patient account is missing its patient profile. Please contact the clinic.';
-                } elseif ($patient['Approval'] !== 'Yes') {
-                    $loginError = 'Your registration is still pending approval by an administrator.';
-                } else {
-                    session_regenerate_id(true);
-                    $_SESSION['user_id'] = (int) $user['UserID'];
-                    $_SESSION['patient_id'] = (int) $patient['PatientID'];
-                    $_SESSION['role'] = $user['Role'];
-                    $_SESSION['full_name'] = $user['FullName'];
-                    set_login_session_cookie(isset($_POST['remember']) && $_POST['remember'] === '1');
-                    header('Location: index.php');
-                    exit;
-                }
+            if (!$patient) {
+                $loginError = 'This patient account is missing its patient profile. Please contact the clinic.';
+            } elseif ($patient['Approval'] !== 'Yes') {
+                $loginError = 'Your registration is still pending approval by an administrator.';
             } else {
                 session_regenerate_id(true);
                 $_SESSION['user_id'] = (int) $user['UserID'];
+                $_SESSION['patient_id'] = (int) $patient['PatientID'];
                 $_SESSION['role'] = $user['Role'];
                 $_SESSION['full_name'] = $user['FullName'];
                 set_login_session_cookie(isset($_POST['remember']) && $_POST['remember'] === '1');
+                header('Location: index.php');
+                exit;
+
+                if ($user["Role"] === "Admin") {
+
+                    require_once __DIR__ . '/../email_helper.php';
+
+                    $sql = "
+                        SELECT 
+                            p.PatientID,
+                            u.FullName,
+                            u.Email,
+                            a.*
+                        FROM patient p
+                        INNER JOIN user u 
+                            ON p.UserID = u.UserID
+                        INNER JOIN appointment a 
+                            ON p.PatientID = a.PatientID
+                        WHERE YEAR(a.AppointmentDate) = YEAR(CURDATE())
+                        AND a.AppointmentStatus = 'Completed'
+                        ORDER BY p.PatientID
+
+                    ";
+
+                    $stmt = $pdo->prepare($sql);
+                    $stmt->execute();
+
+                    $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                    $patientReports = [];
+
+                    foreach ($records as $record) {
+
+                        $patientID = $record['PatientID'];
+
+                        if (!isset($patientReports[$patientID])) {
+                            $patientReports[$patientID] = [
+                                'name' => $record['FullName'],
+                                'email' => $record['Email'],
+                                'records' => []
+                            ];
+                        }
+
+                        $patientReports[$patientID]['records'][] = $record;
+                    }
+
+                    foreach ($patientReports as $patientID => $patient) {
+                        $subject = "Your Dental Report - BrightSmile Dental";
+
+                        $body = "
+                            <div style='
+                                font-family: Arial, sans-serif;
+                                background-color: #f6f9fa;
+                                padding: 30px;
+                                color: #333333;
+                            '>
+
+                                <div style='
+                                    max-width: 600px;
+                                    margin: 0 auto;
+                                    background-color: #ffffff;
+                                    border-radius: 10px;
+                                    overflow: hidden;
+                                    border: 1px solid #e5e7eb;
+                                '>
+
+                                    <div style='
+                                        background-color: #42B1CC;
+                                        padding: 25px;
+                                        text-align: center;
+                                        color: white;
+                                    '>
+                                        <h2 style='margin: 0;'>
+                                            BrightSmile Dental
+                                        </h2>
+                                        <p style='margin: 8px 0 0;'>
+                                            Your Dental Report
+                                        </p>
+                                    </div>
+
+                                    <div style='padding: 30px;'>
+
+                                        <h2 style='color: #333333;'>
+                                            Dental Report
+                                        </h2>
+
+                                        <p>
+                                            Dear " . htmlspecialchars($patient['name']) . ",
+                                        </p>
+
+                                        <p style='line-height: 1.6; color: #555555;'>
+                                            Here is your yearly visitation report
+                                            from BrightSmile Dental.
+                                        </p>
+
+                                        <div style='
+                                            background-color: #f0f9fb;
+                                            padding: 20px;
+                                            border-radius: 8px;
+                                            margin: 20px 0;
+                                        '>
+                                            <h3 style='color: #26869D; margin-top: 0;'>
+                                                Summary
+                                            </h3>
+
+                                            <p style='margin-bottom: 0;'>
+                                                Completed Visits This Year:
+                                                <strong>" . count($patient['records']) . "</strong>
+                                            </p>
+                                        </div>
+
+                                        <p style='line-height: 1.6; color: #555555;'>
+                                            Please contact BrightSmile Dental if you have
+                                            any questions regarding your dental records.
+                                        </p>
+
+                                        <p style='margin-top: 30px;'>
+                                            Regards,<br>
+                                            <strong>BrightSmile Dental</strong>
+                                        </p>
+
+                                    </div>
+
+                                    <div style='
+                                        background-color: #f6f9fa;
+                                        padding: 15px;
+                                        text-align: center;
+                                        font-size: 12px;
+                                        color: #888888;
+                                    '>
+                                        &copy; " . date('Y') . " BrightSmile Dental.
+                                        All rights reserved.
+                                    </div>
+
+                                </div>
+                            </div>
+                        ";
+
+                        sendEmail(
+                            $patient['email'],
+                            $subject,
+                            $body
+                        );
+                    }
+
+                    $remindersql = "
+                        SELECT 
+                            p.PatientID,
+                            u.FullName,
+                            u.Email,
+                            s.ServiceName,
+                            a.*
+                        FROM patient p
+                        INNER JOIN user u 
+                            ON p.UserID = u.UserID
+                        INNER JOIN appointment a 
+                            ON p.PatientID = a.PatientID
+                        INNER JOIN service s
+                            ON a.ServiceID = s.ServiceID
+                        WHERE a.AppointmentDate >= CURDATE()
+                        AND a.AppointmentDate <= DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+                        AND a.AppointmentStatus = 'Confirmed'
+                        ORDER BY p.PatientID
+                    ";
+
+                    $reminderstmt = $pdo->prepare($remindersql);
+                    $reminderstmt->execute();
+
+                    $appointments = $reminderstmt->fetchAll(PDO::FETCH_ASSOC);
+                    $today = new DateTimeImmutable('today');
+
+                    foreach($appointments as $appointment){
+                        $appointmentDate = new DateTimeImmutable(
+                            $appointment["AppointmentDate"]
+                        );
+
+                        $daysLeft = $today->diff($appointmentDate)->days;
+
+                        $subject = "Upcoming Appointment - BrightSmile Dental";
+
+                        $body = "
+                            <div style='
+                                font-family: Arial, sans-serif;
+                                background-color: #f6f9fa;
+                                padding: 30px;
+                                color: #333333;
+                            '>
+
+                                <div style='
+                                    max-width: 600px;
+                                    margin: 0 auto;
+                                    background-color: #ffffff;
+                                    border-radius: 10px;
+                                    overflow: hidden;
+                                    border: 1px solid #e5e7eb;
+                                '>
+
+                                    <div style='
+                                        background-color: #42B1CC;
+                                        padding: 25px;
+                                        text-align: center;
+                                        color: white;
+                                    '>
+                                        <h2 style='margin: 0;'>
+                                            BrightSmile Dental
+                                        </h2>
+                                        <p style='margin: 8px 0 0;'>
+                                            Appointment Notification
+                                        </p>
+                                    </div>
+
+                                    <div style='padding: 30px;'>
+
+                                        <h2 style='color: #333333;'>
+                                            Upcoming Dental Appointment
+                                        </h2>
+
+                                        <p>
+                                            Dear " . htmlspecialchars($appointment['FullName']) . ",
+                                        </p>
+
+                                        <p style='line-height: 1.6; color: #555555;'>
+                                            This is a reminder that your dental appointment
+                                            is scheduled in the next ". $daysLeft ." days.
+                                        </p>
+
+                                        <div style='
+                                            background-color: #f0f9fb;
+                                            padding: 20px;
+                                            border-radius: 8px;
+                                            margin: 20px 0;
+                                        '>
+                                            <h3 style='color: #26869D; margin-top: 0;'>
+                                                Appointment Details
+                                            </h3>
+
+                                            <p>
+                                                Appointment:
+                                                <strong>" . htmlspecialchars($appointment['ServiceName']) . "</strong>
+                                            </p>
+
+                                            <p>
+                                                Appointment Date:
+                                                <strong>" . htmlspecialchars($appointmentDate->format('d M Y')) . "</strong>
+                                            </p>
+
+                                            <p style='margin-bottom: 0;'>
+                                                Appointment Time:
+                                                <strong>" . htmlspecialchars(date('g:i A', strtotime($appointment['AppointmentTime']))) . "</strong>
+                                            </p>
+                                        </div>
+
+                                        <p style='line-height: 1.6; color: #555555;'>
+                                            Please remember to arrive 10-15 minutes early
+                                            for your appointment.
+                                        </p>
+
+                                        <p style='line-height: 1.6; color: #555555;'>
+                                            If you have any questions or need to make changes
+                                            to your appointment, please contact BrightSmile Dental.
+                                        </p>
+
+                                        <p style='margin-top: 30px;'>
+                                            Regards,<br>
+                                            <strong>BrightSmile Dental</strong>
+                                        </p>
+
+                                    </div>
+
+                                    <div style='
+                                        background-color: #f6f9fa;
+                                        padding: 15px;
+                                        text-align: center;
+                                        font-size: 12px;
+                                        color: #888888;
+                                    '>
+                                        &copy; " . date('Y') . " BrightSmile Dental.
+                                        All rights reserved.
+                                    </div>
+
+                                </div>
+                            </div>
+                        ";
+
+                        sendEmail(
+                            $appointment['Email'],
+                            $subject,
+                            $body
+                        );
+                    }
+                }
+
                 header('Location: ' . ($user['Role'] === 'Dentist' ? 'dentist_dashboard.php' : 'admin_dashboard.php'));
                 exit;
             }
-            if ($loginError !== '') {
-                $_SESSION['login_captcha'] = generate_login_captcha();
-            }
+        } else {
+            session_regenerate_id(true);
+            $_SESSION['user_id'] = (int) $user['UserID'];
+            $_SESSION['role'] = $user['Role'];
+            $_SESSION['full_name'] = $user['FullName'];
+            set_login_session_cookie(isset($_POST['remember']) && $_POST['remember'] === '1');
+            header('Location: ' . ($user['Role'] === 'Dentist' ? 'dentist_dashboard.php' : 'admin_dashboard.php'));
+            exit;
         }
     } else {
         $fullName = trim($_POST['full_name'] ?? '');
@@ -286,36 +543,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </div>
                             </div>
 
-                            <!-- CAPTCHA -->
-                            <div class="login-captcha">
-                                <div class="captcha-toolbar">
-                                    <button type="button" class="captcha-refresh" id="captcha-refresh" aria-label="Refresh CAPTCHA" title="Refresh CAPTCHA">
-                                        <i class="fa-solid fa-rotate" aria-hidden="true"></i>
-                                    </button>
-                                </div>
-                                <div class="captcha-challenge">
-                                    <canvas
-                                        class="captcha-canvas"
-                                        id="captcha-canvas"
-                                        role="img"
-                                        aria-label="CAPTCHA challenge. Enter the characters displayed."
-                                        data-code="<?= escape_html($_SESSION['login_captcha']) ?>"
-                                    ></canvas>
-                                </div>
-                                <label for="captcha">Enter the characters shown above</label>
-                                <input
-                                    type="text"
-                                    id="captcha"
-                                    name="captcha"
-                                    minlength="6"
-                                    maxlength="6"
-                                    autocomplete="off"
-                                    autocapitalize="off"
-                                    spellcheck="false"
-                                    required
-                                >
-                            </div>
-
                             <!-- Login Button -->
                             <button
                                 type="submit"
@@ -417,9 +644,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 document.getElementById('register-panel').hidden = !showRegistration;
                 document.getElementById('login-switch').hidden = showRegistration;
                 document.getElementById('register-switch').hidden = !showRegistration;
-                if (!showRegistration) {
-                    drawCaptcha();
-                }
             });
         });
 
@@ -431,112 +655,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             forgotPasswordNotice.hidden = isExpanded;
         });
 
-        const captchaCanvas = document.getElementById('captcha-canvas');
-        const captchaInput = document.getElementById('captcha');
-        const captchaRefreshButton = document.getElementById('captcha-refresh');
-        const loginForm = captchaInput.form;
-        let captchaCode = captchaCanvas.dataset.code;
-
-        function drawCaptcha() {
-            const context = captchaCanvas.getContext('2d');
-            const pixelRatio = window.devicePixelRatio || 1;
-            const canvasWidth = Math.max(captchaCanvas.clientWidth, 1);
-            const canvasHeight = Math.max(captchaCanvas.clientHeight, 1);
-            captchaCanvas.width = canvasWidth * pixelRatio;
-            captchaCanvas.height = canvasHeight * pixelRatio;
-            context.scale(pixelRatio, pixelRatio);
-            context.fillStyle = '#f5fbfd';
-            context.fillRect(0, 0, canvasWidth, canvasHeight);
-
-            context.strokeStyle = 'rgba(66, 177, 204, 0.12)';
-            context.lineWidth = 1;
-            for (let x = 0; x < canvasWidth; x += 16) {
-                context.beginPath();
-                context.moveTo(x, 0);
-                context.lineTo(x, canvasHeight);
-                context.stroke();
-            }
-            for (let y = 0; y < canvasHeight; y += 16) {
-                context.beginPath();
-                context.moveTo(0, y);
-                context.lineTo(canvasWidth, y);
-                context.stroke();
-            }
-
-            for (let index = 0; index < 12; index += 1) {
-                context.beginPath();
-                context.moveTo(Math.random() * canvasWidth, Math.random() * canvasHeight);
-                context.lineTo(Math.random() * canvasWidth, Math.random() * canvasHeight);
-                context.strokeStyle = `rgba(35, 139, 165, ${0.15 + Math.random() * 0.25})`;
-                context.lineWidth = 1 + Math.random();
-                context.stroke();
-            }
-
-            for (let index = 0; index < 90; index += 1) {
-                context.beginPath();
-                context.arc(Math.random() * canvasWidth, Math.random() * canvasHeight, Math.random() * 1.6, 0, Math.PI * 2);
-                context.fillStyle = `rgba(38, 50, 56, ${0.08 + Math.random() * 0.2})`;
-                context.fill();
-            }
-
-            const characterWidth = canvasWidth / captchaCode.length;
-            captchaCode.split('').forEach((character, index) => {
-                context.save();
-                const centerX = characterWidth * index + characterWidth / 2;
-                const centerY = canvasHeight / 2 + (Math.random() * 20 - 10);
-                context.translate(centerX, centerY);
-                context.rotate((Math.random() * 0.5 - 0.25));
-                context.font = `700 ${30 + Math.random() * 10}px Georgia, serif`;
-                context.textAlign = 'center';
-                context.textBaseline = 'middle';
-                context.fillStyle = ['#176b82', '#263238', '#238ba5', '#34434d'][Math.floor(Math.random() * 4)];
-                context.fillText(character, 0, 0);
-                context.restore();
-            });
-        }
-
-        async function refreshCaptcha() {
-            captchaRefreshButton.disabled = true;
-            try {
-                const response = await fetch('authentication.php?refresh_captcha=1', {
-                    credentials: 'same-origin',
-                    cache: 'no-store',
-                    headers: { Accept: 'application/json' },
-                });
-                if (!response.ok) {
-                    throw new Error('CAPTCHA refresh request failed.');
-                }
-
-                const result = await response.json();
-                if (typeof result.captcha !== 'string' || result.captcha.length !== 6) {
-                    throw new Error('CAPTCHA refresh returned an invalid challenge.');
-                }
-
-                captchaCode = result.captcha;
-                captchaInput.value = '';
-                captchaInput.setCustomValidity('');
-                drawCaptcha();
-            } catch (error) {
-                console.error(error);
-                captchaInput.setCustomValidity('Unable to refresh the CAPTCHA. Please reload the page.');
-                captchaInput.reportValidity();
-            } finally {
-                captchaRefreshButton.disabled = false;
-            }
-        }
-
-        captchaRefreshButton.addEventListener('click', refreshCaptcha);
-        captchaInput.addEventListener('input', () => captchaInput.setCustomValidity(''));
-        loginForm.addEventListener('submit', (event) => {
-            if (captchaInput.value !== captchaCode) {
-                event.preventDefault();
-                captchaInput.setCustomValidity('Enter the CAPTCHA exactly as displayed, including letter case.');
-                captchaInput.reportValidity();
-                captchaInput.focus();
-            }
-        });
-        drawCaptcha();
-        window.addEventListener('resize', drawCaptcha);
 
         // Toggle password visibility
         function togglePassword() {
