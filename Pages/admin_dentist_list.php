@@ -263,11 +263,6 @@
                                     <form method="POST" id="addDoctorForm">
                                         <input type="hidden" name="action" value="addDoctor">
 
-                                        <!-- <div class="mb-3">
-                                            <label for="userID" class="form-label">UserID</label>
-                                            <input type="text" class="form-control" id="userID" name="userID" value="" readonly>
-                                        </div> -->
-
                                         <div class="mb-3">
                                             <label for="fullName" class="form-label">Full Name</label>
                                             <input type="text" class="form-control" id="fullName" name="fullName" required>
@@ -381,8 +376,6 @@
                             }
                         }
 
-                        // $stmt->execute();
-                        // $result = $stmt->fetch();
                     ?>
 
                     <div class="modal fade" id="editDoctorModal" tabindex="-1">

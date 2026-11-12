@@ -257,6 +257,15 @@ body {
     color: #9f2d26;
 }
 
+.security-notice.success {
+    background-color: #d1fae5;
+    border-color: #34d399;
+}
+
+.security-notice.success p {
+    color: #065f46;
+}
+
 .security-icon {
     font-size: 16px;
 }
