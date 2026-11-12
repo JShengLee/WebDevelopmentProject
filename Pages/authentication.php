@@ -80,6 +80,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 set_login_session_cookie(isset($_POST['remember']) && $_POST['remember'] === '1');
                 header('Location: index.php');
                 exit;
+            }
+        } else {
+            session_regenerate_id(true);
+            $_SESSION['user_id'] = (int) $user['UserID'];
+            $_SESSION['role'] = $user['Role'];
+            $_SESSION['full_name'] = $user['FullName'];
+            set_login_session_cookie(isset($_POST['remember']) && $_POST['remember'] === '1');
 
                 if ($user["Role"] === "Admin") {
 
@@ -91,11 +98,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             u.FullName,
                             u.Email,
                             a.*
-                        FROM patient p
+                        FROM appointment a
+                        INNER JOIN patient p 
+                            ON p.PatientID = a.PatientID
                         INNER JOIN user u 
                             ON p.UserID = u.UserID
-                        INNER JOIN appointment a 
-                            ON p.PatientID = a.PatientID
                         WHERE YEAR(a.AppointmentDate) = YEAR(CURDATE())
                         AND a.AppointmentStatus = 'Completed'
                         ORDER BY p.PatientID
@@ -216,11 +223,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                         ";
 
-                        sendEmail(
+                        if (sendEmail(
                             $patient['email'],
                             $subject,
                             $body
-                        );
+                        )) {
+                            $_SESSION['login_debug_messages'][] = [
+                                'type' => 'log',
+                                'message' => 'Yearly report sent successfully to PatientID: ' . (int)$patientID
+                            ];
+                        } else {
+                            $_SESSION['login_debug_messages'][] = [
+                                'type' => 'error',
+                                'message' => 'Yearly report failed for PatientID: ' . (int)$patientID
+                            ];
+                        }
                     }
 
                     $remindersql = "
@@ -361,24 +378,122 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </div>
                             </div>
                         ";
+                        
+                    sendEmail(
+                        $patient['email'],
+                        $subject,
+                        $body);
+                    };
+
+                    $birthmonthsql = "SELECT u.FullName, p.DateOfBirth, u.Email FROM patient p JOIN user u ON p.UserID = u.UserID WHERE MONTH(DateOfBirth) = MONTH(CURDATE())";
+                    $birthmonthstmt = $pdo->prepare($birthmonthsql);
+                    $birthmonthstmt->execute();
+                    $birthmonths = $birthmonthstmt->fetchAll(PDO::FETCH_ASSOC);
+
+                    foreach($birthmonths as $birthmonth){
+                        $subject = "Birthmonth Promotion - BrightSmile Dental";
+
+                        $body = "
+                            <div style='
+                                font-family: Arial, sans-serif;
+                                background-color: #f6f9fa;
+                                padding: 30px;
+                                color: #333333;
+                            '>
+
+                                <div style='
+                                    max-width: 600px;
+                                    margin: 0 auto;
+                                    background-color: #ffffff;
+                                    border-radius: 10px;
+                                    overflow: hidden;
+                                    border: 1px solid #e5e7eb;
+                                '>
+
+                                    <div style='
+                                        background-color: #42B1CC;
+                                        padding: 25px;
+                                        text-align: center;
+                                        color: white;
+                                    '>
+                                        <h2 style='margin: 0;'>
+                                            BrightSmile Dental
+                                        </h2>
+                                        <p style='margin: 8px 0 0;'>
+                                            Birthmonth Promotion
+                                        </p>
+                                    </div>
+
+                                    <div style='padding: 30px;'>
+
+                                        <h2 style='color: #333333;'>
+                                            Happy Birthday!
+                                        </h2>
+
+                                        <p>
+                                            Dear " . htmlspecialchars($birthmonth['FullName']) . ",
+                                        </p>
+
+                                        <p style='line-height: 1.6; color: #555555;'>
+                                            This is an email to notify you that we have a special promotion waiting for you to celebrate your birthmonth!
+                                        </p>
+
+                                        <div style='
+                                            background-color: #f0f9fb;
+                                            padding: 20px;
+                                            border-radius: 8px;
+                                            margin: 20px 0;
+                                        '>
+                                            <h3 style='color: #26869D; margin-top: 0;'>
+                                                Promotion Details
+                                            </h3>
+
+                                            <p>
+                                                Get up to 
+                                                <strong>40%</strong> 
+                                                discount for our dental services.
+                                            </p>
+                                        </div>
+
+                                        <p style='line-height: 1.6; color: #555555;'>
+                                            Please note that the promotion would only be valid for this month.
+                                        </p>
+
+                                        <p style='line-height: 1.6; color: #555555;'>
+                                            If you have any questions or need to make changes
+                                            to your appointment, please contact BrightSmile Dental.
+                                        </p>
+
+                                        <p style='margin-top: 30px;'>
+                                            Regards,<br>
+                                            <strong>BrightSmile Dental</strong>
+                                        </p>
+
+                                    </div>
+
+                                    <div style='
+                                        background-color: #f6f9fa;
+                                        padding: 15px;
+                                        text-align: center;
+                                        font-size: 12px;
+                                        color: #888888;
+                                    '>
+                                        &copy; " . date('Y') . " BrightSmile Dental.
+                                        All rights reserved.
+                                    </div>
+
+                                </div>
+                            </div>
+                        ";
 
                         sendEmail(
-                            $appointment['Email'],
+                            $birthmonth['Email'],
                             $subject,
                             $body
                         );
                     }
                 }
-
-                header('Location: ' . ($user['Role'] === 'Dentist' ? 'dentist_dashboard.php' : 'admin_dashboard.php'));
-                exit;
-            }
-        } else {
-            session_regenerate_id(true);
-            $_SESSION['user_id'] = (int) $user['UserID'];
-            $_SESSION['role'] = $user['Role'];
-            $_SESSION['full_name'] = $user['FullName'];
-            set_login_session_cookie(isset($_POST['remember']) && $_POST['remember'] === '1');
+            
             header('Location: ' . ($user['Role'] === 'Dentist' ? 'dentist_dashboard.php' : 'admin_dashboard.php'));
             exit;
         }
